@@ -220,7 +220,7 @@
           <li>살아있는 몬스터 80마리 이상이면 패배</li>
           <li>모든 캐릭터는 고유 패시브, 신화 등급만 자동 발동 스킬 보유 · 보스는 처치 즉시 다음 라운드</li>
           <li>오라 유닛은 주변 3×3이 색으로 표시되고, 버프를 받는 유닛은 모서리에 ▲ 표시</li>
-          <li>조합 전용 캐릭터는 <b>특수</b> 등급: 상위 등급으로 합성 불가, 전체 합성(C)에서 기본 제외</li>
+          <li>조합은 항상 수동(조합 버튼). 📌 핀은 목표 표시이며 신화를 핀하면 하위 조합식이 전부 함께 핀됨</li>
           <li>가장자리 칸일수록 길에 가깝습니다 (사거리 확인)</li>
         </ul>
       </div>
@@ -277,8 +277,7 @@
       <div class="card">
         <h3>명령</h3>
         <div class="actions">
-          <button class="primary" id="bSummon">소환 <span id="summonCost">20G</span><kbd>S</kbd></button>
-          <button id="bCombineAll">📌 핀 조합 즉시 실행<kbd>C</kbd></button>
+          <button class="primary wide" id="bSummon">소환 <span id="summonCost">20G</span><kbd>S</kbd></button>
           <button id="bLuck" class="wide">행운 강화 (고급 직접 소환 확률) <span id="luckCost"></span><kbd>L</kbd></button>
           <button id="bSkip" class="wide">다음 라운드 바로 시작<kbd>N</kbd></button>
         </div>
@@ -286,7 +285,7 @@
       </div>
 
       <div class="card">
-        <h3>조합식 (상위 등급은 조합으로만 획득 · 📌 핀을 꽂으면 재료가 모일 때 자동 조합)</h3>
+        <h3>조합식 (상위 등급은 조합으로만 획득 · 📌 핀 = 목표 표시, 하위 조합식까지 함께 표시 · 자동 조합 없음)</h3>
         <div class="recipes" id="recipes"></div>
       </div>
 
@@ -298,7 +297,7 @@
       <div class="card">
         <h3>선택한 유닛</h3>
         <div class="sel" id="sel"></div>
-        <p class="note" style="margin:8px 0 0">단축키: S 소환 · C 전체 합성 · K 잠금 전환 · L 행운 · N 다음 라운드 · Space 일시정지 · Esc 선택 해제</p>
+        <p class="note" style="margin:8px 0 0">단축키: S 소환 · K 잠금 전환 · L 행운 · N 다음 라운드 · Space 일시정지 · Esc 선택 해제</p>
       </div>
 
       <div class="card">
@@ -658,7 +657,7 @@
       units: [], monsters: [], shots: [], spawnQ: 0, spawnT: 0,
       luck: mods.luck, kills: 0, speed: 1, paused: false,
       sel: null, log: [], mods, time: 0, buff: { atk: 0, t: 0 },
-      mode, maxRound: mode.type === 'stage' ? CFG.MAX_ROUND : Infinity, fx: [], bossSpawned: false, timeStopT: 0, pins: [], autoT: 0,
+      mode, maxRound: mode.type === 'stage' ? CFG.MAX_ROUND : Infinity, fx: [], bossSpawned: false, timeStopT: 0, pinRoots: [],
       stageMul: mode.type === 'stage' ? CFG.STAGE_HP_MUL[mode.stage - 1] : 1,
       debuffs: [], dmul: computeDmul([]),
     };
@@ -742,38 +741,39 @@
     renderPanel();
     return true;
   }
-  function recipeCounts(def, auto) {
-    return def.recipe.map(([n, need]) => ({ n, need, have: S.units.filter(u => u.def.n === n && !(auto && u.lock)).length }));
+  function recipeCounts(def) {
+    return def.recipe.map(([n, need]) => ({ n, need, have: S.units.filter(u => u.def.n === n && !u.lock).length }));
   }
-  const canCraftNow = (def, auto) => recipeCounts(def, auto).every(x => x.have >= x.need);
-  function craft(def, auto) {
+  const canCraftNow = def => recipeCounts(def).every(x => x.have >= x.need);
+  function craft(def) {
     if (!S || S.phase !== 'play') return false;
-    const rc = recipeCounts(def, auto);
-    if (rc.some(x => x.have < x.need)) { if (!auto) log(`재료 부족: ${rc.map(x => `${x.n} ${x.have}/${x.need}`).join(', ')}`); return false; }
+    const rc = recipeCounts(def);
+    if (rc.some(x => x.have < x.need)) { log(`재료 부족: ${rc.map(x => `${x.n} ${x.have}/${x.need}`).join(', ')} (🔒 잠긴 유닛 제외)`); return false; }
     const used = [];
     for (const x of rc) {
-      const pool = S.units.filter(u => u.def.n === x.n && !(auto && u.lock) && !used.includes(u)).sort((a, b) => (a.lock - b.lock) || (edgeDist(b.col, b.row) - edgeDist(a.col, a.row)));
+      const pool = S.units.filter(u => u.def.n === x.n && !u.lock && !used.includes(u)).sort((a, b) => edgeDist(b.col, b.row) - edgeDist(a.col, a.row));
       used.push(...pool.slice(0, x.need));
     }
     used.sort((a, b) => edgeDist(a.col, a.row) - edgeDist(b.col, b.row));
     const spot = { c: used[0].col, r: used[0].row };
     S.units = S.units.filter(u => !used.includes(u));
     const nu = makeUnit(def, spot.c, spot.r);
-    S.units.push(nu); if (!auto) S.sel = nu;
-    log(`${auto ? '자동 ' : ''}조합: ${def.recipe.map(([n, k]) => `${n}×${k}`).join(' + ')} → [${GRADE_NAMES[def.grade]}] ${def.n}`, 'g' + def.grade);
+    S.units.push(nu); S.sel = nu;
+    log(`조합: ${def.recipe.map(([n, k]) => `${n}×${k}`).join(' + ')} → [${GRADE_NAMES[def.grade]}] ${def.n}`, 'g' + def.grade);
     S.fx.push({ type: 'flash', col: spot.c, row: spot.r, t: 0.5, d: 0.5, c: GRADE_COLORS[def.grade] });
     renderPanel();
     return true;
   }
-  function craftPinned(manual) {
-    if (!S || S.phase !== 'play') return;
-    let n = 0, guard = 0;
-    const pinned = RECIPE_UNITS.filter(d => S.pins.includes(d.n) && unlocked(d)).sort((a, b) => a.grade - b.grade);
-    let changed = true;
-    while (changed && guard++ < 50) { changed = false; for (const def of pinned) { if (canCraftNow(def, true) && craft(def, true)) { n++; changed = true; } } }
-    if (manual && !n) log(S.pins.length ? '핀 조합의 재료가 아직 모이지 않았습니다.' : '핀을 꽂은 조합식이 없습니다. (조합식 패널의 📌)');
+  // Pins are planning markers only (no automatic crafting). Pinning a recipe pins its whole sub-tree.
+  function subtree(def, out) { out = out || new Set(); if (!def.recipe) return out; out.add(def.n); for (const [n] of def.recipe) subtree(defByName(n), out); return out; }
+  function pinnedSet() { const all = new Set(); for (const n of S.pinRoots) subtree(defByName(n), all); return all; }
+  function togglePin(def) {
+    const i = S.pinRoots.indexOf(def.n);
+    if (i >= 0) S.pinRoots.splice(i, 1);
+    else { S.pinRoots = S.pinRoots.filter(n => !subtree(def).has(n)); S.pinRoots.push(def.n); } // a new root absorbs roots inside its tree
+    renderPanel();
   }
-  function togglePin(def) { const i = S.pins.indexOf(def.n); if (i >= 0) S.pins.splice(i, 1); else S.pins.push(def.n); renderPanel(); }
+  function neededBase(def, acc) { acc = acc || {}; for (const [n, k] of def.recipe) { const d = defByName(n); for (let i = 0; i < k; i++) { if (d.recipe) neededBase(d, acc); else acc[n] = (acc[n] || 0) + 1; } } return acc; }
   let recipeTab = 'all';
   function renderRecipes() {
     const box = $('recipes'); box.innerHTML = '';
@@ -781,26 +781,33 @@
     const mk = (key, label) => { const b = document.createElement('button'); b.textContent = label; b.className = recipeTab === key ? 'on' : ''; b.addEventListener('click', () => { recipeTab = key; renderRecipes(); }); tabs.appendChild(b); };
     mk('all', '전체'); mk('now', '지금 가능'); mk('pin', '📌 핀'); for (let g = 1; g <= 6; g++) mk(String(g), GRADE_NAMES[g]);
     box.appendChild(tabs);
+    const pins = pinnedSet();
     let list = RECIPE_UNITS.filter(unlocked);
-    if (recipeTab === 'now') list = list.filter(d => canCraftNow(d, false));
-    else if (recipeTab === 'pin') list = list.filter(d => S.pins.includes(d.n));
+    if (recipeTab === 'now') list = list.filter(d => canCraftNow(d));
+    else if (recipeTab === 'pin') list = list.filter(d => pins.has(d.n));
     else if (recipeTab !== 'all') list = list.filter(d => d.grade === Number(recipeTab));
-    list.sort((a, b) => (canCraftNow(b, false) - canCraftNow(a, false)) || (a.grade - b.grade));
+    if (recipeTab === 'pin') list.sort((a, b) => a.grade - b.grade); // bottom-up: craft order
+    else list.sort((a, b) => (canCraftNow(b) - canCraftNow(a)) || (a.grade - b.grade));
+    if (recipeTab === 'pin' && S.pinRoots.length) {
+      const goal = document.createElement('div'); goal.className = 'note';
+      goal.innerHTML = S.pinRoots.map(n => { const d = defByName(n), nb = neededBase(d); return `🎯 <b class="g${d.grade}">${n}</b> 목표 · 필요한 일반 유닛: ${Object.entries(nb).map(([k, v]) => `${k}×${v}`).join(', ')}`; }).join('<br>');
+      box.appendChild(goal);
+    }
     const locked = RECIPE_UNITS.filter(d => owned(d) && !unlocked(d));
     if (!list.length) box.appendChild(Object.assign(document.createElement('span'), { className: 'empty', textContent: '해당하는 조합식이 없습니다.' }));
     for (const def of list.slice(0, 40)) {
-      const rc = recipeCounts(def, false), ok = rc.every(x => x.have >= x.need), pinned = S.pins.includes(def.n);
+      const rc = recipeCounts(def), ok = rc.every(x => x.have >= x.need), pinned = pins.has(def.n), isRoot = S.pinRoots.includes(def.n);
       const row = document.createElement('div'); row.className = 'recipe' + (ok ? ' ok' : '') + (pinned ? ' pinned' : '');
       row.appendChild(spriteCanvas(unitSprite(def, 3), 36));
       const info = document.createElement('div'); info.className = 'ri';
       info.innerHTML = `<div class="nm g${def.grade}">${def.n} <span class="note">${GRADE_NAMES[def.grade]} · ${TYPE_LABEL[def.t]}</span></div><div class="mat">${rc.map(x => `<span class="${x.have >= x.need ? 'has' : ''}">${x.n} ${x.have}/${x.need}</span>`).join(' + ')}</div>`;
-      const bp = document.createElement('button'); bp.textContent = pinned ? '📌 해제' : '📌 핀'; bp.title = '재료가 모이면 자동 조합'; bp.addEventListener('click', () => togglePin(def));
-      const b = document.createElement('button'); b.textContent = '조합'; b.disabled = !ok; b.addEventListener('click', () => craft(def, false));
+      const bp = document.createElement('button'); bp.textContent = isRoot ? '🎯 해제' : pinned ? '📌 하위' : '📌 핀'; bp.title = '목표 표시 (하위 조합식까지 함께 표시, 자동 조합 없음)'; bp.disabled = pinned && !isRoot; bp.addEventListener('click', () => togglePin(def));
+      const b = document.createElement('button'); b.textContent = '조합'; b.disabled = !ok; b.addEventListener('click', () => craft(def));
       row.append(info, bp, b); box.appendChild(row);
     }
     if (recipeTab === 'all' && locked.length) { const n = document.createElement('div'); n.className = 'note'; n.textContent = `재료 분기 미해금 (뽑기로 재료 캐릭터 획득 필요): ${locked.map(d => d.n).join(', ')}`; box.appendChild(n); }
   }
-  function toggleLock() { const u = S.sel; if (!u) return; u.lock = !u.lock; log(`${u.def.n}: 자동 조합 재료 ${u.lock ? '제외' : '허용'}`); renderPanel(); }
+  function toggleLock() { const u = S.sel; if (!u) return; u.lock = !u.lock; log(`${u.def.n}: 조합 재료 ${u.lock ? '제외' : '허용'}`); renderPanel(); }
   const sellOf = def => def.sell || SELL[def.grade];
   function sellSelected() {
     const u = S.sel; if (!u) return;
@@ -1026,7 +1033,6 @@
       if (m.burnT > 0) { m.burnT -= dt; hit(m, m.burnDps * dt, null); }
       const p = pathPos(m.d); m.x = p.x; m.y = p.y;
     }
-    S.autoT += dt; if (S.autoT >= 1) { S.autoT = 0; craftPinned(false); }
     for (const u of S.units) {
       if (u.def.skill) { u.scd -= dt; if (u.scd <= 0 && castSkill(u)) u.scd = u.def.skill.cd; }
       u.cd -= dt; if (u.cd > 0) continue;
@@ -1207,7 +1213,7 @@
       const btns = document.createElement('div'); btns.className = 'btns';
       const bs = document.createElement('button'); bs.className = 'danger'; bs.textContent = `판매 +${sellOf(u.def)}G`;
       bs.addEventListener('click', sellSelected);
-      const bl = document.createElement('button'); bl.className = 'lockb'; bl.textContent = u.lock ? '🔒 자동 조합 재료 제외 중' : '🔓 자동 조합 재료 허용 중';
+      const bl = document.createElement('button'); bl.className = 'lockb'; bl.textContent = u.lock ? '🔒 조합 재료 제외 중' : '🔓 조합 재료 허용 중';
       bl.title = '클릭하여 전환'; bl.addEventListener('click', toggleLock);
       btns.append(bs, bl);
       sel.append(head, meta, pv);
@@ -1392,7 +1398,6 @@
     renderPanel();
   });
   $('bSummon').addEventListener('click', () => summon(false));
-  $('bCombineAll').addEventListener('click', () => craftPinned(true));
   $('bLuck').addEventListener('click', upgradeLuck);
   $('bSkip').addEventListener('click', skipRound);
   $('bQuit').addEventListener('click', quitGame);
@@ -1410,7 +1415,6 @@
     if (!S) return;
     const k = ev.key.toLowerCase();
     if (k === 's') summon(false);
-    else if (k === 'c') craftPinned(true);
     else if (k === 'l') upgradeLuck();
     else if (k === 'n') skipRound();
     else if (k === ' ') { ev.preventDefault(); togglePause(); }
