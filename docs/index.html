@@ -7,7 +7,7 @@
 <title>랜타디</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
-  /* Layout: square arena board on the left, command panel on the right; stacks on phones. Single dark arcade theme by choice. */
+  /* Layout: lobby (출격/캐릭터/장비 tabs) and a square arena board with a command panel; stacks on phones. Single dark arcade theme by choice. */
   :root {
     --bg: #0d1117;
     --panel: #161c26;
@@ -17,6 +17,7 @@
     --muted: #8b95a7;
     --accent: #f2b134;
     --accent-ink: #1a1200;
+    --gem: #7ee8fa;
     --danger: #ff5a5f;
     --ok: #4cd27a;
     --info: #4aa3ff;
@@ -27,64 +28,47 @@
   * { box-sizing: border-box; }
   html, body { height: 100%; }
   body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--fg);
-    font-family: var(--font-body);
-    font-size: 14px;
-    line-height: 1.45;
-    padding-inline: 16px;
-    padding-block: 12px 24px;
+    margin: 0; background: var(--bg); color: var(--fg);
+    font-family: var(--font-body); font-size: 14px; line-height: 1.45;
+    padding-inline: 16px; padding-block: 12px 24px;
   }
   button {
-    font: inherit;
-    color: var(--fg);
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 8px 12px;
-    cursor: pointer;
-    min-height: 36px;
+    font: inherit; color: var(--fg); background: var(--panel-2); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px 12px; cursor: pointer; min-height: 36px;
   }
   button:hover:not(:disabled) { border-color: var(--muted); }
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   button:disabled { opacity: .45; cursor: not-allowed; }
   button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
   button.primary:hover:not(:disabled) { filter: brightness(1.08); }
+  button.gem { border-color: var(--gem); color: var(--gem); }
   button.danger { border-color: var(--danger); color: var(--danger); }
+  button.tab { border-radius: 8px 8px 0 0; border-bottom: none; background: transparent; color: var(--muted); }
+  button.tab[aria-selected="true"] { background: var(--panel); color: var(--fg); border-color: var(--line); }
+  canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; }
   .app { max-width: 1040px; margin: 0 auto; display: grid; gap: 12px; }
   .top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
-  .top h1 {
-    font-family: var(--font-display);
-    font-weight: 400;
-    font-size: 30px;
-    letter-spacing: .02em;
-    margin: 0;
-    color: var(--accent);
-    line-height: 1;
-  }
+  .top h1 { font-family: var(--font-display); font-weight: 400; font-size: 30px; letter-spacing: .02em; margin: 0; color: var(--accent); line-height: 1; }
   .top h1 small { font-family: var(--font-body); font-size: 12px; color: var(--muted); margin-left: 8px; letter-spacing: .08em; }
   .hud { display: flex; flex-wrap: wrap; gap: 6px 14px; font-variant-numeric: tabular-nums; }
   .stat { display: flex; flex-direction: column; min-width: 64px; }
   .stat .k { font-size: 11px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
   .stat b { font-size: 18px; line-height: 1.1; }
   .stat.gold b { color: var(--accent); }
+  .stat.gems b { color: var(--gem); }
   .stat.warn b { color: var(--danger); }
   .ctl { display: flex; gap: 6px; margin-left: auto; }
   .ctl button { min-width: 44px; padding: 6px 10px; }
   .layout { display: grid; grid-template-columns: minmax(0, 504px) minmax(0, 1fr); gap: 14px; align-items: start; }
   .board { position: relative; width: 100%; max-width: 504px; }
-  canvas { display: block; width: 100%; aspect-ratio: 1; max-width: 100%; background: var(--panel); border-radius: 10px; touch-action: manipulation; }
+  #cv { display: block; width: 100%; aspect-ratio: 1; max-width: 100%; background: var(--panel); border-radius: 10px; touch-action: manipulation; }
   .overlay {
-    position: absolute; inset: 0; border-radius: 10px;
-    background: rgba(13, 17, 23, .88);
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    text-align: center; padding: 20px; gap: 10px;
+    position: absolute; inset: 0; border-radius: 10px; background: rgba(13, 17, 23, .9);
+    display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; gap: 10px;
   }
   .overlay h2 { font-family: var(--font-display); font-weight: 400; font-size: 34px; margin: 0; color: var(--accent); }
-  .overlay p { margin: 0; max-width: 40ch; color: var(--fg); }
-  .overlay ul { margin: 0; padding: 0; list-style: none; text-align: left; color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
-  .overlay ul li::before { content: "▸ "; color: var(--accent); }
+  .overlay p { margin: 0; max-width: 40ch; }
+  .overlay .gemline { color: var(--gem); font-size: 20px; font-weight: 700; }
   .panel { display: grid; gap: 10px; min-width: 0; }
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; min-width: 0; }
   .card h3 { margin: 0 0 8px; font-size: 12px; letter-spacing: .1em; color: var(--muted); text-transform: uppercase; font-weight: 500; }
@@ -102,6 +86,7 @@
   .upg .lv { color: var(--muted); font-size: 12px; }
   .upg button { padding: 4px 10px; min-height: 30px; font-size: 13px; white-space: nowrap; }
   .sel { display: grid; gap: 6px; }
+  .sel .head { display: flex; align-items: center; gap: 10px; }
   .sel .name { font-size: 18px; font-weight: 700; }
   .sel .meta { color: var(--muted); font-size: 12px; }
   .sel dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin: 0; font-variant-numeric: tabular-nums; }
@@ -112,9 +97,38 @@
   .log { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .log li:first-child { color: var(--fg); }
   .g0 { color: #aab2bf; } .g1 { color: #4cd27a; } .g2 { color: #4aa3ff; } .g3 { color: #b16cff; } .g4 { color: #ff9f1c; } .g5 { color: #ff4d6d; }
+  .r0 { color: #aab2bf; } .r1 { color: #4aa3ff; } .r2 { color: #b16cff; } .r3 { color: #ff9f1c; }
   .note { font-size: 12px; color: var(--muted); }
+  /* lobby */
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); padding: 0 4px; }
+  .lobby-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+  .lobby-grid .full { grid-column: 1 / -1; }
+  .gacha-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .results { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; min-height: 20px; }
+  .rcard { display: grid; justify-items: center; gap: 4px; padding: 8px; width: 96px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; font-size: 12px; text-align: center; }
+  .rcard.new { border-color: var(--accent); }
+  .rcard .tag { font-size: 10px; color: var(--accent); letter-spacing: .08em; }
+  .roster { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+  .ccard { display: grid; justify-items: center; gap: 4px; padding: 8px 6px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; font-size: 12px; text-align: center; }
+  .ccard.locked { opacity: .4; filter: grayscale(.6); }
+  .ccard .nm { font-weight: 700; }
+  .ccard .lv { color: var(--muted); font-size: 11px; }
+  .slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .slot { background: var(--panel-2); border: 1px dashed var(--line); border-radius: 8px; padding: 8px; font-size: 12px; min-height: 64px; }
+  .slot .k { color: var(--muted); font-size: 11px; letter-spacing: .08em; }
+  .slot.on { border-style: solid; }
+  .inv { display: grid; gap: 6px; }
+  .item { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 13px; }
+  .item .st { color: var(--muted); font-size: 12px; }
+  .item button { min-height: 28px; padding: 2px 10px; font-size: 12px; }
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+  .summary div { background: var(--panel-2); border-radius: 8px; padding: 8px 10px; }
+  .summary .k { font-size: 11px; color: var(--muted); letter-spacing: .08em; }
+  .summary b { font-size: 18px; }
+  .rules { margin: 0; padding: 0; list-style: none; color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
+  .rules li::before { content: "▸ "; color: var(--accent); }
   @media (max-width: 760px) {
-    .layout { grid-template-columns: 1fr; }
+    .layout, .lobby-grid { grid-template-columns: 1fr; }
     .board { max-width: 100%; }
     .ctl { margin-left: 0; }
   }
@@ -127,34 +141,96 @@
   <header class="top">
     <h1>랜타디<small>RANDOM TOWER DEFENSE</small></h1>
     <div class="hud">
-      <div class="stat"><span class="k">라운드</span><b id="hRound">-</b></div>
-      <div class="stat"><span class="k">남은 시간</span><b id="hTime">-</b></div>
-      <div class="stat gold"><span class="k">골드</span><b id="hGold">0</b></div>
+      <div class="stat gems"><span class="k">보석</span><b id="hGems">0</b></div>
+      <div class="stat" id="hRoundWrap"><span class="k">라운드</span><b id="hRound">-</b></div>
+      <div class="stat" id="hTimeWrap"><span class="k">남은 시간</span><b id="hTime">-</b></div>
+      <div class="stat gold" id="hGoldWrap"><span class="k">골드</span><b id="hGold">0</b></div>
       <div class="stat" id="hMonWrap"><span class="k">몬스터</span><b id="hMon">0 / 80</b></div>
-      <div class="stat"><span class="k">유닛</span><b id="hUnits">0 / 49</b></div>
+      <div class="stat" id="hUnitsWrap"><span class="k">유닛</span><b id="hUnits">0 / 49</b></div>
     </div>
-    <div class="ctl">
+    <div class="ctl" id="gameCtl" hidden>
       <button id="bSpeed" title="게임 속도">x1</button>
       <button id="bPause" title="일시정지 (Space)">일시정지</button>
+      <button id="bQuit" class="danger" title="포기하고 로비로">포기</button>
     </div>
   </header>
 
-  <main class="layout">
-    <section class="board">
-      <canvas id="cv" width="504" height="504" aria-label="게임 보드"></canvas>
-      <div class="overlay" id="overlay">
-        <h2>랜타디</h2>
-        <p>골드로 무작위 유닛을 소환하고, 같은 유닛 2개를 합쳐 상위 등급으로 올리세요. 몬스터는 길을 계속 돌며, 쌓이면 패배합니다.</p>
-        <ul>
-          <li>소환 20G · 등급 6단계 (일반 → 신화)</li>
-          <li>라운드마다 몬스터 20마리, 10·20·30라운드 보스, 40라운드 최종 보스</li>
+  <!-- ================= LOBBY ================= -->
+  <section id="lobby">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="deploy" aria-selected="true">출격</button>
+      <button class="tab" role="tab" data-tab="chars" aria-selected="false">캐릭터 뽑기</button>
+      <button class="tab" role="tab" data-tab="gear" aria-selected="false">장비 뽑기</button>
+    </div>
+
+    <div class="lobby-grid" id="tab-deploy" role="tabpanel">
+      <div class="card">
+        <h3>전적</h3>
+        <div class="summary">
+          <div><span class="k">최고 라운드</span><br><b id="lbBest">0</b></div>
+          <div><span class="k">플레이 횟수</span><br><b id="lbRuns">0</b></div>
+          <div><span class="k">보유 캐릭터</span><br><b id="lbOwned">0 / 18</b></div>
+          <div><span class="k">보유 장비</span><br><b id="lbItems">0</b></div>
+        </div>
+        <p class="note" style="margin:10px 0 0">보석 보상: 게임 종료 시 <b>50 + 라운드 × 15</b> (클리어 시 +300). 게임 안에서는 <b>보유한 캐릭터만</b> 소환·합성됩니다. 상위 등급 캐릭터가 없으면 그 등급으로 합성할 수 없습니다.</p>
+        <div style="margin-top:12px"><button class="primary" id="bStart" style="min-height:48px;width:100%;font-size:16px">게임 시작</button></div>
+      </div>
+      <div class="card">
+        <h3>출격 정보</h3>
+        <div id="deployGear" class="slots"></div>
+        <p class="note" style="margin:10px 0 0" id="deployPool"></p>
+        <h3 style="margin-top:12px">규칙</h3>
+        <ul class="rules">
+          <li>소환 20G · 같은 유닛 2개를 합쳐 상위 등급</li>
+          <li>라운드마다 몬스터 20마리 · 10·20·30 보스, 40 최종 보스(45초 제한)</li>
           <li>살아있는 몬스터 80마리 이상이면 패배</li>
-          <li>보스를 45초 안에 못 잡으면 패배</li>
           <li>가장자리 칸일수록 길에 가깝습니다 (사거리 확인)</li>
         </ul>
-        <p id="ovBest" class="note"></p>
-        <button class="primary" id="bStart">게임 시작</button>
       </div>
+    </div>
+
+    <div class="lobby-grid" id="tab-chars" role="tabpanel" hidden>
+      <div class="card full">
+        <h3>캐릭터 뽑기</h3>
+        <div class="gacha-bar">
+          <button class="gem" id="bPullChar1">1회 뽑기 · 100 보석</button>
+          <button class="gem" id="bPullChar10">10회 뽑기 · 900 보석</button>
+          <span class="note">확률: 일반 45% · 고급 30% · 희귀 14% · 영웅 7% · 전설 3% · 신화 1%. 중복 시 캐릭터 레벨 +1 (공격력 +8%/Lv, 최대 Lv.10, 초과 시 30 보석 환급)</span>
+        </div>
+        <div class="results" id="charResults"></div>
+      </div>
+      <div class="card full">
+        <h3>도감</h3>
+        <div class="roster" id="roster"></div>
+      </div>
+    </div>
+
+    <div class="lobby-grid" id="tab-gear" role="tabpanel" hidden>
+      <div class="card full">
+        <h3>장비 뽑기</h3>
+        <div class="gacha-bar">
+          <button class="gem" id="bPullGear1">1회 뽑기 · 100 보석</button>
+          <button class="gem" id="bPullGear10">10회 뽑기 · 900 보석</button>
+          <span class="note">확률: 일반 55% · 희귀 30% · 영웅 12% · 전설 3%. 장비는 출격한 모든 유닛에 적용됩니다.</span>
+        </div>
+        <div class="results" id="gearResults"></div>
+      </div>
+      <div class="card">
+        <h3>장착 중</h3>
+        <div class="slots" id="equipSlots"></div>
+      </div>
+      <div class="card">
+        <h3>보관함</h3>
+        <div class="inv" id="inv"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= GAME ================= -->
+  <main class="layout" id="game" hidden>
+    <section class="board">
+      <canvas id="cv" width="504" height="504" aria-label="게임 보드"></canvas>
+      <div class="overlay" id="overlay" hidden></div>
     </section>
 
     <aside class="panel">
@@ -176,7 +252,7 @@
 
       <div class="card">
         <h3>선택한 유닛</h3>
-        <div class="sel" id="sel"><span class="empty">보드의 유닛을 클릭하세요. 선택 후 빈 칸을 클릭하면 이동합니다.</span></div>
+        <div class="sel" id="sel"></div>
         <p class="note" style="margin:8px 0 0">단축키: S 소환 · C 전체 합성 · L 행운 · N 다음 라운드 · Space 일시정지 · Esc 선택 해제</p>
       </div>
 
@@ -193,25 +269,19 @@
   'use strict';
 
   // ---------- Tunables (balance is a first guess; adjust after playtesting) ----------
-  const T = 56, N = 9, SIZE = T * N;           // 9x9 tiles, outer ring is the monster path
-  const INNER_MIN = 1, INNER_MAX = N - 2;        // build area 7x7
+  const T = 56, N = 9, SIZE = T * N;
+  const INNER_MIN = 1, INNER_MAX = N - 2;
   const CFG = {
-    START_GOLD: 100,
-    SUMMON_COST: 20,
-    ROUND_TIME: 25,
-    BOSS_TIME: 45,
-    MONSTER_CAP: 80,
-    MAX_ROUND: 40,
-    COMBINE_NEED: 2,
-    SPAWN_INTERVAL: 0.6,
-    PER_ROUND: 20,
+    START_GOLD: 100, SUMMON_COST: 20, ROUND_TIME: 25, BOSS_TIME: 45, MONSTER_CAP: 80, MAX_ROUND: 40,
+    COMBINE_NEED: 2, SPAWN_INTERVAL: 0.6, PER_ROUND: 20,
     hp: n => Math.round(12 * Math.pow(1.17, n) + 8 * n),
     speed: n => 55 + Math.min(n, 30) * 1.0,
     bounty: n => 1 + Math.floor(n / 8),
     roundBonus: n => 15 + n * 2,
-    BOSS_HP_MUL: 25,
-    BOSS_BOUNTY_MUL: 30,
-    UPG_PCT: 0.12,
+    BOSS_HP_MUL: 25, BOSS_BOUNTY_MUL: 30, UPG_PCT: 0.12,
+    gemsForRun: (round, cleared) => 50 + round * 15 + (cleared ? 300 : 0),
+    PULL_COST: 100, PULL10_COST: 900, CHAR_LV_MAX: 10, CHAR_LV_PCT: 0.08, DUP_REFUND: 30,
+    START_GEMS: 300,
   };
   const GRADE_NAMES = ['일반', '고급', '희귀', '영웅', '전설', '신화'];
   const GRADE_COLORS = ['#aab2bf', '#4cd27a', '#4aa3ff', '#b16cff', '#ff9f1c', '#ff4d6d'];
@@ -222,25 +292,180 @@
   const LUCK_MUL = [0.82, 1.0, 1.12, 1.25, 1.4, 1.6];
   const LUCK_MAX = 8;
   const LUCK_COST = lv => Math.round(100 * Math.pow(1.6, lv));
+  const CHAR_PULL_W = [45, 30, 14, 7, 3, 1];
   const TYPE_LABEL = { single: '단일', splash: '광역', slow: '둔화', multi: '연쇄', crit: '치명타' };
   const TYPE_DESC = {
-    single: '한 대상에게 피해',
-    splash: '대상 주변 45px 안의 몬스터에게 50% 추가 피해',
-    slow: '대상 이동 속도 40% 감소 1.5초',
-    multi: '사거리 안 최대 3마리에게 70% 피해',
-    crit: '25% 확률로 3배 피해',
+    single: '한 대상에게 피해', splash: '대상 주변 45px 안의 몬스터에게 50% 추가 피해',
+    slow: '대상 이동 속도 40% 감소 1.5초', multi: '사거리 안 최대 3마리에게 70% 피해', crit: '25% 확률로 3배 피해',
   };
-  // n: name, t: attack type, d: damage multiplier, i: attack interval (s), r: range (px)
+  // n: name, t: attack type, d: damage mult, i: attack interval, r: range, sp: sprite spec (hat, wep, palette)
   const UNITS = [
-    [{ n: '궁수', t: 'single', d: 1.0, i: 0.9, r: 140 }, { n: '투석병', t: 'splash', d: 0.8, i: 1.3, r: 130 }, { n: '창병', t: 'single', d: 1.3, i: 1.1, r: 120 }],
-    [{ n: '사냥꾼', t: 'crit', d: 1.0, i: 0.9, r: 150 }, { n: '마법사', t: 'splash', d: 0.9, i: 1.2, r: 140 }, { n: '냉기술사', t: 'slow', d: 0.8, i: 1.0, r: 140 }],
-    [{ n: '저격수', t: 'single', d: 1.6, i: 1.4, r: 220 }, { n: '화염술사', t: 'splash', d: 1.0, i: 1.1, r: 150 }, { n: '폭풍술사', t: 'multi', d: 0.8, i: 1.0, r: 150 }],
-    [{ n: '성기사', t: 'crit', d: 1.2, i: 0.9, r: 150 }, { n: '대마법사', t: 'splash', d: 1.1, i: 1.0, r: 160 }, { n: '서리여왕', t: 'slow', d: 1.0, i: 0.8, r: 160 }],
-    [{ n: '용기사', t: 'splash', d: 1.3, i: 1.0, r: 170 }, { n: '암살자', t: 'crit', d: 1.5, i: 0.7, r: 150 }, { n: '뇌신', t: 'multi', d: 1.0, i: 0.8, r: 180 }],
-    [{ n: '태양신', t: 'splash', d: 1.5, i: 0.8, r: 200 }, { n: '시간술사', t: 'slow', d: 1.3, i: 0.6, r: 190 }, { n: '파멸자', t: 'single', d: 2.5, i: 1.0, r: 240 }],
+    [{ n: '궁수', t: 'single', d: 1.0, i: 0.9, r: 140, sp: { hat: 'hood', wep: 'bow', c: '#4e9a51', d: '#35703a', H: '#3b7a40', h: '#6b4a2b' } },
+     { n: '투석병', t: 'splash', d: 0.8, i: 1.3, r: 130, sp: { hat: 'band', wep: 'orb', c: '#8a6d4b', d: '#6a5238', G: '#c0392b', x: '#9a9a9a', h: '#2c2c2c' } },
+     { n: '창병', t: 'single', d: 1.3, i: 1.1, r: 120, sp: { hat: 'none', wep: 'spear', c: '#6c7a89', d: '#4f5b68', h: '#2c2c2c' } }],
+    [{ n: '사냥꾼', t: 'crit', d: 1.0, i: 0.9, r: 150, sp: { hat: 'hood', wep: 'bow', c: '#7a5230', d: '#5b3c22', H: '#9c6b3c', h: '#3a2a1a' } },
+     { n: '마법사', t: 'splash', d: 0.9, i: 1.2, r: 140, sp: { hat: 'wizard', wep: 'staff', c: '#3b5bdb', d: '#2a42a0', H: '#3b5bdb', x: '#8ec5ff' } },
+     { n: '냉기술사', t: 'slow', d: 0.8, i: 1.0, r: 140, sp: { hat: 'wizard', wep: 'orb', c: '#5bc0eb', d: '#3a8fb5', H: '#bfe9ff', x: '#e0f7ff' } }],
+    [{ n: '저격수', t: 'single', d: 1.6, i: 1.4, r: 220, sp: { hat: 'hood', wep: 'bow', c: '#2f3e46', d: '#1f2a30', H: '#4a5f6a', h: '#1a1a1a' } },
+     { n: '화염술사', t: 'splash', d: 1.0, i: 1.1, r: 150, sp: { hat: 'wizard', wep: 'staff', c: '#d9480f', d: '#a13508', H: '#ff6b35', x: '#ffd166' } },
+     { n: '폭풍술사', t: 'multi', d: 0.8, i: 1.0, r: 150, sp: { hat: 'band', wep: 'orb', c: '#6f42c1', d: '#4d2b8c', G: '#c8a2ff', x: '#e3d2ff', h: '#d0bfff' } }],
+    [{ n: '성기사', t: 'crit', d: 1.2, i: 0.9, r: 150, sp: { hat: 'helmet', wep: 'sword', c: '#e9ecef', d: '#adb5bd', W: '#dee2e6', G: '#f2b134', w: '#ffffff' } },
+     { n: '대마법사', t: 'splash', d: 1.1, i: 1.0, r: 160, sp: { hat: 'wizard', wep: 'staff', c: '#5f3dc4', d: '#3b1f8f', H: '#7048e8', x: '#ffe066' } },
+     { n: '서리여왕', t: 'slow', d: 1.0, i: 0.8, r: 160, sp: { hat: 'crown', wep: 'orb', c: '#a5d8ff', d: '#74c0fc', h: '#e7f5ff', G: '#f2b134', x: '#ffffff' } }],
+    [{ n: '용기사', t: 'splash', d: 1.3, i: 1.0, r: 170, sp: { hat: 'helmet', wep: 'spear', c: '#c92a2a', d: '#8a1c1c', W: '#e03131', G: '#f2b134', w: '#ffd43b' } },
+     { n: '암살자', t: 'crit', d: 1.5, i: 0.7, r: 150, sp: { hat: 'hood', wep: 'sword', c: '#212529', d: '#000000', H: '#343a40', w: '#ff6b6b' } },
+     { n: '뇌신', t: 'multi', d: 1.0, i: 0.8, r: 180, sp: { hat: 'horns', wep: 'orb', c: '#fcc419', d: '#e67700', G: '#ffffff', x: '#fff3bf', h: '#ffe066' } }],
+    [{ n: '태양신', t: 'splash', d: 1.5, i: 0.8, r: 200, sp: { hat: 'crown', wep: 'staff', c: '#ffd43b', d: '#f08c00', h: '#fff9db', G: '#ff922b', x: '#ffffff' } },
+     { n: '시간술사', t: 'slow', d: 1.3, i: 0.6, r: 190, sp: { hat: 'wizard', wep: 'orb', c: '#20c997', d: '#0ca678', H: '#12b886', x: '#c3fae8' } },
+     { n: '파멸자', t: 'single', d: 2.5, i: 1.0, r: 240, sp: { hat: 'horns', wep: 'scythe', c: '#495057', d: '#212529', G: '#ff4d6d', h: '#1a1a2e', w: '#ff4d6d', o: '#343a40' } }],
   ];
+  const ALL_UNITS = UNITS.flat();
+  ALL_UNITS.forEach(def => { def.grade = UNITS.findIndex(g => g.includes(def)); });
+  const defByName = name => ALL_UNITS.find(d => d.n === name) || null;
 
-  // Path geometry: corners at tile centers of the outer ring, clockwise from top-left.
+  // ---------- Equipment ----------
+  const RARITY_NAMES = ['일반', '희귀', '영웅', '전설'];
+  const RARITY_COLORS = ['#aab2bf', '#4aa3ff', '#b16cff', '#ff9f1c'];
+  const GEAR_W = [55, 30, 12, 3];
+  const GEAR_SELL = [10, 30, 80, 200];
+  const SLOT_NAMES = { weapon: '무기', boots: '신발', trinket: '장신구' };
+  const GEAR_NAMES = {
+    weapon: ['낡은 활', '강철 검', '룬 창', '용의 검'],
+    boots: ['가죽 신발', '질주의 장화', '바람의 장화', '천공의 장화'],
+    trinket: ['동전 주머니', '행운의 반지', '황금 목걸이', '왕의 인장'],
+  };
+  // stat: key, label, base per rarity, unit
+  const GEAR_STATS = {
+    weapon: [{ k: 'atk', l: '공격력', b: [5, 10, 18, 30], u: '%' }],
+    boots: [{ k: 'aspd', l: '공격 속도', b: [4, 8, 14, 22], u: '%' }, { k: 'range', l: '사거리', b: [10, 20, 35, 50], u: '' }],
+    trinket: [{ k: 'gold', l: '골드 획득', b: [5, 10, 18, 30], u: '%' }, { k: 'luck', l: '시작 행운', b: [1, 2, 3, 4], u: 'Lv' }, { k: 'startGold', l: '시작 골드', b: [20, 50, 100, 200], u: 'G' }],
+  };
+
+  // ---------- Pixel sprites ----------
+  const BODY = [
+    '....kkkk....', '...khhhhk...', '..khhhhhhk..', '..kssssssk..', '..ksesssesk.', '..kssssssk..',
+    '...kccccck..', '..kcdccccdk.', '..kcccccck..', '...kccccck..', '...kbkkkbk..', '...kbk.kbk..'];
+  const HATS = {
+    none: [],
+    hood: ['....kkkk....', '...kHHHHk...', '..kHHHHHHk..', '..kHkssskHk.'],
+    wizard: ['.....kk.....', '....kHHk....', '...kHHHHk...', '.kHHHHHHHHk.'],
+    helmet: ['...kGGk.....', '...kWWWWk...', '..kWWWWWWk..', '..kWkssskWk.'],
+    crown: ['...G.G.G....', '...kGGGGk...'],
+    horns: ['..G......G..', '..kGhhhhGk..'],
+    band: ['....kkkk....', '...kGGGGk...'],
+  };
+  const WEAPONS = {
+    none: [],
+    bow: ['', '', '..........o.', '.........o.k', '.........o.k', '.........o.k', '.........o.k', '.........o.k', '..........o.'],
+    staff: ['', '..........x.', '.........xxx', '..........x.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.'],
+    sword: ['', '..........w.', '..........w.', '..........w.', '..........w.', '..........w.', '.........kwk', '..........o.'],
+    spear: ['..........w.', '..........w.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.'],
+    orb: ['', '', '', '..........x.', '.........x.x', '..........x.'],
+    scythe: ['........kwww', '.........kkw', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.'],
+  };
+  const MONSTERS = [
+    ['........', '...kk...', '..kcck..', '.kcccck.', '.kecccek', '.kcccck.', 'kcccccck', 'kkkkkkkk'],
+    ['........', 'k......k', 'kk....kk', 'kkkkkkkk', 'kkeccekk', '.kcccck.', '..kcck..', '...kk...'],
+    ['..kkkk..', '.kcccck.', 'kcecceck', 'kcccccck', 'kcccccck', 'kcccccck', 'kckcckck', 'k.k..k.k'],
+  ];
+  const BOSS = ['.G........G.', '.Gk......kG.', '..kcccccck..', '.kccccccccck', '.kceccccceck', '.kccccccccck', '.kcckkkkkcck', '..kcccccck..', '.kkccccccckk', '.kcccccccck.', '..kcck.kcck.', '..kkkk.kkkk.'];
+  const DEFAULT_PAL = { k: '#1a1a2e', s: '#f1c27d', e: '#1a1a2e', h: '#4a3222', b: '#3a2a1a', G: '#f2b134', W: '#cfd6e0', w: '#d0d7e2', o: '#8b5a2b', x: '#ffffff' };
+
+  function composeRows(sp) {
+    const rows = BODY.map(r => r.split(''));
+    const overlay = layer => layer.forEach((r, i) => { for (let j = 0; j < r.length; j++) if (r[j] !== '.') rows[i][j] = r[j]; });
+    overlay(HATS[sp.hat] || []);
+    overlay(WEAPONS[sp.wep] || []);
+    return rows.map(r => r.join(''));
+  }
+  const spriteCache = new Map();
+  function makeSprite(key, rows, pal, scale) {
+    const ck = key + '@' + scale;
+    if (spriteCache.has(ck)) return spriteCache.get(ck);
+    const w = rows[0].length, h = rows.length;
+    const c = document.createElement('canvas'); c.width = w * scale; c.height = h * scale;
+    const g = c.getContext('2d');
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const ch = rows[y][x]; if (ch === '.' || ch === undefined) continue;
+      g.fillStyle = pal[ch] || '#ff00ff'; g.fillRect(x * scale, y * scale, scale, scale);
+    }
+    spriteCache.set(ck, c);
+    return c;
+  }
+  function unitSprite(def, scale) {
+    const pal = Object.assign({}, DEFAULT_PAL, { H: def.sp.c }, def.sp);
+    return makeSprite('u:' + def.n, composeRows(def.sp), pal, scale);
+  }
+  function monsterSprite(kind, hue, slowed, scale) {
+    const body = slowed ? `hsl(${hue} 45% 45%)` : `hsl(${hue} 65% 58%)`;
+    const pal = { k: '#1a1a2e', c: body, e: '#ffffff' };
+    return makeSprite(`m:${kind}:${hue}:${slowed ? 1 : 0}`, MONSTERS[kind], pal, scale);
+  }
+  function bossSprite(hue, scale) {
+    return makeSprite('boss:' + hue, BOSS, { k: '#1a1a2e', c: `hsl(${hue} 60% 40%)`, e: '#ff4d6d', G: '#f2b134' }, scale);
+  }
+  function spriteCanvas(src, px) {
+    const c = document.createElement('canvas'); c.className = 'px'; c.width = src.width; c.height = src.height;
+    c.style.width = px + 'px'; c.style.height = px + 'px';
+    c.getContext('2d').drawImage(src, 0, 0);
+    return c;
+  }
+
+  // ---------- Persistent meta (localStorage; per browser) ----------
+  let M = null, S = null, uid = 0;
+  function defaultMeta() {
+    return { gems: CFG.START_GEMS, chars: { '궁수': 1, '투석병': 1, '창병': 1, '사냥꾼': 1 }, items: [], equip: { weapon: null, boots: null, trinket: null }, best: 0, runs: 0, seq: 0 };
+  }
+  function loadMeta() {
+    try { const raw = localStorage.getItem('rtd_meta'); if (raw) { const m = JSON.parse(raw); return Object.assign(defaultMeta(), m); } } catch (e) { /* unavailable */ }
+    return defaultMeta();
+  }
+  function saveMeta() { try { localStorage.setItem('rtd_meta', JSON.stringify(M)); } catch (e) { /* unavailable */ } }
+  const owned = def => (M.chars[def.n] || 0) > 0;
+  const charLv = def => M.chars[def.n] || 0;
+  const ownedOf = g => UNITS[g].filter(owned);
+  function equipMods() {
+    const mods = { atk: 0, aspd: 0, range: 0, gold: 0, luck: 0, startGold: 0 };
+    for (const slot of Object.keys(M.equip)) {
+      const it = M.items.find(i => i.id === M.equip[slot]); if (!it) continue;
+      mods[it.stat] += it.val;
+    }
+    return mods;
+  }
+
+  // ---------- Game state ----------
+  function newState() {
+    const mods = equipMods();
+    return {
+      phase: 'play', gold: CFG.START_GOLD + mods.startGold, round: 0, timer: 0,
+      units: [], monsters: [], shots: [], spawnQ: 0, spawnT: 0,
+      upg: [0, 0, 0, 0, 0, 0], luck: mods.luck, kills: 0, speed: 1, paused: false,
+      sel: null, log: [], mods, time: 0,
+    };
+  }
+  const $ = id => document.getElementById(id);
+  function log(msg, cls) { S.log.unshift({ msg, cls }); if (S.log.length > 8) S.log.length = 8; renderLog(); }
+  function unitAt(c, r) { return S.units.find(u => u.col === c && u.row === r) || null; }
+  const edgeDist = (c, r) => Math.min(c - INNER_MIN, INNER_MAX - c, r - INNER_MIN, INNER_MAX - r);
+  function freeTiles() {
+    const out = [];
+    for (let r = INNER_MIN; r <= INNER_MAX; r++) for (let c = INNER_MIN; c <= INNER_MAX; c++) if (!unitAt(c, r)) out.push({ c, r });
+    return out;
+  }
+  function bestFreeTile() {
+    const free = freeTiles(); if (!free.length) return null;
+    const minD = Math.min(...free.map(t => edgeDist(t.c, t.r)));
+    const cands = free.filter(t => edgeDist(t.c, t.r) === minD);
+    return cands[Math.floor(Math.random() * cands.length)];
+  }
+  function weights() {
+    const w = BASE_W.map((b, i) => ownedOf(i).length ? b * Math.pow(LUCK_MUL[i], S.luck) : 0);
+    const sum = w.reduce((a, b) => a + b, 0) || 1;
+    return w.map(x => x / sum);
+  }
+  function weightedIndex(w) { let r = Math.random() * w.reduce((a, b) => a + b, 0); for (let i = 0; i < w.length; i++) { r -= w[i]; if (r < 0) return i; } return w.length - 1; }
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  function makeUnit(def, c, r) { return { id: ++uid, grade: def.grade, def, col: c, row: r, cd: Math.random() * 0.3 }; }
   const C0 = T / 2, L = (N - 1) * T, P = 4 * L;
   function pathPos(d) {
     d = ((d % P) + P) % P;
@@ -250,89 +475,44 @@
     return { x: C0, y: C0 + L - (d - 3 * L) };
   }
   const tileCenter = (c, r) => ({ x: (c + 0.5) * T, y: (r + 0.5) * T });
-  const edgeDist = (c, r) => Math.min(c - INNER_MIN, INNER_MAX - c, r - INNER_MIN, INNER_MAX - r);
-
-  // ---------- State ----------
-  let S = null, uid = 0;
-  function loadBest() { try { return Number(localStorage.getItem('rtd_best') || 0) || 0; } catch (e) { return 0; } }
-  function saveBest(v) { try { localStorage.setItem('rtd_best', String(v)); } catch (e) { /* storage unavailable */ } }
-  function newState() {
-    return {
-      phase: 'idle', gold: CFG.START_GOLD, round: 0, timer: 0,
-      units: [], monsters: [], shots: [], spawnQ: 0, spawnT: 0,
-      upg: [0, 0, 0, 0, 0, 0], luck: 0, kills: 0, speed: 1, paused: false,
-      sel: null, log: [], best: loadBest(), time: 0,
-    };
-  }
-
-  // ---------- Helpers ----------
-  const $ = id => document.getElementById(id);
-  function log(msg, cls) {
-    S.log.unshift({ msg, cls });
-    if (S.log.length > 8) S.log.length = 8;
-    renderLog();
-  }
-  function unitAt(c, r) { return S.units.find(u => u.col === c && u.row === r) || null; }
-  function freeTiles() {
-    const out = [];
-    for (let r = INNER_MIN; r <= INNER_MAX; r++) for (let c = INNER_MIN; c <= INNER_MAX; c++) if (!unitAt(c, r)) out.push({ c, r });
-    return out;
-  }
-  function bestFreeTile() {
-    const free = freeTiles();
-    if (!free.length) return null;
-    const minD = Math.min(...free.map(t => edgeDist(t.c, t.r)));
-    const cands = free.filter(t => edgeDist(t.c, t.r) === minD);
-    return cands[Math.floor(Math.random() * cands.length)];
-  }
-  function weights() {
-    const w = BASE_W.map((b, i) => b * Math.pow(LUCK_MUL[i], S.luck));
-    const sum = w.reduce((a, b) => a + b, 0);
-    return w.map(x => x / sum);
-  }
-  function rollGrade() {
-    const w = weights();
-    let r = Math.random();
-    for (let i = 0; i < w.length; i++) { r -= w[i]; if (r < 0) return i; }
-    return w.length - 1;
-  }
-  function makeUnit(grade, def, c, r) { return { id: ++uid, grade, def, col: c, row: r, cd: Math.random() * 0.3 }; }
-  function dmgOf(u) { return BASE_DMG[u.grade] * u.def.d * (1 + CFG.UPG_PCT * S.upg[u.grade]); }
+  const dmgOf = u => BASE_DMG[u.grade] * u.def.d * (1 + CFG.UPG_PCT * S.upg[u.grade]) * (1 + CFG.CHAR_LV_PCT * (charLv(u.def) - 1)) * (1 + S.mods.atk / 100);
+  const intervalOf = u => u.def.i * (1 - S.mods.aspd / 100);
+  const rangeOf = u => u.def.r + S.mods.range;
   function dpsOf(u) {
-    const base = dmgOf(u) / u.def.i;
-    if (u.def.t === 'crit') return base * (1 + 0.25 * 2);
-    if (u.def.t === 'multi') return base * 0.7 * 3;
+    const base = dmgOf(u) / intervalOf(u);
+    if (u.def.t === 'crit') return base * 1.5;
+    if (u.def.t === 'multi') return base * 2.1;
     return base;
   }
   const fmt = n => n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e4 ? (n / 1e3).toFixed(1) + 'k' : Math.round(n).toLocaleString('ko-KR');
+  const goldGain = n => Math.round(n * (1 + S.mods.gold / 100));
 
-  // ---------- Actions ----------
+  // ---------- In-game actions ----------
   function summon() {
-    if (S.phase !== 'play') return;
+    if (!S || S.phase !== 'play') return;
     if (S.gold < CFG.SUMMON_COST) { log('골드가 부족합니다.'); return; }
     const tile = bestFreeTile();
     if (!tile) { log('빈 칸이 없습니다. 합성하거나 판매하세요.'); return; }
     S.gold -= CFG.SUMMON_COST;
-    const g = rollGrade();
-    const def = UNITS[g][Math.floor(Math.random() * UNITS[g].length)];
-    const u = makeUnit(g, def, tile.c, tile.r);
+    const g = weightedIndex(weights());
+    const def = pick(ownedOf(g));
+    const u = makeUnit(def, tile.c, tile.r);
     S.units.push(u);
     log(`소환: [${GRADE_NAMES[g]}] ${def.n}${g >= 3 ? ' ✦' : ''}`, 'g' + g);
-    S.sel = u;
-    renderPanel();
+    S.sel = u; renderPanel();
   }
   function combineGroup(group) {
-    // group: COMBINE_NEED units with the same def. Result goes to the best (edge-closest) tile of the group.
     const grade = group[0].grade;
     if (grade >= UNITS.length - 1) return false;
+    const pool = ownedOf(grade + 1);
+    if (!pool.length) { log(`${GRADE_NAMES[grade + 1]} 등급 캐릭터를 보유해야 합성할 수 있습니다.`); return false; }
     group.sort((a, b) => edgeDist(a.col, a.row) - edgeDist(b.col, b.row));
     const spot = { c: group[0].col, r: group[0].row };
     S.units = S.units.filter(u => !group.includes(u));
-    const ng = grade + 1;
-    const def = UNITS[ng][Math.floor(Math.random() * UNITS[ng].length)];
-    const nu = makeUnit(ng, def, spot.c, spot.r);
+    const def = pick(pool);
+    const nu = makeUnit(def, spot.c, spot.r);
     S.units.push(nu);
-    log(`합성: ${group[0].def.n} ×${CFG.COMBINE_NEED} → [${GRADE_NAMES[ng]}] ${def.n}`, 'g' + ng);
+    log(`합성: ${group[0].def.n} ×${CFG.COMBINE_NEED} → [${GRADE_NAMES[def.grade]}] ${def.n}`, 'g' + def.grade);
     S.sel = nu;
     return true;
   }
@@ -340,19 +520,20 @@
     const u = S.sel; if (!u) return;
     const same = S.units.filter(x => x.def === u.def);
     if (same.length < CFG.COMBINE_NEED) { log(`${u.def.n}이(가) ${CFG.COMBINE_NEED}개 필요합니다. (현재 ${same.length}개)`); return; }
-    const group = [u, ...same.filter(x => x !== u).slice(0, CFG.COMBINE_NEED - 1)];
-    combineGroup(group);
+    combineGroup([u, ...same.filter(x => x !== u).slice(0, CFG.COMBINE_NEED - 1)]);
     renderPanel();
   }
   function combineAll() {
-    if (S.phase !== 'play') return;
+    if (!S || S.phase !== 'play') return;
     let n = 0, changed = true;
     while (changed) {
       changed = false;
       const byDef = new Map();
       for (const u of S.units) { if (!byDef.has(u.def)) byDef.set(u.def, []); byDef.get(u.def).push(u); }
-      for (const [, arr] of byDef) {
-        if (arr.length >= CFG.COMBINE_NEED && arr[0].grade < UNITS.length - 1) { if (combineGroup(arr.slice(0, CFG.COMBINE_NEED))) { n++; changed = true; break; } }
+      for (const [def, arr] of byDef) {
+        if (arr.length >= CFG.COMBINE_NEED && def.grade < UNITS.length - 1 && ownedOf(def.grade + 1).length) {
+          if (combineGroup(arr.slice(0, CFG.COMBINE_NEED))) { n++; changed = true; break; }
+        }
       }
     }
     if (!n) log('합성할 조합이 없습니다.');
@@ -363,31 +544,25 @@
     S.units = S.units.filter(x => x !== u);
     S.gold += SELL[u.grade];
     log(`판매: ${u.def.n} +${SELL[u.grade]}G`);
-    S.sel = null;
-    renderPanel();
+    S.sel = null; renderPanel();
   }
+  const upgCost = g => Math.round(UPG_BASE[g] * Math.pow(1.25, S.upg[g]));
   function upgradeGrade(g) {
     if (S.phase !== 'play') return;
     const cost = upgCost(g);
     if (S.gold < cost) { log('골드가 부족합니다.'); return; }
     S.gold -= cost; S.upg[g]++;
-    log(`${GRADE_NAMES[g]} 공격력 강화 Lv.${S.upg[g]}`, 'g' + g);
-    renderPanel();
+    log(`${GRADE_NAMES[g]} 공격력 강화 Lv.${S.upg[g]}`, 'g' + g); renderPanel();
   }
-  const upgCost = g => Math.round(UPG_BASE[g] * Math.pow(1.25, S.upg[g]));
   function upgradeLuck() {
-    if (S.phase !== 'play') return;
+    if (!S || S.phase !== 'play') return;
     if (S.luck >= LUCK_MAX) { log('행운 강화가 최대입니다.'); return; }
     const cost = LUCK_COST(S.luck);
     if (S.gold < cost) { log('골드가 부족합니다.'); return; }
     S.gold -= cost; S.luck++;
-    log(`행운 강화 Lv.${S.luck}`);
-    renderPanel();
+    log(`행운 강화 Lv.${S.luck}`); renderPanel();
   }
-  function skipRound() {
-    if (S.phase !== 'play' || S.spawnQ > 0) return;
-    endRound();
-  }
+  function skipRound() { if (!S || S.phase !== 'play' || S.spawnQ > 0) return; endRound(); }
 
   // ---------- Rounds / monsters ----------
   function spawnMonster(n, boss) {
@@ -395,7 +570,7 @@
     S.monsters.push({
       d: 0, x: C0, y: C0, hp, maxHp: hp, speed: boss ? 40 : CFG.speed(n), slowT: 0,
       bounty: CFG.bounty(n) * (boss ? CFG.BOSS_BOUNTY_MUL : 1), boss, round: n, dead: false,
-      hue: (n * 41) % 360,
+      hue: (n * 41) % 360, kind: n % MONSTERS.length,
     });
   }
   function startRound(n) {
@@ -408,46 +583,50 @@
   }
   function endRound() {
     const r = S.round;
-    if (r % 10 === 0 && S.monsters.some(m => m.boss && !m.dead && m.round === r)) { gameOver(`${r}라운드 보스를 시간 안에 처치하지 못했습니다.`); return; }
-    S.gold += CFG.roundBonus(r);
-    log(`${r}라운드 종료 +${CFG.roundBonus(r)}G`);
-    if (r >= CFG.MAX_ROUND) { win(); return; }
+    if (r % 10 === 0 && S.monsters.some(m => m.boss && !m.dead && m.round === r)) { finishRun(false, `${r}라운드 보스를 시간 안에 처치하지 못했습니다.`); return; }
+    S.gold += goldGain(CFG.roundBonus(r));
+    log(`${r}라운드 종료 +${goldGain(CFG.roundBonus(r))}G`);
+    if (r >= CFG.MAX_ROUND) { finishRun(true, `${CFG.MAX_ROUND}라운드를 모두 막아냈습니다.`); return; }
     startRound(r + 1);
   }
-  function gameOver(reason) {
+  function finishRun(cleared, reason) {
     S.phase = 'over';
-    if (S.round > S.best) { S.best = S.round; saveBest(S.best); }
-    showOverlay('패배', reason, `도달 라운드 ${S.round} · 처치 ${S.kills} · 최고 기록 ${S.best}라운드`, '다시 시작');
-  }
-  function win() {
-    S.phase = 'over';
-    S.best = Math.max(S.best, CFG.MAX_ROUND); saveBest(S.best);
-    showOverlay('클리어!', `${CFG.MAX_ROUND}라운드를 모두 막아냈습니다.`, `처치 ${S.kills} · 남은 골드 ${fmt(S.gold)}`, '다시 시작');
-  }
-  function showOverlay(title, p1, p2, btn) {
-    const ov = $('overlay');
-    ov.innerHTML = '';
-    const h = document.createElement('h2'); h.textContent = title;
-    const a = document.createElement('p'); a.textContent = p1;
-    const b = document.createElement('p'); b.className = 'note'; b.textContent = p2;
-    const bt = document.createElement('button'); bt.className = 'primary'; bt.textContent = btn; bt.id = 'bStart';
-    bt.addEventListener('click', startGame);
-    ov.append(h, a, b, bt); ov.hidden = false;
+    const roundReached = cleared ? CFG.MAX_ROUND : S.round;
+    const gems = CFG.gemsForRun(roundReached, cleared);
+    M.gems += gems; M.runs++; M.best = Math.max(M.best, roundReached); saveMeta();
+    const ov = $('overlay'); ov.innerHTML = '';
+    const h = document.createElement('h2'); h.textContent = cleared ? '클리어!' : '패배';
+    const a = document.createElement('p'); a.textContent = reason;
+    const b = document.createElement('p'); b.className = 'gemline'; b.textContent = `보석 +${gems}`;
+    const c = document.createElement('p'); c.className = 'note'; c.textContent = `도달 라운드 ${roundReached} · 처치 ${S.kills} · 최고 기록 ${M.best}라운드`;
+    const bt = document.createElement('button'); bt.className = 'primary'; bt.textContent = '로비로 (뽑기)';
+    bt.addEventListener('click', () => showLobby('chars'));
+    const bt2 = document.createElement('button'); bt2.textContent = '바로 다시 시작';
+    bt2.addEventListener('click', startGame);
+    ov.append(h, a, b, c, bt, bt2); ov.hidden = false;
+    renderHud();
   }
   function startGame() {
     S = newState();
-    S.phase = 'play';
     $('overlay').hidden = true;
+    $('lobby').hidden = true; $('game').hidden = false; $('gameCtl').hidden = false;
+    ['hRoundWrap', 'hTimeWrap', 'hGoldWrap', 'hMonWrap', 'hUnitsWrap'].forEach(id => { $(id).hidden = false; });
+    $('bSpeed').textContent = 'x1'; $('bPause').textContent = '일시정지';
     log('게임 시작. 소환(S)으로 유닛을 뽑으세요.');
-    startRound(1);
-    renderPanel();
+    const eq = Object.values(M.equip).filter(Boolean).length;
+    if (eq) log(`장비 ${eq}개 적용: 공격 +${S.mods.atk}% · 공속 +${S.mods.aspd}% · 사거리 +${S.mods.range} · 골드 +${S.mods.gold}%`);
+    startRound(1); renderPanel();
+  }
+  function quitGame() {
+    if (!S || S.phase !== 'play') { showLobby('deploy'); return; }
+    finishRun(false, '게임을 포기했습니다.');
   }
 
   // ---------- Combat ----------
   function hit(m, amt) {
     if (m.dead) return;
     m.hp -= amt;
-    if (m.hp <= 0) { m.dead = true; S.gold += m.bounty; S.kills++; if (m.boss) log(`보스 처치! +${m.bounty}G`, 'g4'); }
+    if (m.hp <= 0) { m.dead = true; S.gold += goldGain(m.bounty); S.kills++; if (m.boss) log(`보스 처치! +${goldGain(m.bounty)}G`, 'g4'); }
   }
   function fire(u, target, cands) {
     const base = dmgOf(u), col = GRADE_COLORS[u.grade], uc = tileCenter(u.col, u.row);
@@ -461,27 +640,23 @@
         S.shots.push({ ring: true, x: target.x, y: target.y, r: 45, t: 0.25, col });
         break;
       case 'slow': hit(target, base); target.slowT = Math.max(target.slowT, 1.5); shot(target, 1.5); break;
-      case 'multi': { const ts = cands.slice(0, 3); for (const m of ts) { hit(m, base * 0.7); shot(m, 1.2); } break; }
+      case 'multi': { for (const m of cands.slice(0, 3)) { hit(m, base * 0.7); shot(m, 1.2); } break; }
     }
   }
   function update(dt) {
-    if (S.phase !== 'play' || S.paused) return;
-    S.time += dt;
-    S.timer -= dt;
+    if (!S || S.phase !== 'play' || S.paused) return;
+    S.time += dt; S.timer -= dt;
     if (S.spawnQ > 0) {
       S.spawnT -= dt;
       while (S.spawnT <= 0 && S.spawnQ > 0) { spawnMonster(S.round, false); S.spawnQ--; S.spawnT += CFG.SPAWN_INTERVAL; }
     }
     for (const m of S.monsters) {
-      const sp = m.speed * (m.slowT > 0 ? 0.6 : 1);
-      m.d += sp * dt; m.slowT -= dt;
+      m.d += m.speed * (m.slowT > 0 ? 0.6 : 1) * dt; m.slowT -= dt;
       const p = pathPos(m.d); m.x = p.x; m.y = p.y;
     }
     for (const u of S.units) {
-      u.cd -= dt;
-      if (u.cd > 0) continue;
-      const uc = tileCenter(u.col, u.row), r2 = u.def.r * u.def.r;
-      const cands = [];
+      u.cd -= dt; if (u.cd > 0) continue;
+      const uc = tileCenter(u.col, u.row), rg = rangeOf(u), r2 = rg * rg, cands = [];
       for (const m of S.monsters) {
         if (m.dead) continue;
         const dx = m.x - uc.x, dy = m.y - uc.y, d2 = dx * dx + dy * dy;
@@ -490,93 +665,82 @@
       if (!cands.length) continue;
       cands.sort((a, b) => (b.m.boss - a.m.boss) || (a.d2 - b.d2));
       fire(u, cands[0].m, cands.map(c => c.m));
-      u.cd = u.def.i;
+      u.cd = intervalOf(u);
     }
     S.monsters = S.monsters.filter(m => !m.dead);
     for (const s of S.shots) s.t -= dt;
     S.shots = S.shots.filter(s => s.t > 0);
-    if (S.monsters.length >= CFG.MONSTER_CAP) { gameOver(`살아있는 몬스터가 ${CFG.MONSTER_CAP}마리에 도달했습니다.`); return; }
+    if (S.monsters.length >= CFG.MONSTER_CAP) { finishRun(false, `살아있는 몬스터가 ${CFG.MONSTER_CAP}마리에 도달했습니다.`); return; }
     if (S.timer <= 0) endRound();
   }
 
-  // ---------- Rendering ----------
+  // ---------- Board rendering ----------
   const cv = $('cv'), ctx = cv.getContext('2d');
   function fitCanvas() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     cv.width = SIZE * dpr; cv.height = SIZE * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
-  fitCanvas();
-  window.addEventListener('resize', fitCanvas);
-
+  fitCanvas(); window.addEventListener('resize', fitCanvas);
   function roundRect(x, y, w, h, r) {
     ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
     ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
   }
   function draw() {
+    if ($('game').hidden) return;
+    ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, SIZE, SIZE);
-    // path ring
     ctx.fillStyle = '#222b38';
     ctx.fillRect(0, 0, SIZE, T); ctx.fillRect(0, SIZE - T, SIZE, T); ctx.fillRect(0, 0, T, SIZE); ctx.fillRect(SIZE - T, 0, T, SIZE);
-    // path centre line with direction ticks
-    ctx.strokeStyle = 'rgba(255,255,255,.07)'; ctx.lineWidth = 1; ctx.setLineDash([6, 10]);
-    ctx.strokeRect(C0, C0, L, L); ctx.setLineDash([]);
-    // build grid
-    ctx.fillStyle = '#121923';
-    ctx.fillRect(T, T, SIZE - 2 * T, SIZE - 2 * T);
+    ctx.strokeStyle = 'rgba(255,255,255,.07)'; ctx.lineWidth = 1; ctx.setLineDash([6, 10]); ctx.strokeRect(C0, C0, L, L); ctx.setLineDash([]);
+    ctx.fillStyle = '#121923'; ctx.fillRect(T, T, SIZE - 2 * T, SIZE - 2 * T);
     ctx.strokeStyle = 'rgba(255,255,255,.05)';
     for (let i = INNER_MIN; i <= INNER_MAX + 1; i++) {
       ctx.beginPath(); ctx.moveTo(i * T, T); ctx.lineTo(i * T, SIZE - T); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(T, i * T); ctx.lineTo(SIZE - T, i * T); ctx.stroke();
     }
-    // spawn marker
     ctx.fillStyle = 'rgba(255,90,95,.25)'; ctx.beginPath(); ctx.arc(C0, C0, 10, 0, Math.PI * 2); ctx.fill();
     if (!S) return;
-    // selected range
-    if (S.sel) {
+    if (S.sel && S.units.includes(S.sel)) {
       const c = tileCenter(S.sel.col, S.sel.row);
       ctx.fillStyle = 'rgba(242,177,52,.08)'; ctx.strokeStyle = 'rgba(242,177,52,.5)'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.arc(c.x, c.y, S.sel.def.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      ctx.strokeStyle = '#f2b134'; ctx.lineWidth = 2;
-      roundRect(S.sel.col * T + 3, S.sel.row * T + 3, T - 6, T - 6, 8); ctx.stroke();
+      ctx.beginPath(); ctx.arc(c.x, c.y, rangeOf(S.sel), 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = '#f2b134'; ctx.lineWidth = 2; roundRect(S.sel.col * T + 3, S.sel.row * T + 3, T - 6, T - 6, 8); ctx.stroke();
     }
-    // units
-    ctx.font = '700 18px "Noto Sans KR", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     for (const u of S.units) {
       const x = u.col * T + 7, y = u.row * T + 7, w = T - 14;
       ctx.fillStyle = '#1c2431'; roundRect(x, y, w, w, 7); ctx.fill();
       ctx.strokeStyle = GRADE_COLORS[u.grade]; ctx.lineWidth = u.grade >= 4 ? 3 : 2; ctx.stroke();
-      ctx.fillStyle = GRADE_COLORS[u.grade]; ctx.fillText(u.def.n[0], x + w / 2, y + w / 2 + 1);
+      const sp = unitSprite(u.def, 3);
+      ctx.drawImage(sp, x + (w - sp.width) / 2, y + (w - sp.height) / 2);
       if (S.upg[u.grade] > 0) { ctx.fillStyle = '#f2b134'; ctx.beginPath(); ctx.arc(x + w - 5, y + 5, 3, 0, Math.PI * 2); ctx.fill(); }
     }
-    // shots
     for (const s of S.shots) {
-      ctx.globalAlpha = Math.max(0, s.t / 0.25);
-      ctx.strokeStyle = s.col; ctx.lineWidth = s.w || 1.5;
+      ctx.globalAlpha = Math.max(0, s.t / 0.25); ctx.strokeStyle = s.col; ctx.lineWidth = s.w || 1.5;
       ctx.beginPath();
       if (s.ring) ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); else { ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); }
       ctx.stroke();
     }
     ctx.globalAlpha = 1;
-    // monsters
     for (const m of S.monsters) {
-      const r = m.boss ? 16 : 8;
-      ctx.fillStyle = m.slowT > 0 ? `hsl(${m.hue} 45% 45%)` : `hsl(${m.hue} 65% 58%)`;
-      ctx.beginPath(); ctx.arc(m.x, m.y, r, 0, Math.PI * 2); ctx.fill();
-      if (m.boss) { ctx.strokeStyle = '#f2b134'; ctx.lineWidth = 3; ctx.stroke(); }
-      if (m.slowT > 0) { ctx.strokeStyle = '#4aa3ff'; ctx.lineWidth = 1.5; ctx.stroke(); }
+      const sp = m.boss ? bossSprite(m.hue, 3) : monsterSprite(m.kind, m.hue, m.slowT > 0, 2);
+      ctx.drawImage(sp, Math.round(m.x - sp.width / 2), Math.round(m.y - sp.height / 2));
+      const r = sp.height / 2;
+      if (m.slowT > 0) { ctx.strokeStyle = '#4aa3ff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(m.x, m.y, r + 2, 0, Math.PI * 2); ctx.stroke(); }
       const bw = m.boss ? 40 : 18, bh = m.boss ? 5 : 3, frac = Math.max(0, m.hp / m.maxHp);
       ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(m.x - bw / 2, m.y - r - bh - 3, bw, bh);
       ctx.fillStyle = frac > 0.5 ? '#4cd27a' : frac > 0.25 ? '#f2b134' : '#ff5a5f'; ctx.fillRect(m.x - bw / 2, m.y - r - bh - 3, bw * frac, bh);
     }
     if (S.paused && S.phase === 'play') {
       ctx.fillStyle = 'rgba(13,17,23,.6)'; ctx.fillRect(0, 0, SIZE, SIZE);
-      ctx.fillStyle = '#f2b134'; ctx.font = '400 40px "Black Han Sans", "Noto Sans KR", sans-serif'; ctx.fillText('일시정지', SIZE / 2, SIZE / 2);
+      ctx.fillStyle = '#f2b134'; ctx.font = '400 40px "Black Han Sans", "Noto Sans KR", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('일시정지', SIZE / 2, SIZE / 2);
     }
   }
 
-  // ---------- DOM panel ----------
+  // ---------- In-game panel ----------
   function renderHud() {
+    $('hGems').textContent = fmt(M.gems);
     if (!S) return;
     const bossRound = S.round % 10 === 0;
     $('hRound').textContent = S.round ? (bossRound ? `${S.round} 보스` : String(S.round)) : '-';
@@ -589,7 +753,8 @@
     $('bSkip').disabled = S.phase !== 'play' || S.spawnQ > 0;
     $('bLuck').disabled = S.phase !== 'play' || S.luck >= LUCK_MAX || S.gold < LUCK_COST(S.luck);
     for (let g = 0; g < 6; g++) { const b = $('upgBtn' + g); if (b) b.disabled = S.phase !== 'play' || S.gold < upgCost(g); }
-    const cb = $('bSelCombine'); if (cb && S.sel) cb.disabled = S.units.filter(x => x.def === S.sel.def).length < CFG.COMBINE_NEED || S.sel.grade >= 5;
+    const cb = $('bSelCombine');
+    if (cb && S.sel) cb.disabled = S.units.filter(x => x.def === S.sel.def).length < CFG.COMBINE_NEED || S.sel.grade >= 5 || !ownedOf(S.sel.grade + 1).length;
   }
   function renderLog() {
     const ul = $('log'); ul.innerHTML = '';
@@ -597,11 +762,13 @@
   }
   function renderPanel() {
     if (!S) return;
-    // rates
     const w = weights(), rates = $('rates'); rates.innerHTML = '';
-    w.forEach((p, i) => { const d = document.createElement('div'); d.innerHTML = `<b class="g${i}">${(p * 100).toFixed(1)}%</b>${GRADE_NAMES[i]}`; rates.appendChild(d); });
+    w.forEach((p, i) => {
+      const d = document.createElement('div');
+      d.innerHTML = `<b class="g${i}">${ownedOf(i).length ? (p * 100).toFixed(1) + '%' : '미보유'}</b>${GRADE_NAMES[i]}`;
+      rates.appendChild(d);
+    });
     $('luckCost').textContent = S.luck >= LUCK_MAX ? 'MAX' : `${LUCK_COST(S.luck)}G · Lv.${S.luck}`;
-    // upgrades
     const up = $('upg'); up.innerHTML = '';
     for (let g = 0; g < 6; g++) {
       const row = document.createElement('div'); row.className = 'row';
@@ -611,26 +778,129 @@
       b.addEventListener('click', () => upgradeGrade(g));
       row.appendChild(b); up.appendChild(row);
     }
-    // selected
     const sel = $('sel'); sel.innerHTML = '';
     if (!S.sel || !S.units.includes(S.sel)) {
       S.sel = null;
       sel.innerHTML = '<span class="empty">보드의 유닛을 클릭하세요. 선택 후 빈 칸을 클릭하면 이동합니다.</span>';
     } else {
       const u = S.sel, same = S.units.filter(x => x.def === u.def).length;
-      const name = document.createElement('div'); name.className = 'name g' + u.grade; name.textContent = `[${GRADE_NAMES[u.grade]}] ${u.def.n}`;
+      const head = document.createElement('div'); head.className = 'head';
+      head.appendChild(spriteCanvas(unitSprite(u.def, 4), 48));
+      const name = document.createElement('div'); name.className = 'name g' + u.grade; name.textContent = `[${GRADE_NAMES[u.grade]}] ${u.def.n} Lv.${charLv(u.def)}`;
+      head.appendChild(name);
       const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = `${TYPE_LABEL[u.def.t]} · ${TYPE_DESC[u.def.t]}`;
       const dl = document.createElement('dl');
-      dl.innerHTML = `<dt>공격력</dt><dd>${fmt(dmgOf(u))}</dd><dt>공격 간격</dt><dd>${u.def.i.toFixed(2)}s</dd><dt>사거리</dt><dd>${u.def.r}</dd><dt>예상 DPS</dt><dd>${fmt(dpsOf(u))}</dd><dt>같은 유닛</dt><dd>${same} / ${CFG.COMBINE_NEED}</dd><dt>판매가</dt><dd>${SELL[u.grade]}G</dd>`;
+      dl.innerHTML = `<dt>공격력</dt><dd>${fmt(dmgOf(u))}</dd><dt>공격 간격</dt><dd>${intervalOf(u).toFixed(2)}s</dd><dt>사거리</dt><dd>${rangeOf(u)}</dd><dt>예상 DPS</dt><dd>${fmt(dpsOf(u))}</dd><dt>같은 유닛</dt><dd>${same} / ${CFG.COMBINE_NEED}</dd><dt>판매가</dt><dd>${SELL[u.grade]}G</dd>`;
       const btns = document.createElement('div'); btns.className = 'btns';
-      const bc = document.createElement('button'); bc.id = 'bSelCombine'; bc.textContent = u.grade >= 5 ? '최고 등급' : `합성 (${CFG.COMBINE_NEED}개 → 상위 등급)`;
+      const bc = document.createElement('button'); bc.id = 'bSelCombine';
+      bc.textContent = u.grade >= 5 ? '최고 등급' : ownedOf(u.grade + 1).length ? `합성 (${CFG.COMBINE_NEED}개 → ${GRADE_NAMES[u.grade + 1]})` : `${GRADE_NAMES[u.grade + 1]} 캐릭터 미보유`;
       bc.addEventListener('click', combineSelected);
       const bs = document.createElement('button'); bs.className = 'danger'; bs.textContent = `판매 +${SELL[u.grade]}G`;
       bs.addEventListener('click', sellSelected);
       btns.append(bc, bs);
-      sel.append(name, meta, dl, btns);
+      sel.append(head, meta, dl, btns);
     }
     renderHud();
+  }
+
+  // ---------- Lobby ----------
+  function showLobby(tab) {
+    S = null;
+    $('game').hidden = true; $('gameCtl').hidden = true; $('lobby').hidden = false; $('overlay').hidden = true;
+    ['hRoundWrap', 'hTimeWrap', 'hGoldWrap', 'hMonWrap', 'hUnitsWrap'].forEach(id => { $(id).hidden = true; });
+    selectTab(tab || 'deploy');
+    renderLobby();
+  }
+  function selectTab(name) {
+    document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
+    ['deploy', 'chars', 'gear'].forEach(t => { $('tab-' + t).hidden = t !== name; });
+  }
+  function itemLabel(it) {
+    const st = GEAR_STATS[it.slot].find(s => s.k === it.stat);
+    return `${st.l} +${it.val}${st.u}`;
+  }
+  function renderLobby() {
+    renderHud();
+    $('lbBest').textContent = M.best; $('lbRuns').textContent = M.runs;
+    $('lbOwned').textContent = `${ALL_UNITS.filter(owned).length} / ${ALL_UNITS.length}`;
+    $('lbItems').textContent = M.items.length;
+    const pool = GRADE_NAMES.map((g, i) => `${g} ${ownedOf(i).length}/3`).join(' · ');
+    $('deployPool').textContent = `등급별 보유: ${pool}`;
+    // equipment slots (deploy + gear tab)
+    for (const id of ['deployGear', 'equipSlots']) {
+      const box = $(id); box.innerHTML = '';
+      for (const slot of Object.keys(SLOT_NAMES)) {
+        const it = M.items.find(i => i.id === M.equip[slot]);
+        const d = document.createElement('div'); d.className = 'slot' + (it ? ' on' : '');
+        d.innerHTML = `<div class="k">${SLOT_NAMES[slot]}</div>` + (it ? `<div class="r${it.rarity}"><b>${it.name}</b></div><div class="st">${itemLabel(it)}</div>` : '<div class="empty">비어 있음</div>');
+        if (it && id === 'equipSlots') { const b = document.createElement('button'); b.textContent = '해제'; b.style.marginTop = '4px'; b.addEventListener('click', () => { M.equip[slot] = null; saveMeta(); renderLobby(); }); d.appendChild(b); }
+        box.appendChild(d);
+      }
+    }
+    // roster
+    const ro = $('roster'); ro.innerHTML = '';
+    for (const def of ALL_UNITS) {
+      const c = document.createElement('div'); c.className = 'ccard' + (owned(def) ? '' : ' locked');
+      c.appendChild(spriteCanvas(unitSprite(def, 4), 48));
+      const nm = document.createElement('div'); nm.className = 'nm g' + def.grade; nm.textContent = def.n;
+      const lv = document.createElement('div'); lv.className = 'lv'; lv.textContent = `${GRADE_NAMES[def.grade]} · ${TYPE_LABEL[def.t]} · ${owned(def) ? 'Lv.' + charLv(def) : '미보유'}`;
+      c.append(nm, lv); ro.appendChild(c);
+    }
+    // inventory
+    const inv = $('inv'); inv.innerHTML = '';
+    if (!M.items.length) inv.innerHTML = '<span class="empty">장비가 없습니다. 보석으로 뽑아 보세요.</span>';
+    const sorted = [...M.items].sort((a, b) => b.rarity - a.rarity || a.slot.localeCompare(b.slot));
+    for (const it of sorted) {
+      const equipped = M.equip[it.slot] === it.id;
+      const d = document.createElement('div'); d.className = 'item';
+      d.innerHTML = `<div><span class="r${it.rarity}"><b>${it.name}</b></span> <span class="st">${SLOT_NAMES[it.slot]} · ${RARITY_NAMES[it.rarity]} · ${itemLabel(it)}</span></div>`;
+      const be = document.createElement('button'); be.textContent = equipped ? '장착 중' : '장착'; be.disabled = equipped;
+      be.addEventListener('click', () => { M.equip[it.slot] = it.id; saveMeta(); renderLobby(); });
+      const bs = document.createElement('button'); bs.className = 'danger'; bs.textContent = `판매 +${GEAR_SELL[it.rarity]}`; bs.disabled = equipped;
+      bs.addEventListener('click', () => { M.items = M.items.filter(x => x !== it); M.gems += GEAR_SELL[it.rarity]; saveMeta(); renderLobby(); });
+      d.append(be, bs); inv.appendChild(d);
+    }
+    const can1 = M.gems >= CFG.PULL_COST, can10 = M.gems >= CFG.PULL10_COST;
+    $('bPullChar1').disabled = !can1; $('bPullChar10').disabled = !can10; $('bPullGear1').disabled = !can1; $('bPullGear10').disabled = !can10;
+  }
+  function pullChar() {
+    const def = pick(UNITS[weightedIndex(CHAR_PULL_W)]);
+    const cur = M.chars[def.n] || 0;
+    let tag;
+    if (cur === 0) { M.chars[def.n] = 1; tag = 'NEW'; }
+    else if (cur < CFG.CHAR_LV_MAX) { M.chars[def.n] = cur + 1; tag = `Lv.${cur + 1}`; }
+    else { M.gems += CFG.DUP_REFUND; tag = `MAX · +${CFG.DUP_REFUND}보석`; }
+    return { def, tag, isNew: cur === 0 };
+  }
+  function pullGear() {
+    const rarity = weightedIndex(GEAR_W);
+    const slot = pick(Object.keys(SLOT_NAMES));
+    const st = pick(GEAR_STATS[slot]);
+    const val = Math.max(1, Math.round(st.b[rarity] * (0.8 + Math.random() * 0.4)));
+    const it = { id: ++M.seq, slot, rarity, stat: st.k, val, name: GEAR_NAMES[slot][rarity] };
+    M.items.push(it);
+    return it;
+  }
+  function doPull(kind, count) {
+    const cost = count === 10 ? CFG.PULL10_COST : CFG.PULL_COST;
+    if (M.gems < cost) return;
+    M.gems -= cost;
+    const box = $(kind === 'char' ? 'charResults' : 'gearResults'); box.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+      const card = document.createElement('div'); card.className = 'rcard';
+      if (kind === 'char') {
+        const r = pullChar();
+        if (r.isNew) card.classList.add('new');
+        card.innerHTML = `<div class="g${r.def.grade}"><b>${r.def.n}</b></div><div class="note">${GRADE_NAMES[r.def.grade]}</div><div class="tag">${r.tag}</div>`;
+        card.prepend(spriteCanvas(unitSprite(r.def, 4), 48));
+      } else {
+        const it = pullGear();
+        if (it.rarity >= 2) card.classList.add('new');
+        card.innerHTML = `<div class="r${it.rarity}"><b>${it.name}</b></div><div class="note">${SLOT_NAMES[it.slot]} · ${RARITY_NAMES[it.rarity]}</div><div class="tag">${itemLabel(it)}</div>`;
+      }
+      box.appendChild(card);
+    }
+    saveMeta(); renderLobby();
   }
 
   // ---------- Input ----------
@@ -641,8 +911,7 @@
     const c = Math.floor(x / T), r = Math.floor(y / T);
     if (c < INNER_MIN || c > INNER_MAX || r < INNER_MIN || r > INNER_MAX) { S.sel = null; renderPanel(); return; }
     const u = unitAt(c, r);
-    if (u) { S.sel = u; }
-    else if (S.sel) { S.sel.col = c; S.sel.row = r; }
+    if (u) S.sel = u; else if (S.sel) { S.sel.col = c; S.sel.row = r; }
     renderPanel();
   });
   $('bStart').addEventListener('click', startGame);
@@ -650,38 +919,38 @@
   $('bCombineAll').addEventListener('click', combineAll);
   $('bLuck').addEventListener('click', upgradeLuck);
   $('bSkip').addEventListener('click', skipRound);
+  $('bQuit').addEventListener('click', quitGame);
   $('bSpeed').addEventListener('click', () => { if (!S) return; S.speed = S.speed >= 3 ? 1 : S.speed + 1; $('bSpeed').textContent = 'x' + S.speed; });
   $('bPause').addEventListener('click', togglePause);
+  $('bPullChar1').addEventListener('click', () => doPull('char', 1));
+  $('bPullChar10').addEventListener('click', () => doPull('char', 10));
+  $('bPullGear1').addEventListener('click', () => doPull('gear', 1));
+  $('bPullGear10').addEventListener('click', () => doPull('gear', 10));
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => selectTab(b.dataset.tab)));
   function togglePause() { if (!S || S.phase !== 'play') return; S.paused = !S.paused; $('bPause').textContent = S.paused ? '계속' : '일시정지'; }
   document.addEventListener('keydown', ev => {
     if (ev.target && /input|textarea/i.test(ev.target.tagName)) return;
+    if (!S) return;
     const k = ev.key.toLowerCase();
     if (k === 's') summon();
     else if (k === 'c') combineAll();
     else if (k === 'l') upgradeLuck();
     else if (k === 'n') skipRound();
     else if (k === ' ') { ev.preventDefault(); togglePause(); }
-    else if (k === 'escape') { if (S) { S.sel = null; renderPanel(); } }
-    else if (k === 'enter' && S && S.phase !== 'play') startGame();
+    else if (k === 'escape') { S.sel = null; renderPanel(); }
   });
 
   // ---------- Loop ----------
   let last = performance.now();
   function frame(now) {
     const raw = Math.min(0.05, (now - last) / 1000); last = now;
-    if (S) {
-      const steps = S.speed;
-      for (let i = 0; i < steps; i++) update(raw);
-      renderHud();
-    }
+    if (S) { for (let i = 0; i < S.speed; i++) update(raw); renderHud(); }
     draw();
     requestAnimationFrame(frame);
   }
   function boot() {
-    S = newState();
-    const best = loadBest();
-    $('ovBest').textContent = best ? `최고 기록: ${best}라운드` : '';
-    renderPanel();
+    M = loadMeta();
+    showLobby('deploy');
     requestAnimationFrame(frame);
   }
   if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(boot); else boot();
