@@ -147,6 +147,11 @@
   .recipes { display: grid; gap: 6px; }
   .recipe { display: grid; grid-template-columns: 36px 1fr auto; gap: 8px; align-items: center; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font-size: 12px; min-width: 0; }
   .recipe.ok { border-color: var(--accent); }
+  .recipe.pinned { background: rgba(242,177,52,.08); }
+  .recipe { grid-template-columns: 36px 1fr auto auto; }
+  .rtabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
+  .rtabs button { min-height: 26px; padding: 2px 8px; font-size: 12px; color: var(--muted); }
+  .rtabs button.on { color: var(--fg); border-color: var(--accent); }
   .recipe .nm { font-weight: 700; }
   .recipe .mat { color: var(--muted); }
   .recipe .mat .has { color: var(--ok); }
@@ -196,7 +201,7 @@
           <div><span class="k">보유 캐릭터</span><br><b id="lbOwned">0 / 56</b></div>
           <div><span class="k">보유 장비</span><br><b id="lbItems">0</b></div>
         </div>
-        <p class="note" style="margin:10px 0 0">기본 캐릭터 6종(등급별 1종)은 항상 보유하며, 뽑기 캐릭터는 같은 등급이라도 능력치가 20% 높고 더 강한 패시브를 가집니다. 게임 안에서는 <b>보유한 캐릭터만</b> 소환·합성됩니다. 성장은 뽑기 중복으로만 이루어집니다(신화 캐릭터 ★, 전설 장비 ★).</p>
+        <p class="note" style="margin:10px 0 0">일반 8종과 등급별 기본 1종은 항상 보유합니다. 뽑기 캐릭터는 같은 등급이라도 능력치가 20% 높고 더 강한 패시브를 가지며, 뽑으면 그 캐릭터의 <b>조합식이 해금</b>됩니다(재료 캐릭터도 보유해야 실제 제작 가능). 성장은 뽑기 중복으로만 이루어집니다(신화 ★, 전설 장비 ★).</p>
         <h3 style="margin-top:12px">모드 선택</h3>
         <div class="modes" id="modes"></div>
         <p class="note" style="margin:8px 0 0">스테이지는 40라운드 클리어 시 <b>최초 1회</b> 보석 보상(이후 재도전은 라운드 보상의 1/3). 무한 모드는 보석 <b>50 + 라운드 × 15</b>, 10라운드마다 디버프가 하나씩 추가되어 중첩됩니다.</p>
@@ -207,13 +212,14 @@
         <p class="note" style="margin:10px 0 0" id="deployPool"></p>
         <h3 style="margin-top:12px">규칙</h3>
         <ul class="rules">
-          <li>소환 20G · 같은 유닛 2개를 합쳐 상위 등급</li>
+          <li>소환 20G · 일반 8종 중 무작위 (행운 강화 시 고급 직접 소환 확률 상승)</li>
+          <li>상위 등급은 <b>지정 조합식</b>으로만 제작 (고급 = 일반 2종, 희귀 = 고급+일반, 영웅 = 희귀+고급, 전설 = 영웅+희귀+일반, 신화 = 전설+영웅+희귀)</li>
+          <li>뽑기로 얻은 캐릭터는 그 조합식이 해금됨 · 기본 캐릭터 갈래(사냥꾼→저격수→성기사→용기사→파멸자)는 항상 열림</li>
           <li>라운드마다 몬스터 20마리 · 10라운드마다 보스(45초 제한, 건너뛰기 불가)</li>
           <li>무한 모드: 10라운드마다 디버프 추가(중첩), 라운드 무제한</li>
           <li>살아있는 몬스터 80마리 이상이면 패배</li>
           <li>모든 캐릭터는 고유 패시브, 신화 등급만 자동 발동 스킬 보유 · 보스는 처치 즉시 다음 라운드</li>
           <li>오라 유닛은 주변 3×3이 색으로 표시되고, 버프를 받는 유닛은 모서리에 ▲ 표시</li>
-          <li>조합식: 지정 재료 유닛을 보드에 모아 조합 전용 캐릭터 제작 (예: 검사×2 + 마법사×1 → 마검사)</li>
           <li>조합 전용 캐릭터는 <b>특수</b> 등급: 상위 등급으로 합성 불가, 전체 합성(C)에서 기본 제외</li>
           <li>가장자리 칸일수록 길에 가깝습니다 (사거리 확인)</li>
         </ul>
@@ -229,7 +235,7 @@
           <button id="bTicket">신화 선택권 · 조각 60 <span id="shardCnt"></span></button>
           <span class="note" id="pityNote"></span>
         </div>
-        <p class="note" style="margin:8px 0 0">확률: 일반 37% · 고급 27% · 희귀 15% · 영웅 10% · 전설 7% · <b>신화 4%</b> (기본·특수 캐릭터 제외). <b>천장</b>: 30회 연속 신화 미출현 시 다음 뽑기 신화 확정. <b>10연차</b>: 영웅 이상 1개 보장. <b>신화</b> 중복: ★+1 (공격력 +15%/★, 최대 ★10, 초과 시 100보석). 그 외 등급 중복: 신화 조각(일반 1 · 고급 2 · 희귀 4 · 영웅 8 · 전설 15) → 60조각으로 원하는 신화 선택.</p>
+        <p class="note" style="margin:8px 0 0">확률: 고급 45% · 희귀 25% · 영웅 15% · 전설 9% · <b>신화 6%</b> (일반은 전부 기본 보유 · 기본·특수 캐릭터 제외). <b>천장</b>: 30회 연속 신화 미출현 시 다음 뽑기 신화 확정. <b>10연차</b>: 영웅 이상 1개 보장. <b>신화</b> 중복: ★+1 (공격력 +15%/★, 최대 ★10, 초과 시 100보석). 그 외 등급 중복: 신화 조각(일반 1 · 고급 2 · 희귀 4 · 영웅 8 · 전설 15) → 60조각으로 원하는 신화 선택.</p>
         <div class="results" id="ticketBox" hidden></div>
         <div class="results" id="charResults"></div>
       </div>
@@ -272,15 +278,15 @@
         <h3>명령</h3>
         <div class="actions">
           <button class="primary" id="bSummon">소환 <span id="summonCost">20G</span><kbd>S</kbd></button>
-          <button id="bCombineAll">전체 합성<kbd>C</kbd></button>
-          <button id="bLuck" class="wide">행운 강화 (소환 확률) <span id="luckCost"></span><kbd>L</kbd></button>
+          <button id="bCombineAll">📌 핀 조합 즉시 실행<kbd>C</kbd></button>
+          <button id="bLuck" class="wide">행운 강화 (고급 직접 소환 확률) <span id="luckCost"></span><kbd>L</kbd></button>
           <button id="bSkip" class="wide">다음 라운드 바로 시작<kbd>N</kbd></button>
         </div>
         <div class="rates" id="rates"></div>
       </div>
 
       <div class="card">
-        <h3>조합식 (재료 유닛을 보드에 모으면 조합 가능)</h3>
+        <h3>조합식 (상위 등급은 조합으로만 획득 · 📌 핀을 꽂으면 재료가 모일 때 자동 조합)</h3>
         <div class="recipes" id="recipes"></div>
       </div>
 
@@ -348,9 +354,9 @@
   const STAR_MAX = 10, STAR_PCT = 0.15, GEAR_STAR_PCT = 0.2;
   const BASE_W = [45, 30, 15, 7, 2.5, 0.5];
   const LUCK_MUL = [0.82, 1.0, 1.12, 1.25, 1.4, 1.6];
-  const LUCK_MAX = 8;
+  const LUCK_MAX = 8; const LUCK_STEP = 0.05;    // 행운 Lv당 소환 시 고급 유닛 확률 +5% (최대 40%)
   const LUCK_COST = lv => Math.round(100 * Math.pow(1.6, lv));
-  const CHAR_PULL_W = [37, 27, 15, 10, 7, 4];   // 신화 1% → 4%
+  const CHAR_PULL_W = [0, 45, 25, 15, 9, 6];    // 일반은 전부 기본 보유라 뽑기 제외 · 신화 6%
   const PITY_AT = 30;                             // 30회 연속 신화 미출현 시 다음 뽑기 신화 확정
   const TEN_PULL_MIN_GRADE = 3;                   // 10연차 시 영웅 이상 1개 보장
   const SHARD_BY_GRADE = [1, 2, 4, 8, 15];        // 중복 뽑기 시 신화 조각
@@ -374,19 +380,19 @@
     [ // 일반
       { n: '궁수', t: 'single', d: 1.0, i: 0.9, r: 140, base: true, sp: { hat: 'hood', wep: 'bow', c: '#4e9a51', d: '#35703a', H: '#3b7a40', h: '#6b4a2b' },
         mod: { focus: 0.05 }, p: '집중: 같은 대상을 연속 공격할 때마다 피해 +5% (최대 10중첩)' },
-      { n: '투석병', t: 'splash', d: 0.8, i: 1.3, r: 130, sp: { hat: 'band', wep: 'orb', c: '#8a6d4b', d: '#6a5238', G: '#c0392b', x: '#9a9a9a', h: '#2c2c2c' },
+      { n: '투석병', t: 'splash', d: 0.8, i: 1.3, r: 130, base: true, sp: { hat: 'band', wep: 'orb', c: '#8a6d4b', d: '#6a5238', G: '#c0392b', x: '#9a9a9a', h: '#2c2c2c' },
         mod: { splashR: 60 }, p: '큰 돌: 광역 반경 45 → 60' },
-      { n: '창병', t: 'single', d: 1.3, i: 1.1, r: 120, sp: { hat: 'none', wep: 'spear', c: '#6c7a89', d: '#4f5b68', h: '#2c2c2c' },
+      { n: '창병', t: 'single', d: 1.3, i: 1.1, r: 120, base: true, sp: { hat: 'none', wep: 'spear', c: '#6c7a89', d: '#4f5b68', h: '#2c2c2c' },
         mod: { pierce: 0.5 }, p: '관통: 대상 바로 뒤 몬스터에게 50% 추가 피해' },
-      { n: '견습술사', t: 'slow', d: 0.8, i: 1.0, r: 130, sp: { hat: 'cap', wep: 'staff', c: '#74c0fc', d: '#4dabf7', H: '#4dabf7', x: '#d0ebff' },
+      { n: '견습술사', t: 'slow', d: 0.8, i: 1.0, r: 130, base: true, sp: { hat: 'cap', wep: 'staff', c: '#74c0fc', d: '#4dabf7', H: '#4dabf7', x: '#d0ebff' },
         mod: { slowDur: 2.5 }, p: '끈질긴 서리: 둔화 지속 1.5초 → 2.5초' },
-      { n: '도적', t: 'crit', d: 1.0, i: 0.8, r: 120, sp: { hat: 'mask', wep: 'dagger', c: '#495057', d: '#343a40', G: '#868e96', w: '#ced4da' },
+      { n: '도적', t: 'crit', d: 1.0, i: 0.8, r: 120, base: true, sp: { hat: 'mask', wep: 'dagger', c: '#495057', d: '#343a40', G: '#868e96', w: '#ced4da' },
         mod: { killGold: 1 }, p: '소매치기: 처치할 때마다 골드 +1' },
-      { n: '민병대', t: 'single', d: 0.9, i: 0.9, r: 130, sp: { hat: 'cap', wep: 'spear', c: '#b08968', d: '#7f5539', H: '#7f5539', h: '#4a3222' },
+      { n: '민병대', t: 'single', d: 0.9, i: 0.9, r: 130, base: true, sp: { hat: 'cap', wep: 'spear', c: '#b08968', d: '#7f5539', H: '#7f5539', h: '#4a3222' },
         mod: { countAtk: 0.03 }, p: '수적 우세: 보드 위 일반 등급 유닛 1마리당 공격력 +3%' },
-      { n: '횃불병', t: 'splash', d: 0.7, i: 1.1, r: 130, sp: { hat: 'none', wep: 'torch', c: '#c0392b', d: '#922b21', h: '#2c2c2c', x: '#ffb347' },
+      { n: '횃불병', t: 'splash', d: 0.7, i: 1.1, r: 130, base: true, sp: { hat: 'none', wep: 'torch', c: '#c0392b', d: '#922b21', h: '#2c2c2c', x: '#ffb347' },
         mod: { burn: 0.1, burnDur: 1.5 }, p: '불씨: 피격 몬스터에게 1.5초간 초당 공격력 10% 화상' },
-      { n: '검사', t: 'single', d: 1.2, i: 1.0, r: 120, sp: { hat: 'none', wep: 'sword', c: '#5c7cfa', d: '#3b5bdb', h: '#2c2c2c', w: '#e9ecef' },
+      { n: '검사', t: 'single', d: 1.2, i: 1.0, r: 120, base: true, sp: { hat: 'none', wep: 'sword', c: '#5c7cfa', d: '#3b5bdb', h: '#2c2c2c', w: '#e9ecef' },
         mod: { pctDmg: 0.01 }, p: '베기: 일반 몬스터에게 최대 체력 1% 추가 피해' },
     ],
     [ // 고급
@@ -470,7 +476,7 @@
         skill: { id: 'sunburst', name: '태양 폭발', cd: 20, desc: '20초마다 모든 몬스터에게 공격력 ×5 피해' } },
       { n: '시간술사', t: 'slow', d: 1.3, i: 0.6, r: 190, sp: { hat: 'wizard', wep: 'orb', c: '#20c997', d: '#0ca678', H: '#12b886', x: '#c3fae8' },
         mod: { aspd: 0.25 }, p: '가속: 자신의 공격 속도 +25%',
-        skill: { id: 'timestop', name: '시간 정지', cd: 30, desc: '30초마다 모든 몬스터 3초 정지, 라운드 시간 +5초' } },
+        skill: { id: 'timestop', name: '시간 정지', cd: 30, desc: '30초마다 3초간 시간 정지 (라운드 타이머·몬스터 이동·스폰 정지, 아군만 공격 · 중첩 불가)' } },
       { n: '용왕', t: 'multi', d: 1.4, i: 0.9, r: 190, sp: { hat: 'horns', wep: 'axe', c: '#9c36b5', d: '#702c8c', G: '#ffd43b', w: '#ffd43b', h: '#e599f7' },
         mod: { bossDmg: 1.0 }, p: '지배: 보스에게 피해 +100%',
         skill: { id: 'dragonrage', name: '용의 분노', cd: 25, desc: '25초마다 보스(없으면 최대 체력 몬스터)에게 공격력 ×20 피해' } },
@@ -509,11 +515,15 @@
   ];
   const ALL_UNITS = UNITS.flat();
   ALL_UNITS.forEach(def => { def.grade = UNITS.findIndex(g => g.includes(def)); def.m = Object.assign({}, MOD, def.mod || {}); def.statMul = def.base ? 1 : CFG.GACHA_STAT_MUL; });
+  // Recipe tree: every character above 일반 is made from a fixed recipe (원랜디 style). 특수 recipes are on the defs themselves.
+  const RECIPES = {"사냥꾼": [["궁수", 1], ["도적", 1]], "마법사": [["견습술사", 1], ["검사", 1]], "냉기술사": [["견습술사", 1], ["투석병", 1]], "쌍검사": [["검사", 1], ["도적", 1]], "상인": [["도적", 1], ["민병대", 1]], "궁기병": [["궁수", 1], ["창병", 1]], "점술사": [["견습술사", 1], ["민병대", 1]], "방패병": [["창병", 1], ["민병대", 1]], "저격수": [["사냥꾼", 1], ["궁수", 1]], "화염술사": [["마법사", 1], ["횃불병", 1]], "폭풍술사": [["마법사", 1], ["견습술사", 1]], "암흑궁수": [["사냥꾼", 1], ["도적", 1]], "수도승": [["쌍검사", 1], ["민병대", 1]], "기계공": [["방패병", 1], ["투석병", 1]], "성직자": [["점술사", 1], ["민병대", 1]], "암흑기사": [["쌍검사", 1], ["검사", 1]], "성기사": [["저격수", 1], ["사냥꾼", 1]], "대마법사": [["화염술사", 1], ["마법사", 1]], "서리여왕": [["폭풍술사", 1], ["냉기술사", 1]], "음유시인": [["성직자", 1], ["상인", 1]], "현상금사냥꾼": [["암흑궁수", 1], ["궁기병", 1]], "검성": [["암흑기사", 1], ["쌍검사", 1]], "정령사": [["폭풍술사", 1], ["점술사", 1]], "현자": [["성직자", 1], ["마법사", 1]], "용기사": [["성기사", 1], ["저격수", 1], ["창병", 1]], "암살자": [["검성", 1], ["암흑궁수", 1], ["도적", 1]], "뇌신": [["서리여왕", 1], ["폭풍술사", 1], ["견습술사", 1]], "드루이드": [["정령사", 1], ["수도승", 1], ["민병대", 1]], "연금술사": [["현자", 1], ["성직자", 1], ["투석병", 1]], "광전사": [["검성", 1], ["암흑기사", 1], ["검사", 1]], "대주교": [["음유시인", 1], ["성직자", 1], ["민병대", 1]], "용사": [["현상금사냥꾼", 1], ["기계공", 1], ["창병", 1]], "파멸자": [["용기사", 1], ["성기사", 1], ["저격수", 1]], "태양신": [["연금술사", 1], ["대마법사", 1], ["화염술사", 1]], "시간술사": [["뇌신", 1], ["서리여왕", 1], ["성직자", 1]], "용왕": [["용사", 1], ["현상금사냥꾼", 1], ["기계공", 1]], "사신": [["암살자", 1], ["검성", 1], ["암흑기사", 1]], "창조신": [["대주교", 1], ["현자", 1], ["성직자", 1]], "혼돈": [["광전사", 1], ["정령사", 1], ["수도승", 1]], "명왕": [["드루이드", 1], ["음유시인", 1], ["암흑궁수", 1]]};
+  ALL_UNITS.forEach(def => { if (RECIPES[def.n]) def.recipe = RECIPES[def.n]; });
   const GACHA_UNITS = UNITS.map(g => g.filter(d => !d.base && !d.recipeOnly));
-  const RECIPE_UNITS = ALL_UNITS.filter(d => d.recipeOnly);
+  const RECIPE_UNITS = ALL_UNITS.filter(d => d.recipe);
   const defByName = name => ALL_UNITS.find(d => d.n === name);
   const isMaterial = def => RECIPE_UNITS.some(r => r.recipe.some(([n]) => n === def.n));
   ALL_UNITS.forEach(def => { if (def.recipeOnly) def.noAuto = true; });
+  for (const d of RECIPE_UNITS) for (const [n] of d.recipe) { if (!defByName(n)) throw new Error('recipe material missing: ' + n); }
 
   // ---------- Equipment ----------
   const RARITY_NAMES = ['일반', '희귀', '영웅', '전설'];
@@ -626,6 +636,7 @@
   }
   function saveMeta() { try { localStorage.setItem('rtd_meta', JSON.stringify(M)); } catch (e) { /* unavailable */ } }
   const owned = def => def.base || (def.recipeOnly ? def.recipe.every(([n]) => owned(defByName(n))) : (M.chars[def.n] || 0) > 0);
+  const unlocked = def => owned(def) && (!def.recipe || def.recipe.every(([n]) => unlocked(defByName(n)))); // whole branch available
   // Only top-grade (신화) characters grow with duplicate pulls: ★1..★10, +15% attack per star.
   const starsOf = def => def.grade === TOP_GRADE && !def.base ? Math.max(1, Math.min(STAR_MAX, M.chars[def.n] || 1)) : 1;
   const ownedOf = g => (UNITS[g] || []).filter(d => owned(d) && !d.recipeOnly);
@@ -647,7 +658,7 @@
       units: [], monsters: [], shots: [], spawnQ: 0, spawnT: 0,
       luck: mods.luck, kills: 0, speed: 1, paused: false,
       sel: null, log: [], mods, time: 0, buff: { atk: 0, t: 0 },
-      mode, maxRound: mode.type === 'stage' ? CFG.MAX_ROUND : Infinity, fx: [], bossSpawned: false,
+      mode, maxRound: mode.type === 'stage' ? CFG.MAX_ROUND : Infinity, fx: [], bossSpawned: false, timeStopT: 0, pins: [], autoT: 0,
       stageMul: mode.type === 'stage' ? CFG.STAGE_HP_MUL[mode.stage - 1] : 1,
       debuffs: [], dmul: computeDmul([]),
     };
@@ -671,11 +682,8 @@
     const cands = free.filter(t => edgeDist(t.c, t.r) === minD);
     return cands[Math.floor(Math.random() * cands.length)];
   }
-  function weights() {
-    const w = BASE_W.map((b, i) => ownedOf(i).length ? b * Math.pow(LUCK_MUL[i], S.luck) : 0);
-    const sum = w.reduce((a, b) => a + b, 0) || 1;
-    return w.map(x => x / sum);
-  }
+  const luckChance = () => Math.min(0.4, LUCK_STEP * S.luck);
+  function weights() { const p = ownedOf(1).length ? luckChance() : 0; return [1 - p, p, 0, 0, 0, 0]; }
   function weightedIndex(w) { let r = Math.random() * w.reduce((a, b) => a + b, 0); for (let i = 0; i < w.length; i++) { r -= w[i]; if (r < 0) return i; } return w.length - 1; }
   const pick = arr => arr[Math.floor(Math.random() * arr.length)];
   function makeUnit(def, c, r) { return { id: ++uid, grade: def.grade, def, col: c, row: r, cd: Math.random() * 0.3, scd: def.skill ? def.skill.cd * 0.5 : 0, shots: 0, focusN: 0, frenzyN: 0, lastT: null, harvest: 0, lock: !!def.noAuto }; }
@@ -734,82 +742,65 @@
     renderPanel();
     return true;
   }
-  function recipeCounts(def) {
-    return def.recipe.map(([n, need]) => ({ n, need, have: S.units.filter(u => u.def.n === n).length }));
+  function recipeCounts(def, auto) {
+    return def.recipe.map(([n, need]) => ({ n, need, have: S.units.filter(u => u.def.n === n && !(auto && u.lock)).length }));
   }
-  function craft(def) {
-    if (!S || S.phase !== 'play') return;
-    const rc = recipeCounts(def);
-    if (rc.some(x => x.have < x.need)) { log(`재료 부족: ${rc.map(x => `${x.n} ${x.have}/${x.need}`).join(', ')}`); return; }
+  const canCraftNow = (def, auto) => recipeCounts(def, auto).every(x => x.have >= x.need);
+  function craft(def, auto) {
+    if (!S || S.phase !== 'play') return false;
+    const rc = recipeCounts(def, auto);
+    if (rc.some(x => x.have < x.need)) { if (!auto) log(`재료 부족: ${rc.map(x => `${x.n} ${x.have}/${x.need}`).join(', ')}`); return false; }
     const used = [];
     for (const x of rc) {
-      const pool = S.units.filter(u => u.def.n === x.n).sort((a, b) => edgeDist(b.col, b.row) - edgeDist(a.col, a.row)); // keep best-positioned ones last
+      const pool = S.units.filter(u => u.def.n === x.n && !(auto && u.lock) && !used.includes(u)).sort((a, b) => (a.lock - b.lock) || (edgeDist(b.col, b.row) - edgeDist(a.col, a.row)));
       used.push(...pool.slice(0, x.need));
     }
     used.sort((a, b) => edgeDist(a.col, a.row) - edgeDist(b.col, b.row));
     const spot = { c: used[0].col, r: used[0].row };
     S.units = S.units.filter(u => !used.includes(u));
     const nu = makeUnit(def, spot.c, spot.r);
-    S.units.push(nu); S.sel = nu;
-    log(`조합: ${def.recipe.map(([n, k]) => `${n}×${k}`).join(' + ')} → [${GRADE_NAMES[def.grade]}] ${def.n}`, 'g' + def.grade);
+    S.units.push(nu); if (!auto) S.sel = nu;
+    log(`${auto ? '자동 ' : ''}조합: ${def.recipe.map(([n, k]) => `${n}×${k}`).join(' + ')} → [${GRADE_NAMES[def.grade]}] ${def.n}`, 'g' + def.grade);
+    S.fx.push({ type: 'flash', col: spot.c, row: spot.r, t: 0.5, d: 0.5, c: GRADE_COLORS[def.grade] });
     renderPanel();
-  }
-  function renderRecipes() {
-    const box = $('recipes'); box.innerHTML = '';
-    const avail = RECIPE_UNITS.filter(owned);
-    if (!avail.length) { box.innerHTML = '<span class="empty">재료 캐릭터를 모두 보유하면 조합식이 열립니다.</span>'; return; }
-    for (const def of avail) {
-      const rc = recipeCounts(def), ok = rc.every(x => x.have >= x.need);
-      const row = document.createElement('div'); row.className = 'recipe' + (ok ? ' ok' : '');
-      row.appendChild(spriteCanvas(unitSprite(def, 3), 36));
-      const info = document.createElement('div'); info.className = 'ri';
-      info.innerHTML = `<div class="nm g${def.grade}">${def.n} <span class="note">${GRADE_NAMES[def.grade]}</span></div><div class="mat">${rc.map(x => `<span class="${x.have >= x.need ? 'has' : ''}">${x.n} ${x.have}/${x.need}</span>`).join(' + ')}</div>`;
-      const b = document.createElement('button'); b.textContent = '조합'; b.disabled = !ok; b.addEventListener('click', () => craft(def));
-      row.append(info, b); box.appendChild(row);
-    }
-  }
-  function toggleLock() { const u = S.sel; if (!u) return; u.lock = !u.lock; log(`${u.def.n}: 전체 합성 ${u.lock ? '제외' : '허용'}`); renderPanel(); }
-  const canCombine = def => !def.recipeOnly && def.grade < TOP_GRADE;
-  function combineGroup(group) {
-    const grade = group[0].grade;
-    if (!canCombine(group[0].def)) return false;
-    const pool = ownedOf(grade + 1);
-    if (!pool.length) { log(`${GRADE_NAMES[grade + 1]} 등급 캐릭터를 보유해야 합성할 수 있습니다.`); return false; }
-    group.sort((a, b) => edgeDist(a.col, a.row) - edgeDist(b.col, b.row));
-    const spot = { c: group[0].col, r: group[0].row };
-    S.units = S.units.filter(u => !group.includes(u));
-    const def = pick(pool);
-    const nu = makeUnit(def, spot.c, spot.r);
-    S.units.push(nu);
-    log(`합성: ${group[0].def.n} ×${CFG.COMBINE_NEED} → [${GRADE_NAMES[def.grade]}] ${def.n}`, 'g' + def.grade);
-    S.sel = nu;
     return true;
   }
-  function combineSelected() {
-    const u = S.sel; if (!u) return;
-    const same = S.units.filter(x => x.def === u.def);
-    if (!canCombine(u.def)) { log(`${u.def.n}은(는) 합성할 수 없습니다.`); return; }
-    if (same.length < CFG.COMBINE_NEED) { log(`${u.def.n}이(가) ${CFG.COMBINE_NEED}개 필요합니다. (현재 ${same.length}개)`); return; }
-    const partners = same.filter(x => x !== u).sort((a, b) => a.lock - b.lock);
-    combineGroup([u, ...partners.slice(0, CFG.COMBINE_NEED - 1)]);
-    renderPanel();
-  }
-  function combineAll() {
+  function craftPinned(manual) {
     if (!S || S.phase !== 'play') return;
-    let n = 0, changed = true;
-    while (changed) {
-      changed = false;
-      const byDef = new Map();
-      for (const u of S.units) { if (u.lock) continue; if (!byDef.has(u.def)) byDef.set(u.def, []); byDef.get(u.def).push(u); }
-      for (const [def, arr] of byDef) {
-        if (arr.length >= CFG.COMBINE_NEED && canCombine(def) && ownedOf(def.grade + 1).length) {
-          if (combineGroup(arr.slice(0, CFG.COMBINE_NEED))) { n++; changed = true; break; }
-        }
-      }
-    }
-    if (!n) log('합성할 조합이 없습니다. (🔒 잠긴 유닛은 제외)');
-    renderPanel();
+    let n = 0, guard = 0;
+    const pinned = RECIPE_UNITS.filter(d => S.pins.includes(d.n) && unlocked(d)).sort((a, b) => a.grade - b.grade);
+    let changed = true;
+    while (changed && guard++ < 50) { changed = false; for (const def of pinned) { if (canCraftNow(def, true) && craft(def, true)) { n++; changed = true; } } }
+    if (manual && !n) log(S.pins.length ? '핀 조합의 재료가 아직 모이지 않았습니다.' : '핀을 꽂은 조합식이 없습니다. (조합식 패널의 📌)');
   }
+  function togglePin(def) { const i = S.pins.indexOf(def.n); if (i >= 0) S.pins.splice(i, 1); else S.pins.push(def.n); renderPanel(); }
+  let recipeTab = 'all';
+  function renderRecipes() {
+    const box = $('recipes'); box.innerHTML = '';
+    const tabs = document.createElement('div'); tabs.className = 'rtabs';
+    const mk = (key, label) => { const b = document.createElement('button'); b.textContent = label; b.className = recipeTab === key ? 'on' : ''; b.addEventListener('click', () => { recipeTab = key; renderRecipes(); }); tabs.appendChild(b); };
+    mk('all', '전체'); mk('now', '지금 가능'); mk('pin', '📌 핀'); for (let g = 1; g <= 6; g++) mk(String(g), GRADE_NAMES[g]);
+    box.appendChild(tabs);
+    let list = RECIPE_UNITS.filter(unlocked);
+    if (recipeTab === 'now') list = list.filter(d => canCraftNow(d, false));
+    else if (recipeTab === 'pin') list = list.filter(d => S.pins.includes(d.n));
+    else if (recipeTab !== 'all') list = list.filter(d => d.grade === Number(recipeTab));
+    list.sort((a, b) => (canCraftNow(b, false) - canCraftNow(a, false)) || (a.grade - b.grade));
+    const locked = RECIPE_UNITS.filter(d => owned(d) && !unlocked(d));
+    if (!list.length) box.appendChild(Object.assign(document.createElement('span'), { className: 'empty', textContent: '해당하는 조합식이 없습니다.' }));
+    for (const def of list.slice(0, 40)) {
+      const rc = recipeCounts(def, false), ok = rc.every(x => x.have >= x.need), pinned = S.pins.includes(def.n);
+      const row = document.createElement('div'); row.className = 'recipe' + (ok ? ' ok' : '') + (pinned ? ' pinned' : '');
+      row.appendChild(spriteCanvas(unitSprite(def, 3), 36));
+      const info = document.createElement('div'); info.className = 'ri';
+      info.innerHTML = `<div class="nm g${def.grade}">${def.n} <span class="note">${GRADE_NAMES[def.grade]} · ${TYPE_LABEL[def.t]}</span></div><div class="mat">${rc.map(x => `<span class="${x.have >= x.need ? 'has' : ''}">${x.n} ${x.have}/${x.need}</span>`).join(' + ')}</div>`;
+      const bp = document.createElement('button'); bp.textContent = pinned ? '📌 해제' : '📌 핀'; bp.title = '재료가 모이면 자동 조합'; bp.addEventListener('click', () => togglePin(def));
+      const b = document.createElement('button'); b.textContent = '조합'; b.disabled = !ok; b.addEventListener('click', () => craft(def, false));
+      row.append(info, bp, b); box.appendChild(row);
+    }
+    if (recipeTab === 'all' && locked.length) { const n = document.createElement('div'); n.className = 'note'; n.textContent = `재료 분기 미해금 (뽑기로 재료 캐릭터 획득 필요): ${locked.map(d => d.n).join(', ')}`; box.appendChild(n); }
+  }
+  function toggleLock() { const u = S.sel; if (!u) return; u.lock = !u.lock; log(`${u.def.n}: 자동 조합 재료 ${u.lock ? '제외' : '허용'}`); renderPanel(); }
   const sellOf = def => def.sell || SELL[def.grade];
   function sellSelected() {
     const u = S.sel; if (!u) return;
@@ -1002,7 +993,7 @@
       case 'vines': alive.forEach(m => { m.slowT = Math.max(m.slowT, 3); m.slowPct = Math.max(m.slowPct, 0.4); }); ring(SIZE / 2, SIZE / 2, SIZE / 2); break;
       case 'transmute': { const g = S.round * 5; S.gold += g; ring(uc.x, uc.y, 50); break; }
       case 'sunburst': alive.forEach(m => hit(m, base * 5, u)); ring(SIZE / 2, SIZE / 2, SIZE / 2); break;
-      case 'timestop': alive.forEach(m => { m.freezeT = Math.max(m.freezeT, 3); }); S.timer += 5; ring(SIZE / 2, SIZE / 2, SIZE / 2); break;
+      case 'timestop': S.timeStopT = Math.max(S.timeStopT, 3); ring(SIZE / 2, SIZE / 2, SIZE / 2); break;
       case 'dragonrage': { const t = alive.find(m => m.boss) || strongest(alive); hit(t, base * 20, u); bolt(t, 5); break; }
       case 'deathtouch': { const ts = alive.filter(m => !m.boss && m.hp <= m.maxHp * 0.3); if (!ts.length) return false; ts.forEach(m => hit(m, m.hp * 100, u)); ring(SIZE / 2, SIZE / 2, SIZE / 2); break; }
       case 'create': { if (!summon(true)) return false; ring(uc.x, uc.y, 50); break; }
@@ -1019,19 +1010,23 @@
   }
   function update(dt) {
     if (!S || S.phase !== 'play' || S.paused) return;
-    S.time += dt; S.timer -= dt;
+    S.time += dt;
+    const stopped = S.timeStopT > 0;
+    if (stopped) S.timeStopT -= dt; else S.timer -= dt;
     if (S.buff.t > 0) S.buff.t -= dt;
-    if (S.spawnQ > 0) {
+    if (S.spawnQ > 0 && !stopped) {
       S.spawnT -= dt;
       while (S.spawnT <= 0 && S.spawnQ > 0) { spawnMonster(S.round, false); S.spawnQ--; S.spawnT += CFG.SPAWN_INTERVAL; }
     }
     for (const m of S.monsters) {
-      if (m.freezeT > 0) m.freezeT -= dt;
+      if (stopped) { /* time stopped: nothing moves or ticks */ }
+      else if (m.freezeT > 0) m.freezeT -= dt;
       else { m.d += m.speed * (m.slowT > 0 ? 1 - m.slowPct : 1) * dt; }
-      m.slowT -= dt; if (m.slowT <= 0) m.slowPct = 0;
+      if (!stopped) { m.slowT -= dt; if (m.slowT <= 0) m.slowPct = 0; }
       if (m.burnT > 0) { m.burnT -= dt; hit(m, m.burnDps * dt, null); }
       const p = pathPos(m.d); m.x = p.x; m.y = p.y;
     }
+    S.autoT += dt; if (S.autoT >= 1) { S.autoT = 0; craftPinned(false); }
     for (const u of S.units) {
       if (u.def.skill) { u.scd -= dt; if (u.scd <= 0 && castSkill(u)) u.scd = u.def.skill.cd; }
       u.cd -= dt; if (u.cd > 0) continue;
@@ -1138,6 +1133,12 @@
       ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(m.x - bw / 2, m.y - r - bh - 3, bw, bh);
       ctx.fillStyle = frac > 0.5 ? '#4cd27a' : frac > 0.25 ? '#f2b134' : '#ff5a5f'; ctx.fillRect(m.x - bw / 2, m.y - r - bh - 3, bw * frac, bh);
     }
+    if (S.timeStopT > 0) {
+      ctx.fillStyle = 'rgba(32,201,151,.14)'; ctx.fillRect(0, 0, SIZE, SIZE);
+      ctx.strokeStyle = 'rgba(32,201,151,.8)'; ctx.lineWidth = 6; ctx.strokeRect(3, 3, SIZE - 6, SIZE - 6);
+      ctx.font = '400 30px "Black Han Sans", "Noto Sans KR", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.8)'; ctx.strokeText(`시간 정지 ${S.timeStopT.toFixed(1)}s`, SIZE / 2, T / 2 + 4); ctx.fillStyle = '#20c997'; ctx.fillText(`시간 정지 ${S.timeStopT.toFixed(1)}s`, SIZE / 2, T / 2 + 4);
+    }
     if (S.buff.t > 0) { ctx.strokeStyle = 'rgba(242,177,52,.6)'; ctx.lineWidth = 3; ctx.strokeRect(T + 2, T + 2, SIZE - 2 * T - 4, SIZE - 2 * T - 4); }
     if (globalAtk() > 0) { ctx.globalAlpha = 0.25 + 0.1 * Math.sin(S.time * 2); ctx.strokeStyle = '#ffd43b'; ctx.lineWidth = 2; ctx.strokeRect(T + 5, T + 5, SIZE - 2 * T - 10, SIZE - 2 * T - 10); ctx.globalAlpha = 1; }
     // skill effects
@@ -1165,7 +1166,7 @@
     $('hGems').textContent = fmt(M.gems);
     if (!S) return;
     $('hRound').textContent = S.round ? (isBossRound() ? `${S.round} 보스` : String(S.round)) : '-';
-    $('hTime').textContent = S.phase === 'play' ? Math.max(0, Math.ceil(S.timer)) + 's' : '-';
+    $('hTime').textContent = S.phase === 'play' ? Math.max(0, Math.ceil(S.timer)) + 's' + (S.timeStopT > 0 ? ' ⏸' : '') : '-';
     $('hGold').textContent = fmt(S.gold);
     $('hMon').textContent = `${S.monsters.length} / ${monsterCap()}`;
     $('hMonWrap').classList.toggle('warn', S.monsters.length >= monsterCap() * 0.7);
@@ -1174,8 +1175,6 @@
     $('bSkip').disabled = S.phase !== 'play' || S.spawnQ > 0 || isBossRound();
     $('bSkip').textContent = isBossRound() ? '보스 라운드 (건너뛰기 불가)' : '다음 라운드 바로 시작';
     $('bLuck').disabled = S.phase !== 'play' || S.luck >= LUCK_MAX || S.gold < LUCK_COST(S.luck);
-    const cb = $('bSelCombine');
-    if (cb && S.sel) cb.disabled = !canCombine(S.sel.def) || S.units.filter(x => x.def === S.sel.def).length < CFG.COMBINE_NEED || !ownedOf(S.sel.grade + 1).length;
     const cd = $('selCd'); if (cd && S.sel && S.sel.def.skill) cd.textContent = S.sel.scd > 0 ? `쿨다운 ${Math.ceil(S.sel.scd)}s` : '준비 완료';
   }
   function renderLog() {
@@ -1185,11 +1184,8 @@
   function renderPanel() {
     if (!S) return;
     const w = weights(), rates = $('rates'); rates.innerHTML = '';
-    w.forEach((p, i) => {
-      const d = document.createElement('div');
-      d.innerHTML = `<b class="g${i}">${ownedOf(i).length ? (p * 100).toFixed(1) + '%' : '미보유'}</b>${GRADE_NAMES[i]}`;
-      rates.appendChild(d);
-    });
+    rates.style.gridTemplateColumns = 'repeat(2, 1fr)';
+    [0, 1].forEach(i => { const d = document.createElement('div'); d.innerHTML = `<b class="g${i}">${(w[i] * 100).toFixed(0)}%</b>${GRADE_NAMES[i]} 소환`; rates.appendChild(d); });
     $('luckCost').textContent = S.luck >= LUCK_MAX ? 'MAX' : `${LUCK_COST(S.luck)}G · Lv.${S.luck}`;
     renderRecipes();
     const sel = $('sel'); sel.innerHTML = '';
@@ -1205,18 +1201,15 @@
       head.appendChild(name);
       const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = `${TYPE_LABEL[u.def.t]} · ${TYPE_DESC[u.def.t]}`;
       const pv = document.createElement('div'); pv.className = 'pv'; pv.innerHTML = `<b>패시브</b> ${u.def.p}`;
-      if (isMaterial(u.def)) { const mats = RECIPE_UNITS.filter(r => owned(r) && r.recipe.some(([n]) => n === u.def.n)).map(r => r.n); if (mats.length) meta.textContent += ` · ⚗️ 조합 재료 (${mats.join(', ')})`; }
+      if (isMaterial(u.def)) { const mats = RECIPE_UNITS.filter(r => unlocked(r) && r.recipe.some(([n]) => n === u.def.n)).map(r => r.n); if (mats.length) meta.textContent += ` · ⚗️ 재료로 쓰임: ${mats.join(', ')}`; }
       const dl = document.createElement('dl');
-      dl.innerHTML = `<dt>공격력</dt><dd>${fmt(dmgOf(u))}</dd><dt>공격 간격</dt><dd>${intervalOf(u).toFixed(2)}s</dd><dt>사거리</dt><dd>${rangeOf(u)}</dd><dt>예상 DPS</dt><dd>${fmt(dpsOf(u))}</dd><dt>같은 유닛</dt><dd>${same} / ${CFG.COMBINE_NEED}</dd><dt>판매가</dt><dd>${sellOf(u.def)}G</dd>`;
+      dl.innerHTML = `<dt>공격력</dt><dd>${fmt(dmgOf(u))}</dd><dt>공격 간격</dt><dd>${intervalOf(u).toFixed(2)}s</dd><dt>사거리</dt><dd>${rangeOf(u)}</dd><dt>예상 DPS</dt><dd>${fmt(dpsOf(u))}</dd><dt>보드 위 같은 유닛</dt><dd>${same}</dd><dt>판매가</dt><dd>${sellOf(u.def)}G</dd>`;
       const btns = document.createElement('div'); btns.className = 'btns';
-      const bc = document.createElement('button'); bc.id = 'bSelCombine';
-      bc.textContent = u.def.recipeOnly ? '특수 등급 (합성 불가)' : u.grade >= TOP_GRADE ? '최고 등급' : ownedOf(u.grade + 1).length ? `합성 (${CFG.COMBINE_NEED}개 → ${GRADE_NAMES[u.grade + 1]})` : `${GRADE_NAMES[u.grade + 1]} 캐릭터 미보유`;
-      bc.addEventListener('click', combineSelected);
       const bs = document.createElement('button'); bs.className = 'danger'; bs.textContent = `판매 +${sellOf(u.def)}G`;
       bs.addEventListener('click', sellSelected);
-      const bl = document.createElement('button'); bl.className = 'lockb'; bl.textContent = u.lock ? '🔒 전체 합성 제외 중' : '🔓 전체 합성 허용 중';
+      const bl = document.createElement('button'); bl.className = 'lockb'; bl.textContent = u.lock ? '🔒 자동 조합 재료 제외 중' : '🔓 자동 조합 재료 허용 중';
       bl.title = '클릭하여 전환'; bl.addEventListener('click', toggleLock);
-      btns.append(bc, bs, bl);
+      btns.append(bs, bl);
       sel.append(head, meta, pv);
       if (u.def.skill) { const sk = document.createElement('div'); sk.className = 'pv'; sk.innerHTML = `<b>스킬 · ${u.def.skill.name}</b> ${u.def.skill.desc} <span class="cd" id="selCd"></span>`; sel.appendChild(sk); }
       sel.append(dl, btns);
@@ -1258,7 +1251,7 @@
     inf.appendChild(ib); modes.appendChild(inf);
     $('lbOwned').textContent = `${ALL_UNITS.filter(owned).length} / ${ALL_UNITS.length}`;
     $('lbItems').textContent = M.items.length;
-    $('deployPool').textContent = '등급별 보유: ' + GRADE_NAMES.map((g, i) => `${g} ${UNITS[i].filter(owned).length}/${UNITS[i].length}`).join(' · ');
+    $('deployPool').textContent = '등급별 보유(제작 가능): ' + GRADE_NAMES.map((g, i) => `${g} ${UNITS[i].filter(owned).length}(${UNITS[i].filter(unlocked).length})/${UNITS[i].length}`).join(' · ');
     for (const id of ['deployGear', 'equipSlots']) {
       const box = $(id); box.innerHTML = '';
       for (const slot of Object.keys(SLOT_NAMES)) {
@@ -1278,8 +1271,8 @@
       lv.textContent = `${GRADE_NAMES[def.grade]} · ${TYPE_LABEL[def.t]} · ${def.base ? '기본' : def.recipeOnly ? (owned(def) ? '조합 가능' : '재료 미보유') : !owned(def) ? '미보유' : def.grade === TOP_GRADE ? '★' + starsOf(def) : '보유'}`;
       const ps = document.createElement('div'); ps.className = 'ps'; ps.textContent = def.p;
       c.append(nm, lv, ps);
-      if (def.recipeOnly) { const rc = document.createElement('div'); rc.className = 'rc'; rc.textContent = '조합: ' + def.recipe.map(([n, k]) => `${n}×${k}`).join(' + '); c.appendChild(rc); }
-      else if (isMaterial(def)) { const rc = document.createElement('div'); rc.className = 'rc'; rc.textContent = '⚗️ 재료: ' + RECIPE_UNITS.filter(r => r.recipe.some(([n]) => n === def.n)).map(r => r.n).join(', '); c.appendChild(rc); }
+      if (def.recipe) { const rc = document.createElement('div'); rc.className = 'rc'; rc.textContent = '조합: ' + def.recipe.map(([n, k]) => k > 1 ? `${n}×${k}` : n).join(' + '); c.appendChild(rc); }
+      if (isMaterial(def)) { const rc = document.createElement('div'); rc.className = 'rc'; rc.textContent = '⚗️ 재료: ' + RECIPE_UNITS.filter(r => r.recipe.some(([n]) => n === def.n)).map(r => r.n).join(', '); c.appendChild(rc); }
       if (def.skill) { const sk = document.createElement('div'); sk.className = 'sk'; sk.textContent = `스킬 ${def.skill.name}: ${def.skill.desc}`; c.appendChild(sk); }
       if (!def.base && !def.recipeOnly) { const tg = document.createElement('div'); tg.className = 'tagb'; tg.textContent = `능력치 ×${CFG.GACHA_STAT_MUL}`; c.appendChild(tg); }
       if (def.recipeOnly) { const tg = document.createElement('div'); tg.className = 'tagb'; tg.style.color = '#4aa3ff'; tg.textContent = '조합 전용 · 능력치 ×' + CFG.GACHA_STAT_MUL; c.appendChild(tg); }
@@ -1320,6 +1313,7 @@
     let w = CHAR_PULL_W.slice(), via = '';
     if (M.pity >= PITY_AT - 1) { w = [0, 0, 0, 0, 0, 1]; via = '천장'; }
     else if (minGrade) { w = w.map((x, i) => i >= minGrade ? x : 0); via = '10연차 보장'; }
+    w[0] = 0; // 일반은 전부 기본 보유
     const g = weightedIndex(w);
     const def = pick(GACHA_UNITS[g]);
     M.pity = g === TOP_GRADE ? 0 : M.pity + 1;
@@ -1398,7 +1392,7 @@
     renderPanel();
   });
   $('bSummon').addEventListener('click', () => summon(false));
-  $('bCombineAll').addEventListener('click', combineAll);
+  $('bCombineAll').addEventListener('click', () => craftPinned(true));
   $('bLuck').addEventListener('click', upgradeLuck);
   $('bSkip').addEventListener('click', skipRound);
   $('bQuit').addEventListener('click', quitGame);
@@ -1416,7 +1410,7 @@
     if (!S) return;
     const k = ev.key.toLowerCase();
     if (k === 's') summon(false);
-    else if (k === 'c') combineAll();
+    else if (k === 'c') craftPinned(true);
     else if (k === 'l') upgradeLuck();
     else if (k === 'n') skipRound();
     else if (k === ' ') { ev.preventDefault(); togglePause(); }
@@ -1436,6 +1430,9 @@
     M = loadMeta();
     showLobby('deploy');
     requestAnimationFrame(frame);
+  }
+  if (location.hash === '#debug') { // local testing hook only
+    window.__rtd = { state: () => S, give: name => { const d = defByName(name), t = bestFreeTile(); if (d && t) { S.units.push(makeUnit(d, t.c, t.r)); renderPanel(); } } };
   }
   if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(boot); else boot();
 })();
