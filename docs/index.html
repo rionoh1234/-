@@ -227,8 +227,11 @@
         <div class="gacha-bar">
           <button class="gem" id="bPullChar1">1회 뽑기 · 100 보석</button>
           <button class="gem" id="bPullChar10">10회 뽑기 · 900 보석</button>
-          <span class="note">확률: 일반 45% · 고급 30% · 희귀 14% · 영웅 7% · 전설 3% · 신화 1% (기본·특수 캐릭터는 뽑기 제외). <b>신화</b> 중복: ★+1 (공격력 +15%/★, 최대 ★10). 그 외 등급 중복: 보석 환급 (일반 10 · 고급 15 · 희귀 25 · 영웅 40 · 전설 60)</span>
+          <button id="bTicket">신화 선택권 · 조각 60 <span id="shardCnt"></span></button>
+          <span class="note" id="pityNote"></span>
         </div>
+        <p class="note" style="margin:8px 0 0">확률: 일반 37% · 고급 27% · 희귀 15% · 영웅 10% · 전설 7% · <b>신화 4%</b> (기본·특수 캐릭터 제외). <b>천장</b>: 30회 연속 신화 미출현 시 다음 뽑기 신화 확정. <b>10연차</b>: 영웅 이상 1개 보장. <b>신화</b> 중복: ★+1 (공격력 +15%/★, 최대 ★10, 초과 시 100보석). 그 외 등급 중복: 신화 조각(일반 1 · 고급 2 · 희귀 4 · 영웅 8 · 전설 15) → 60조각으로 원하는 신화 선택.</p>
+        <div class="results" id="ticketBox" hidden></div>
         <div class="results" id="charResults"></div>
       </div>
       <div class="card full">
@@ -343,13 +346,16 @@
   const BASE_DMG = [6, 15, 38, 95, 240, 600, 0];
   const SELL = [10, 20, 40, 80, 160, 320, 0];
   const TOP_GRADE = 5, SPECIAL = 6;
-  const DUP_REFUND_BY_GRADE = [10, 15, 25, 40, 60];
   const STAR_MAX = 10, STAR_PCT = 0.15, GEAR_STAR_PCT = 0.2;
   const BASE_W = [45, 30, 15, 7, 2.5, 0.5];
   const LUCK_MUL = [0.82, 1.0, 1.12, 1.25, 1.4, 1.6];
   const LUCK_MAX = 8;
   const LUCK_COST = lv => Math.round(100 * Math.pow(1.6, lv));
-  const CHAR_PULL_W = [45, 30, 14, 7, 3, 1];
+  const CHAR_PULL_W = [37, 27, 15, 10, 7, 4];   // 신화 1% → 4%
+  const PITY_AT = 30;                             // 30회 연속 신화 미출현 시 다음 뽑기 신화 확정
+  const TEN_PULL_MIN_GRADE = 3;                   // 10연차 시 영웅 이상 1개 보장
+  const SHARD_BY_GRADE = [1, 2, 4, 8, 15];        // 중복 뽑기 시 신화 조각
+  const MYTHIC_TICKET_SHARDS = 60;                // 조각 → 원하는 신화 캐릭터 선택
   const TYPE_LABEL = { single: '단일', splash: '광역', slow: '둔화', multi: '연쇄', crit: '치명타' };
   const TYPE_DESC = {
     single: '한 대상에게 피해', splash: '대상 주변 몬스터에게 추가 피해',
@@ -613,7 +619,7 @@
   // ---------- Persistent meta (localStorage; per browser) ----------
   let M = null, S = null, uid = 0;
   function defaultMeta() {
-    return { gems: CFG.START_GEMS, chars: {}, items: [], equip: { weapon: null, boots: null, trinket: null }, best: 0, runs: 0, seq: 0, stages: [false, false, false, false], bestInf: 0 };
+    return { gems: CFG.START_GEMS, chars: {}, items: [], equip: { weapon: null, boots: null, trinket: null }, best: 0, runs: 0, seq: 0, stages: [false, false, false, false], bestInf: 0, pity: 0, shards: 0 };
   }
   function loadMeta() {
     try { const raw = localStorage.getItem('rtd_meta'); if (raw) return Object.assign(defaultMeta(), JSON.parse(raw)); } catch (e) { /* unavailable */ }
@@ -1256,19 +1262,52 @@
       bs.addEventListener('click', () => { M.items = M.items.filter(x => x !== it); M.gems += GEAR_SELL[it.rarity]; saveMeta(); renderLobby(); });
       d.append(be, bs); inv.appendChild(d);
     }
+    $('shardCnt').textContent = `(보유 ${M.shards})`;
+    $('bTicket').disabled = M.shards < MYTHIC_TICKET_SHARDS;
+    $('pityNote').textContent = `천장까지 ${Math.max(0, PITY_AT - M.pity)}회`;
     const can1 = M.gems >= CFG.PULL_COST, can10 = M.gems >= CFG.PULL10_COST;
     $('bPullChar1').disabled = !can1; $('bPullChar10').disabled = !can10; $('bPullGear1').disabled = !can1; $('bPullGear10').disabled = !can10;
   }
-  function pullChar() {
-    const def = pick(GACHA_UNITS[weightedIndex(CHAR_PULL_W)]);
+  function grantChar(def, via) {
     const cur = M.chars[def.n] || 0;
     let tag;
     if (cur === 0) { M.chars[def.n] = 1; tag = 'NEW'; }
     else if (def.grade === TOP_GRADE) {
       if (cur < STAR_MAX) { M.chars[def.n] = cur + 1; tag = `★${cur + 1} (+${Math.round(STAR_PCT * 100)}%)`; }
       else { M.gems += CFG.PULL_COST; tag = `★MAX · +${CFG.PULL_COST}보석`; }
-    } else { const r = DUP_REFUND_BY_GRADE[def.grade]; M.gems += r; tag = `중복 · +${r}보석`; }
+    } else { const sh = SHARD_BY_GRADE[def.grade]; M.shards += sh; tag = `중복 · 조각 +${sh}`; }
+    if (via) tag += ` · ${via}`;
     return { def, tag, isNew: cur === 0 };
+  }
+  function pullChar(minGrade) {
+    let w = CHAR_PULL_W.slice(), via = '';
+    if (M.pity >= PITY_AT - 1) { w = [0, 0, 0, 0, 0, 1]; via = '천장'; }
+    else if (minGrade) { w = w.map((x, i) => i >= minGrade ? x : 0); via = '10연차 보장'; }
+    const g = weightedIndex(w);
+    const def = pick(GACHA_UNITS[g]);
+    M.pity = g === TOP_GRADE ? 0 : M.pity + 1;
+    return grantChar(def, via);
+  }
+  function openTicket() {
+    const box = $('ticketBox'); box.hidden = !box.hidden; if (box.hidden) return;
+    box.innerHTML = '';
+    for (const def of GACHA_UNITS[TOP_GRADE]) {
+      const card = document.createElement('div'); card.className = 'rcard';
+      card.innerHTML = `<div class="g5"><b>${def.n}</b></div><div class="note">${owned(def) ? '★' + starsOf(def) + ' → ★' + Math.min(STAR_MAX, starsOf(def) + 1) : '미보유 → NEW'}</div>`;
+      card.prepend(spriteCanvas(unitSprite(def, 4), 48));
+      const b = document.createElement('button'); b.className = 'gem'; b.textContent = '선택'; b.style.minHeight = '28px';
+      b.disabled = M.shards < MYTHIC_TICKET_SHARDS || (M.chars[def.n] || 0) >= STAR_MAX;
+      b.addEventListener('click', () => {
+        if (M.shards < MYTHIC_TICKET_SHARDS) return;
+        M.shards -= MYTHIC_TICKET_SHARDS;
+        const r = grantChar(def, '선택권');
+        const res = $('charResults'); res.innerHTML = '';
+        const c = document.createElement('div'); c.className = 'rcard new';
+        c.innerHTML = `<div class="g5"><b>${r.def.n}</b></div><div class="note">신화</div><div class="tag">${r.tag}</div>`; c.prepend(spriteCanvas(unitSprite(r.def, 4), 48)); res.appendChild(c);
+        box.hidden = true; saveMeta(); renderLobby();
+      });
+      card.appendChild(b); box.appendChild(card);
+    }
   }
   function pullGear() {
     const rarity = weightedIndex(GEAR_W);
@@ -1288,10 +1327,13 @@
     if (M.gems < cost) return;
     M.gems -= cost;
     const box = $(kind === 'char' ? 'charResults' : 'gearResults'); box.innerHTML = '';
+    let gotHigh = false;
     for (let i = 0; i < count; i++) {
       const card = document.createElement('div'); card.className = 'rcard';
       if (kind === 'char') {
-        const r = pullChar();
+        const needGuarantee = count === 10 && i === count - 1 && !gotHigh;
+        const r = pullChar(needGuarantee ? TEN_PULL_MIN_GRADE : 0);
+        if (r.def.grade >= TEN_PULL_MIN_GRADE) gotHigh = true;
         if (r.isNew) card.classList.add('new');
         card.innerHTML = `<div class="g${r.def.grade}"><b>${r.def.n}</b></div><div class="note">${GRADE_NAMES[r.def.grade]}</div><div class="tag">${r.tag}</div>`;
         card.prepend(spriteCanvas(unitSprite(r.def, 4), 48));
@@ -1327,6 +1369,7 @@
   $('bPause').addEventListener('click', togglePause);
   $('bPullChar1').addEventListener('click', () => doPull('char', 1));
   $('bPullChar10').addEventListener('click', () => doPull('char', 10));
+  $('bTicket').addEventListener('click', openTicket);
   $('bPullGear1').addEventListener('click', () => doPull('gear', 1));
   $('bPullGear10').addEventListener('click', () => doPull('gear', 10));
   document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => selectTab(b.dataset.tab)));
