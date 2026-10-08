@@ -166,13 +166,11 @@
   <header class="top">
     <h1>랜타디<small>RANDOM TOWER DEFENSE</small></h1>
     <div class="hud">
-      <div class="stat gems"><span class="k">보석</span><b id="hGems">0</b></div>
-      <div class="stat" id="hModeWrap"><span class="k">모드</span><b id="hMode">-</b></div>
+      <div class="stat gems" id="hGemsWrap"><span class="k">보석</span><b id="hGems">0</b></div>
       <div class="stat" id="hRoundWrap"><span class="k">라운드</span><b id="hRound">-</b></div>
       <div class="stat" id="hTimeWrap"><span class="k">남은 시간</span><b id="hTime">-</b></div>
       <div class="stat gold" id="hGoldWrap"><span class="k">골드</span><b id="hGold">0</b></div>
       <div class="stat" id="hMonWrap"><span class="k">몬스터</span><b id="hMon">0 / 80</b></div>
-      <div class="stat" id="hUnitsWrap"><span class="k">유닛</span><b id="hUnits">0 / 49</b></div>
     </div>
     <div class="ctl" id="gameCtl" hidden>
       <button id="bSpeed" title="게임 속도">x1</button>
@@ -213,7 +211,8 @@
           <li>라운드마다 몬스터 20마리 · 10라운드마다 보스(45초 제한, 건너뛰기 불가)</li>
           <li>무한 모드: 10라운드마다 디버프 추가(중첩), 라운드 무제한</li>
           <li>살아있는 몬스터 80마리 이상이면 패배</li>
-          <li>모든 캐릭터는 고유 패시브, 신화 등급만 자동 발동 스킬 보유</li>
+          <li>모든 캐릭터는 고유 패시브, 신화 등급만 자동 발동 스킬 보유 · 보스는 처치 즉시 다음 라운드</li>
+          <li>오라 유닛은 주변 3×3이 색으로 표시되고, 버프를 받는 유닛은 모서리에 ▲ 표시</li>
           <li>조합식: 지정 재료 유닛을 보드에 모아 조합 전용 캐릭터 제작 (예: 검사×2 + 마법사×1 → 마검사)</li>
           <li>조합 전용 캐릭터는 <b>특수</b> 등급: 상위 등급으로 합성 불가, 전체 합성(C)에서 기본 제외</li>
           <li>가장자리 칸일수록 길에 가깝습니다 (사거리 확인)</li>
@@ -648,7 +647,7 @@
       units: [], monsters: [], shots: [], spawnQ: 0, spawnT: 0,
       luck: mods.luck, kills: 0, speed: 1, paused: false,
       sel: null, log: [], mods, time: 0, buff: { atk: 0, t: 0 },
-      mode, maxRound: mode.type === 'stage' ? CFG.MAX_ROUND : Infinity,
+      mode, maxRound: mode.type === 'stage' ? CFG.MAX_ROUND : Infinity, fx: [], bossSpawned: false,
       stageMul: mode.type === 'stage' ? CFG.STAGE_HP_MUL[mode.stage - 1] : 1,
       debuffs: [], dmul: computeDmul([]),
     };
@@ -852,7 +851,8 @@
       renderDebuffs();
     }
     S.timer = boss ? CFG.BOSS_TIME : roundTime();
-    if (boss) { S.spawnQ = 0; spawnMonster(n, true); log(`${n}라운드 보스 등장! ${CFG.BOSS_TIME}초 안에 처치하세요.`, 'g5'); }
+    S.bossSpawned = false;
+    if (boss) { S.spawnQ = 0; spawnMonster(n, true); S.bossSpawned = true; log(`${n}라운드 보스 등장! ${CFG.BOSS_TIME}초 안에 처치하세요. 처치 즉시 다음 라운드로 넘어갑니다.`, 'g5'); }
     else { S.spawnQ = CFG.PER_ROUND + S.dmul.extraMon; S.spawnT = 0; }
     renderPanel();
   }
@@ -902,11 +902,11 @@
   }
   function startGame(mode) {
     S = newState(mode || { type: 'infinite' });
-    $('hMode').textContent = modeLabel(S.mode);
     renderDebuffs();
     $('overlay').hidden = true;
     $('lobby').hidden = true; $('game').hidden = false; $('gameCtl').hidden = false;
-    ['hModeWrap', 'hRoundWrap', 'hTimeWrap', 'hGoldWrap', 'hMonWrap', 'hUnitsWrap'].forEach(id => { $(id).hidden = false; });
+    ['hRoundWrap', 'hTimeWrap', 'hGoldWrap', 'hMonWrap'].forEach(id => { $(id).hidden = false; });
+    $('hGemsWrap').hidden = true;
     $('bSpeed').textContent = 'x1'; $('bPause').textContent = '일시정지';
     log(`${modeLabel(S.mode)} 시작. 소환(S)으로 유닛을 뽑으세요.` + (S.mode.type === 'stage' ? ` (몬스터 체력 ×${S.stageMul})` : ''));
     const eq = Object.values(M.equip).filter(Boolean).length;
@@ -981,27 +981,29 @@
     return crit;
   }
   const strongest = (list) => list.reduce((a, b) => (!a || b.hp > a.hp) ? b : a, null);
+  const GLOBAL_SKILLS = ['vines', 'sunburst', 'timestop', 'deathtouch', 'chaos', 'genesis'];
   function castSkill(u) {
     const sk = u.def.skill, base = dmgOf(u), uc = tileCenter(u.col, u.row), rg = rangeOf(u), col = GRADE_COLORS[u.grade];
     const alive = S.monsters.filter(m => !m.dead);
     if (!alive.length && sk.id !== 'create') return false;
     const inRange = alive.filter(m => Math.hypot(m.x - uc.x, m.y - uc.y) <= rg);
-    const ring = (x, y, r) => S.shots.push({ ring: true, x, y, r, t: 0.5, col, w: 3 });
+    const ring = (x, y, r) => { S.fx.push({ type: 'wave', x, y, r0: 10, r1: r, t: 0.6, d: 0.6, col }); if (r >= SIZE / 2) S.fx.push({ type: 'screen', t: 0.35, d: 0.35, col }); };
+    const bolt = (t, w) => { S.shots.push({ x1: uc.x, y1: uc.y, x2: t.x, y2: t.y, t: 0.4, col, w }); S.fx.push({ type: 'burst', x: t.x, y: t.y, t: 0.4, d: 0.4, col }); };
     switch (sk.id) {
       case 'smite': if (!inRange.length) return false; inRange.forEach(m => hit(m, base * 6, u)); ring(uc.x, uc.y, rg); break;
       case 'meteor': if (!inRange.length) return false; inRange.forEach(m => hit(m, base * 8, u)); ring(uc.x, uc.y, rg); break;
       case 'breath': if (!inRange.length) return false; inRange.forEach(m => { hit(m, base * 5, u); m.burnT = 3; m.burnDps = Math.max(m.burnDps, base * 0.2); }); ring(uc.x, uc.y, rg); break;
       case 'freeze': if (!inRange.length) return false; inRange.forEach(m => { m.freezeT = Math.max(m.freezeT, 2); }); ring(uc.x, uc.y, rg); break;
       case 'warsong': S.buff = { atk: 0.3, t: 5 }; ring(uc.x, uc.y, 60); break;
-      case 'snipe': { const t = strongest(alive); hit(t, base * 10, u); S.shots.push({ x1: uc.x, y1: uc.y, x2: t.x, y2: t.y, t: 0.4, col, w: 4 }); break; }
-      case 'doom': { const t = strongest(alive); hit(t, base * 15, u); S.shots.push({ x1: uc.x, y1: uc.y, x2: t.x, y2: t.y, t: 0.4, col, w: 4 }); break; }
-      case 'assassinate': { const t = strongest(alive.filter(m => !m.boss)); if (!t) return false; hit(t, t.hp * 100, u); S.shots.push({ x1: uc.x, y1: uc.y, x2: t.x, y2: t.y, t: 0.4, col, w: 4 }); break; }
-      case 'lightning': { const pool = [...alive]; for (let i = 0; i < 6 && pool.length; i++) { const t = pool.splice(Math.floor(Math.random() * pool.length), 1)[0]; hit(t, base * 6, u); S.shots.push({ x1: t.x, y1: 0, x2: t.x, y2: t.y, t: 0.3, col: '#fff3bf', w: 3 }); } break; }
+      case 'snipe': { const t = strongest(alive); hit(t, base * 10, u); bolt(t, 4); break; }
+      case 'doom': { const t = strongest(alive); hit(t, base * 15, u); bolt(t, 4); break; }
+      case 'assassinate': { const t = strongest(alive.filter(m => !m.boss)); if (!t) return false; hit(t, t.hp * 100, u); bolt(t, 4); break; }
+      case 'lightning': { const pool = [...alive]; for (let i = 0; i < 6 && pool.length; i++) { const t = pool.splice(Math.floor(Math.random() * pool.length), 1)[0]; hit(t, base * 6, u); S.shots.push({ x1: t.x, y1: 0, x2: t.x, y2: t.y, t: 0.3, col: '#fff3bf', w: 3 }); S.fx.push({ type: 'burst', x: t.x, y: t.y, t: 0.4, d: 0.4, col: '#fff3bf' }); } break; }
       case 'vines': alive.forEach(m => { m.slowT = Math.max(m.slowT, 3); m.slowPct = Math.max(m.slowPct, 0.4); }); ring(SIZE / 2, SIZE / 2, SIZE / 2); break;
       case 'transmute': { const g = S.round * 5; S.gold += g; ring(uc.x, uc.y, 50); break; }
       case 'sunburst': alive.forEach(m => hit(m, base * 5, u)); ring(SIZE / 2, SIZE / 2, SIZE / 2); break;
       case 'timestop': alive.forEach(m => { m.freezeT = Math.max(m.freezeT, 3); }); S.timer += 5; ring(SIZE / 2, SIZE / 2, SIZE / 2); break;
-      case 'dragonrage': { const t = alive.find(m => m.boss) || strongest(alive); hit(t, base * 20, u); S.shots.push({ x1: uc.x, y1: uc.y, x2: t.x, y2: t.y, t: 0.4, col, w: 5 }); break; }
+      case 'dragonrage': { const t = alive.find(m => m.boss) || strongest(alive); hit(t, base * 20, u); bolt(t, 5); break; }
       case 'deathtouch': { const ts = alive.filter(m => !m.boss && m.hp <= m.maxHp * 0.3); if (!ts.length) return false; ts.forEach(m => hit(m, m.hp * 100, u)); ring(SIZE / 2, SIZE / 2, SIZE / 2); break; }
       case 'create': { if (!summon(true)) return false; ring(uc.x, uc.y, 50); break; }
       case 'chaos': alive.forEach(m => { m.d = Math.max(0, m.d - 0.25 * P); }); ring(SIZE / 2, SIZE / 2, SIZE / 2); break;
@@ -1010,6 +1012,9 @@
       default: return false;
     }
     log(`${u.def.n}: ${sk.name} 발동`, 'g' + u.grade);
+    S.fx.push({ type: 'flash', col: u.col, row: u.row, t: 0.5, d: 0.5, c: col });
+    const gl = GLOBAL_SKILLS.includes(sk.id);
+    S.fx.push({ type: 'text', x: gl ? SIZE / 2 : uc.x, y: gl ? SIZE / 2 : uc.y - 24, text: sk.name, t: 1.2, d: 1.2, col, big: gl });
     return true;
   }
   function update(dt) {
@@ -1046,6 +1051,9 @@
     S.monsters = S.monsters.filter(m => !m.dead);
     for (const s of S.shots) s.t -= dt;
     S.shots = S.shots.filter(s => s.t > 0);
+    for (const f of S.fx) f.t -= dt;
+    S.fx = S.fx.filter(f => f.t > 0);
+    if (isBossRound() && S.bossSpawned && !S.monsters.some(m => m.boss && m.round === S.round)) { log(`${S.round}라운드 보스 처치 완료, 다음 라운드로 진행합니다.`, 'g4'); endRound(); return; }
     if (S.monsters.length >= monsterCap()) { finishRun(false, `살아있는 몬스터가 ${monsterCap()}마리에 도달했습니다.`); return; }
     if (S.timer <= 0) endRound();
   }
@@ -1077,6 +1085,17 @@
     }
     ctx.fillStyle = 'rgba(255,90,95,.25)'; ctx.beginPath(); ctx.arc(C0, C0, 10, 0, Math.PI * 2); ctx.fill();
     if (!S) return;
+    // aura zones (buffers): 3x3 area tinted with the buffer's grade colour
+    for (const u of S.units) {
+      const m = u.def.m; if (!(m.auraAtk || m.auraAspd || m.auraRange)) continue;
+      const c0 = Math.max(INNER_MIN, u.col - 1), r0 = Math.max(INNER_MIN, u.row - 1), c1 = Math.min(INNER_MAX, u.col + 1), r1 = Math.min(INNER_MAX, u.row + 1);
+      const pulse = 0.10 + 0.05 * Math.sin(S.time * 3);
+      ctx.globalAlpha = S.sel === u ? pulse + 0.15 : pulse;
+      ctx.fillStyle = GRADE_COLORS[u.grade]; ctx.fillRect(c0 * T, r0 * T, (c1 - c0 + 1) * T, (r1 - r0 + 1) * T);
+      ctx.globalAlpha = S.sel === u ? 0.9 : 0.45; ctx.strokeStyle = GRADE_COLORS[u.grade]; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+      ctx.strokeRect(c0 * T + 2, r0 * T + 2, (c1 - c0 + 1) * T - 4, (r1 - r0 + 1) * T - 4); ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+    }
     if (S.sel && S.units.includes(S.sel)) {
       const c = tileCenter(S.sel.col, S.sel.row);
       ctx.fillStyle = 'rgba(242,177,52,.08)'; ctx.strokeStyle = 'rgba(242,177,52,.5)'; ctx.lineWidth = 1;
@@ -1091,10 +1110,14 @@
       ctx.drawImage(sp, x + (w - sp.width) / 2, y + (w - sp.height) / 2);
       if (u.def.grade === TOP_GRADE && starsOf(u.def) > 1) { ctx.fillStyle = '#f2b134'; ctx.font = '700 9px sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.fillText('★' + starsOf(u.def), x + w - 3, y + 2); }
       if (u.lock) { ctx.fillStyle = '#ff5a5f'; ctx.fillRect(x + 3, y + 4, 6, 5); ctx.strokeStyle = '#ff5a5f'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x + 6, y + 4, 2, Math.PI, 0); ctx.stroke(); }
-      if (u.def.skill) { // skill cooldown bar
+      if (aura(u, 'auraAtk') || aura(u, 'auraAspd') || aura(u, 'auraRange')) { // receiving a buff
+        ctx.fillStyle = '#4cd27a'; ctx.beginPath(); ctx.moveTo(x + w - 4, y + w - 4); ctx.lineTo(x + w - 11, y + w - 4); ctx.lineTo(x + w - 7.5, y + w - 10); ctx.closePath(); ctx.fill();
+      }
+      if (u.def.skill) { // skill cooldown bar; blinks when ready
         const f = 1 - Math.max(0, u.scd) / u.def.skill.cd;
         ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(x + 4, y + w - 5, w - 8, 3);
-        ctx.fillStyle = f >= 1 ? '#7ee8fa' : '#4aa3ff'; ctx.fillRect(x + 4, y + w - 5, (w - 8) * f, 3);
+        ctx.globalAlpha = f >= 1 ? 0.6 + 0.4 * Math.sin(S.time * 8) : 1;
+        ctx.fillStyle = f >= 1 ? '#7ee8fa' : '#4aa3ff'; ctx.fillRect(x + 4, y + w - 5, (w - 8) * f, 3); ctx.globalAlpha = 1;
       }
     }
     for (const s of S.shots) {
@@ -1116,6 +1139,20 @@
       ctx.fillStyle = frac > 0.5 ? '#4cd27a' : frac > 0.25 ? '#f2b134' : '#ff5a5f'; ctx.fillRect(m.x - bw / 2, m.y - r - bh - 3, bw * frac, bh);
     }
     if (S.buff.t > 0) { ctx.strokeStyle = 'rgba(242,177,52,.6)'; ctx.lineWidth = 3; ctx.strokeRect(T + 2, T + 2, SIZE - 2 * T - 4, SIZE - 2 * T - 4); }
+    if (globalAtk() > 0) { ctx.globalAlpha = 0.25 + 0.1 * Math.sin(S.time * 2); ctx.strokeStyle = '#ffd43b'; ctx.lineWidth = 2; ctx.strokeRect(T + 5, T + 5, SIZE - 2 * T - 10, SIZE - 2 * T - 10); ctx.globalAlpha = 1; }
+    // skill effects
+    for (const f of S.fx) {
+      const k = Math.max(0, f.t / f.d); // 1 → 0
+      if (f.type === 'flash') { ctx.globalAlpha = k * 0.8; ctx.fillStyle = f.c; roundRect(f.col * T + 3, f.row * T + 3, T - 6, T - 6, 8); ctx.fill(); ctx.globalAlpha = 1; }
+      else if (f.type === 'wave') { const r = f.r0 + (f.r1 - f.r0) * (1 - k); ctx.globalAlpha = k; ctx.strokeStyle = f.col; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(f.x, f.y, r, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = k * 0.15; ctx.fillStyle = f.col; ctx.fill(); ctx.globalAlpha = 1; }
+      else if (f.type === 'burst') { const r = 6 + 22 * (1 - k); ctx.globalAlpha = k; ctx.fillStyle = f.col; ctx.beginPath(); ctx.arc(f.x, f.y, r, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke(); ctx.globalAlpha = 1; }
+      else if (f.type === 'screen') { ctx.globalAlpha = k * 0.35; ctx.strokeStyle = f.col; ctx.lineWidth = 24; ctx.strokeRect(0, 0, SIZE, SIZE); ctx.globalAlpha = 1; }
+      else if (f.type === 'text') {
+        const y = f.y - (1 - k) * 22; ctx.globalAlpha = Math.min(1, k * 2);
+        ctx.font = (f.big ? '400 36px' : '400 20px') + ' "Black Han Sans", "Noto Sans KR", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.8)'; ctx.strokeText(f.text, f.x, y); ctx.fillStyle = f.col; ctx.fillText(f.text, f.x, y); ctx.globalAlpha = 1;
+      }
+    }
     if (S.paused && S.phase === 'play') {
       ctx.fillStyle = 'rgba(13,17,23,.6)'; ctx.fillRect(0, 0, SIZE, SIZE);
       ctx.fillStyle = '#f2b134'; ctx.font = '400 40px "Black Han Sans", "Noto Sans KR", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1132,7 +1169,6 @@
     $('hGold').textContent = fmt(S.gold);
     $('hMon').textContent = `${S.monsters.length} / ${monsterCap()}`;
     $('hMonWrap').classList.toggle('warn', S.monsters.length >= monsterCap() * 0.7);
-    $('hUnits').textContent = `${S.units.length} / ${(INNER_MAX - INNER_MIN + 1) ** 2}`;
     $('bSummon').disabled = S.phase !== 'play' || S.gold < summonCost() || S.units.length >= 49;
     $('summonCost').textContent = summonCost() + 'G';
     $('bSkip').disabled = S.phase !== 'play' || S.spawnQ > 0 || isBossRound();
@@ -1192,7 +1228,8 @@
   function showLobby(tab) {
     S = null;
     $('game').hidden = true; $('gameCtl').hidden = true; $('lobby').hidden = false; $('overlay').hidden = true;
-    ['hModeWrap', 'hRoundWrap', 'hTimeWrap', 'hGoldWrap', 'hMonWrap', 'hUnitsWrap'].forEach(id => { $(id).hidden = true; });
+    ['hRoundWrap', 'hTimeWrap', 'hGoldWrap', 'hMonWrap'].forEach(id => { $(id).hidden = true; });
+    $('hGemsWrap').hidden = false;
     selectTab(tab || 'deploy');
     renderLobby();
   }
