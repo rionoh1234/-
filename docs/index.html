@@ -144,6 +144,10 @@
   .debuffs li { color: var(--danger); }
   .debuffs li::before { content: "▼ "; }
   .lockb { font-size: 12px; }
+  #craftBadge { font-size: 12px; color: var(--accent); padding: 2px 4px; }
+  #craftBadge b { background: var(--accent); color: var(--accent-ink); border-radius: 10px; padding: 0 7px; margin-right: 6px; }
+  .sel .quick { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sel .quick button { border-color: var(--accent); min-height: 30px; padding: 4px 10px; font-size: 12px; }
   .recipes { display: grid; gap: 6px; }
   .recipe { display: grid; grid-template-columns: 36px 1fr auto; gap: 8px; align-items: center; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font-size: 12px; min-width: 0; }
   .recipe.ok { border-color: var(--accent); }
@@ -215,7 +219,7 @@
           <li>소환 20G · 일반 8종 중 무작위 (행운 강화 시 고급 직접 소환 확률 상승)</li>
           <li>상위 등급은 <b>지정 조합식</b>으로만 제작 (고급 = 일반 2종, 희귀 = 고급+일반, 영웅 = 희귀+고급, 전설 = 영웅+희귀+일반, 신화 = 전설+영웅+희귀)</li>
           <li>뽑기로 얻은 캐릭터는 그 조합식이 해금됨 · 기본 캐릭터 갈래(사냥꾼→저격수→성기사→용기사→파멸자)는 항상 열림</li>
-          <li>라운드마다 몬스터 20마리 · 10라운드마다 보스(45초 제한, 건너뛰기 불가)</li>
+          <li>라운드마다 몬스터 20마리 · 10라운드마다 보스(90초 제한, 건너뛰기 불가) · 일시정지 중에도 조합·소환·이동 가능</li>
           <li>무한 모드: 10라운드마다 디버프 추가(중첩), 라운드 무제한</li>
           <li>살아있는 몬스터 80마리 이상이면 패배</li>
           <li>모든 캐릭터는 고유 패시브, 신화 등급만 자동 발동 스킬 보유 · 보스는 처치 즉시 다음 라운드</li>
@@ -277,7 +281,9 @@
       <div class="card">
         <h3>명령</h3>
         <div class="actions">
-          <button class="primary wide" id="bSummon">소환 <span id="summonCost">20G</span><kbd>S</kbd></button>
+          <button class="primary" id="bSummon">소환 <span id="summonCost">20G</span><kbd>S</kbd></button>
+          <button id="bGoal" title="🎯 핀한 목표를 향해 보드 재료로 만들 수 있는 조합을 필요 수량만큼 실행 (누를 때만)">🎯 목표 조합 실행<kbd>G</kbd></button>
+          <div class="wide" id="craftBadge" hidden></div>
           <button id="bLuck" class="wide">행운 강화 (고급 직접 소환 확률) <span id="luckCost"></span><kbd>L</kbd></button>
           <button id="bSkip" class="wide">다음 라운드 바로 시작<kbd>N</kbd></button>
         </div>
@@ -297,7 +303,7 @@
       <div class="card">
         <h3>선택한 유닛</h3>
         <div class="sel" id="sel"></div>
-        <p class="note" style="margin:8px 0 0">단축키: S 소환 · K 잠금 전환 · L 행운 · N 다음 라운드 · Space 일시정지 · Esc 선택 해제</p>
+        <p class="note" style="margin:8px 0 0">단축키: S 소환 · G 목표 조합 · K 잠금 전환 · L 행운 · N 다음 라운드 · Space 일시정지 · Esc 선택 해제</p>
       </div>
 
       <div class="card">
@@ -316,7 +322,7 @@
   const T = 56, N = 9, SIZE = T * N;
   const INNER_MIN = 1, INNER_MAX = N - 2;
   const CFG = {
-    START_GOLD: 100, SUMMON_COST: 20, ROUND_TIME: 25, BOSS_TIME: 45, MONSTER_CAP: 80, MAX_ROUND: 40,
+    START_GOLD: 100, SUMMON_COST: 20, ROUND_TIME: 25, BOSS_TIME: 90, MONSTER_CAP: 80, MAX_ROUND: 40,
     COMBINE_NEED: 2, SPAWN_INTERVAL: 0.6, PER_ROUND: 20,
     hp: n => Math.round(12 * Math.pow(1.15, n) + 8 * n),
     speed: n => 55 + Math.min(n, 30) * 1.0,
@@ -657,7 +663,7 @@
       units: [], monsters: [], shots: [], spawnQ: 0, spawnT: 0,
       luck: mods.luck, kills: 0, speed: 1, paused: false,
       sel: null, log: [], mods, time: 0, buff: { atk: 0, t: 0 },
-      mode, maxRound: mode.type === 'stage' ? CFG.MAX_ROUND : Infinity, fx: [], bossSpawned: false, timeStopT: 0, pinRoots: [],
+      mode, maxRound: mode.type === 'stage' ? CFG.MAX_ROUND : Infinity, fx: [], bossSpawned: false, timeStopT: 0, pinRoots: [], hl: null, hintShown: false,
       stageMul: mode.type === 'stage' ? CFG.STAGE_HP_MUL[mode.stage - 1] : 1,
       debuffs: [], dmul: computeDmul([]),
     };
@@ -774,7 +780,37 @@
     renderPanel();
   }
   function neededBase(def, acc) { acc = acc || {}; for (const [n, k] of def.recipe) { const d = defByName(n); for (let i = 0; i < k; i++) { if (d.recipe) neededBase(d, acc); else acc[n] = (acc[n] || 0) + 1; } } return acc; }
-  let recipeTab = 'all';
+  // Plan toward a goal: allocate units already on the board (unlocked), then list what must be crafted and which base units are missing.
+  function planGoal(root) {
+    const avail = {}; for (const u of S.units) if (!u.lock) avail[u.def.n] = (avail[u.def.n] || 0) + 1;
+    const toMake = {}, missing = {};
+    const plan = (def, k) => {
+      const have = Math.min(k, avail[def.n] || 0); avail[def.n] = (avail[def.n] || 0) - have; k -= have;
+      if (k <= 0) return;
+      if (!def.recipe) { missing[def.n] = (missing[def.n] || 0) + k; return; }
+      toMake[def.n] = (toMake[def.n] || 0) + k;
+      for (const [n, c] of def.recipe) plan(defByName(n), k * c);
+    };
+    plan(root, 1);
+    return { toMake, missing };
+  }
+  function runGoal() {
+    if (!S || S.phase !== 'play') return;
+    if (!S.pinRoots.length) { log('🎯 목표가 없습니다. 조합식 패널에서 📌 핀을 꽂으세요.'); return; }
+    let made = 0; const missAll = {};
+    for (const rn of S.pinRoots) {
+      const root = defByName(rn);
+      if (!unlocked(root)) continue;
+      const { toMake, missing } = planGoal(root);
+      const order = Object.keys(toMake).map(defByName).sort((a, b) => a.grade - b.grade);
+      for (const def of order) { for (let i = 0; i < toMake[def.n]; i++) { if (!canCraftNow(def) || !craft(def)) break; made++; } }
+      for (const k of Object.keys(missing)) missAll[k] = (missAll[k] || 0) + missing[k];
+    }
+    const miss = Object.entries(missAll).map(([k, v]) => `${k}×${v}`).join(', ');
+    log(`🎯 목표 조합 실행: ${made}회 제작` + (miss ? ` · 소환으로 더 필요: ${miss}` : ' · 재료 충족'), made ? 'g4' : undefined);
+    renderPanel();
+  }
+  let recipeTab = 'now';
   function renderRecipes() {
     const box = $('recipes'); box.innerHTML = '';
     const tabs = document.createElement('div'); tabs.className = 'rtabs';
@@ -790,7 +826,12 @@
     else list.sort((a, b) => (canCraftNow(b) - canCraftNow(a)) || (a.grade - b.grade));
     if (recipeTab === 'pin' && S.pinRoots.length) {
       const goal = document.createElement('div'); goal.className = 'note';
-      goal.innerHTML = S.pinRoots.map(n => { const d = defByName(n), nb = neededBase(d); return `🎯 <b class="g${d.grade}">${n}</b> 목표 · 필요한 일반 유닛: ${Object.entries(nb).map(([k, v]) => `${k}×${v}`).join(', ')}`; }).join('<br>');
+      goal.innerHTML = S.pinRoots.map(n => {
+        const d = defByName(n), nb = neededBase(d), pl = planGoal(d);
+        const miss = Object.entries(pl.missing).map(([k, v]) => `${k}×${v}`).join(', ');
+        const next = Object.keys(pl.toMake).map(defByName).filter(x => canCraftNow(x)).map(x => x.n).join(', ');
+        return `🎯 <b class="g${d.grade}">${n}</b> 목표 · 전체 필요 일반 유닛: ${Object.entries(nb).map(([k, v]) => `${k}×${v}`).join(', ')}<br>　↳ 지금 조합 가능: <span style="color:var(--ok)">${next || '없음'}</span> · 소환으로 더 필요: <span style="color:var(--danger)">${miss || '없음 (G 키로 목표까지 제작 가능)'}</span>`;
+      }).join('<br>');
       box.appendChild(goal);
     }
     const locked = RECIPE_UNITS.filter(d => owned(d) && !unlocked(d));
@@ -804,6 +845,11 @@
       const bp = document.createElement('button'); bp.textContent = isRoot ? '🎯 해제' : pinned ? '📌 하위' : '📌 핀'; bp.title = '목표 표시 (하위 조합식까지 함께 표시, 자동 조합 없음)'; bp.disabled = pinned && !isRoot; bp.addEventListener('click', () => togglePin(def));
       const b = document.createElement('button'); b.textContent = '조합'; b.disabled = !ok; b.addEventListener('click', () => craft(def));
       row.append(info, bp, b); box.appendChild(row);
+      const names = def.recipe.map(([n]) => n);
+      const on = () => { S.hl = new Set(S.units.filter(u => names.includes(u.def.n)).map(u => u.id)); };
+      const off = () => { S.hl = null; };
+      row.addEventListener('mouseenter', on); row.addEventListener('mouseleave', off);
+      row.addEventListener('touchstart', on, { passive: true }); row.addEventListener('touchend', off); row.addEventListener('touchcancel', off);
     }
     if (recipeTab === 'all' && locked.length) { const n = document.createElement('div'); n.className = 'note'; n.textContent = `재료 분기 미해금 (뽑기로 재료 캐릭터 획득 필요): ${locked.map(d => d.n).join(', ')}`; box.appendChild(n); }
   }
@@ -850,7 +896,7 @@
     }
     S.timer = boss ? CFG.BOSS_TIME : roundTime();
     S.bossSpawned = false;
-    if (boss) { S.spawnQ = 0; spawnMonster(n, true); S.bossSpawned = true; log(`${n}라운드 보스 등장! ${CFG.BOSS_TIME}초 안에 처치하세요. 처치 즉시 다음 라운드로 넘어갑니다.`, 'g5'); }
+    if (boss) { S.spawnQ = 0; spawnMonster(n, true); S.bossSpawned = true; log(`${n}라운드 보스 등장! ${CFG.BOSS_TIME}초 안에 처치하세요. 처치 즉시 다음 라운드로 넘어갑니다.`, 'g5'); if (!S.hintShown) { S.hintShown = true; log('팁: Space로 일시정지해도 조합·소환·이동은 그대로 할 수 있습니다.'); } }
     else { S.spawnQ = CFG.PER_ROUND + S.dmul.extraMon; S.spawnT = 0; }
     renderPanel();
   }
@@ -1110,6 +1156,7 @@
       const sp = unitSprite(u.def, 3);
       ctx.drawImage(sp, x + (w - sp.width) / 2, y + (w - sp.height) / 2);
       if (u.def.grade === TOP_GRADE && starsOf(u.def) > 1) { ctx.fillStyle = '#f2b134'; ctx.font = '700 9px sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.fillText('★' + starsOf(u.def), x + w - 3, y + 2); }
+      if (S.hl && S.hl.has(u.id)) { ctx.globalAlpha = 0.5 + 0.5 * Math.abs(Math.sin(S.time * 6)); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; roundRect(x - 2, y - 2, w + 4, w + 4, 9); ctx.stroke(); ctx.globalAlpha = 1; }
       if (u.lock) { ctx.fillStyle = '#ff5a5f'; ctx.fillRect(x + 3, y + 4, 6, 5); ctx.strokeStyle = '#ff5a5f'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x + 6, y + 4, 2, Math.PI, 0); ctx.stroke(); }
       if (aura(u, 'auraAtk') || aura(u, 'auraAspd') || aura(u, 'auraRange')) { // receiving a buff
         ctx.fillStyle = '#4cd27a'; ctx.beginPath(); ctx.moveTo(x + w - 4, y + w - 4); ctx.lineTo(x + w - 11, y + w - 4); ctx.lineTo(x + w - 7.5, y + w - 10); ctx.closePath(); ctx.fill();
@@ -1179,6 +1226,10 @@
     $('bSummon').disabled = S.phase !== 'play' || S.gold < summonCost() || S.units.length >= 49;
     $('summonCost').textContent = summonCost() + 'G';
     $('bSkip').disabled = S.phase !== 'play' || S.spawnQ > 0 || isBossRound();
+    $('bGoal').disabled = S.phase !== 'play' || !S.pinRoots.length;
+    const nNow = RECIPE_UNITS.filter(d => unlocked(d) && canCraftNow(d)).length;
+    const badge = $('craftBadge'); badge.hidden = !nNow;
+    if (nNow) badge.innerHTML = `<b>${nNow}</b>지금 조합 가능 (조합식 패널 "지금 가능" 탭 · 또는 유닛 클릭)`;
     $('bSkip').textContent = isBossRound() ? '보스 라운드 (건너뛰기 불가)' : '다음 라운드 바로 시작';
     $('bLuck').disabled = S.phase !== 'play' || S.luck >= LUCK_MAX || S.gold < LUCK_COST(S.luck);
     const cd = $('selCd'); if (cd && S.sel && S.sel.def.skill) cd.textContent = S.sel.scd > 0 ? `쿨다운 ${Math.ceil(S.sel.scd)}s` : '준비 완료';
@@ -1217,6 +1268,20 @@
       bl.title = '클릭하여 전환'; bl.addEventListener('click', toggleLock);
       btns.append(bs, bl);
       sel.append(head, meta, pv);
+      const quick = RECIPE_UNITS.filter(r => unlocked(r) && r.recipe.some(([n]) => n === u.def.n));
+      if (quick.length) {
+        const q = document.createElement('div'); q.className = 'quick';
+        for (const r of quick.sort((a, b) => (canCraftNow(b) - canCraftNow(a)) || (a.grade - b.grade)).slice(0, 8)) {
+          const ok = canCraftNow(r) && !u.lock;
+          const b = document.createElement('button'); b.disabled = !ok;
+          b.innerHTML = `${ok ? '⚒ ' : ''}<span class="g${r.grade}">${r.n}</span> 조합` + (ok ? '' : ` <span class="note">(${recipeCounts(r).filter(x => x.have < x.need).map(x => `${x.n} ${x.have}/${x.need}`).join(', ')})</span>`);
+          b.addEventListener('click', () => craft(r));
+          const names = r.recipe.map(([n]) => n);
+          b.addEventListener('mouseenter', () => { S.hl = new Set(S.units.filter(x => names.includes(x.def.n)).map(x => x.id)); }); b.addEventListener('mouseleave', () => { S.hl = null; });
+          q.appendChild(b);
+        }
+        sel.appendChild(q);
+      }
       if (u.def.skill) { const sk = document.createElement('div'); sk.className = 'pv'; sk.innerHTML = `<b>스킬 · ${u.def.skill.name}</b> ${u.def.skill.desc} <span class="cd" id="selCd"></span>`; sel.appendChild(sk); }
       sel.append(dl, btns);
     }
@@ -1401,6 +1466,7 @@
   $('bLuck').addEventListener('click', upgradeLuck);
   $('bSkip').addEventListener('click', skipRound);
   $('bQuit').addEventListener('click', quitGame);
+  $('bGoal').addEventListener('click', runGoal);
   $('bSpeed').addEventListener('click', () => { if (!S) return; S.speed = S.speed >= 3 ? 1 : S.speed + 1; $('bSpeed').textContent = 'x' + S.speed; });
   $('bPause').addEventListener('click', togglePause);
   $('bPullChar1').addEventListener('click', () => doPull('char', 1));
@@ -1419,6 +1485,7 @@
     else if (k === 'n') skipRound();
     else if (k === ' ') { ev.preventDefault(); togglePause(); }
     else if (k === 'k') toggleLock();
+    else if (k === 'g') runGoal();
     else if (k === 'escape') { S.sel = null; renderPanel(); }
   });
 
