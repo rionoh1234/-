@@ -89,6 +89,9 @@
   .sel .head { display: flex; align-items: center; gap: 10px; }
   .sel .name { font-size: 18px; font-weight: 700; }
   .sel .meta { color: var(--muted); font-size: 12px; }
+  .sel .pv { font-size: 12px; padding: 6px 8px; background: var(--panel-2); border-radius: 6px; }
+  .sel .pv b { color: var(--accent); }
+  .sel .pv .cd { color: var(--muted); font-variant-numeric: tabular-nums; }
   .sel dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin: 0; font-variant-numeric: tabular-nums; }
   .sel dt { color: var(--muted); }
   .sel dd { margin: 0; }
@@ -99,7 +102,6 @@
   .g0 { color: #aab2bf; } .g1 { color: #4cd27a; } .g2 { color: #4aa3ff; } .g3 { color: #b16cff; } .g4 { color: #ff9f1c; } .g5 { color: #ff4d6d; }
   .r0 { color: #aab2bf; } .r1 { color: #4aa3ff; } .r2 { color: #b16cff; } .r3 { color: #ff9f1c; }
   .note { font-size: 12px; color: var(--muted); }
-  /* lobby */
   .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); padding: 0 4px; }
   .lobby-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
   .lobby-grid .full { grid-column: 1 / -1; }
@@ -108,11 +110,15 @@
   .rcard { display: grid; justify-items: center; gap: 4px; padding: 8px; width: 96px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; font-size: 12px; text-align: center; }
   .rcard.new { border-color: var(--accent); }
   .rcard .tag { font-size: 10px; color: var(--accent); letter-spacing: .08em; }
-  .roster { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
-  .ccard { display: grid; justify-items: center; gap: 4px; padding: 8px 6px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; font-size: 12px; text-align: center; }
+  .roster { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  .ccard { display: grid; justify-items: center; align-content: start; gap: 3px; padding: 8px 6px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; font-size: 12px; text-align: center; min-width: 0; }
   .ccard.locked { opacity: .4; filter: grayscale(.6); }
+  .ccard.base { border-style: dashed; }
   .ccard .nm { font-weight: 700; }
   .ccard .lv { color: var(--muted); font-size: 11px; }
+  .ccard .ps { font-size: 11px; color: var(--fg); line-height: 1.3; }
+  .ccard .sk { font-size: 11px; color: var(--accent); line-height: 1.3; }
+  .ccard .tagb { font-size: 10px; letter-spacing: .08em; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
   .slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .slot { background: var(--panel-2); border: 1px dashed var(--line); border-radius: 8px; padding: 8px; font-size: 12px; min-height: 64px; }
   .slot .k { color: var(--muted); font-size: 11px; letter-spacing: .08em; }
@@ -169,10 +175,10 @@
         <div class="summary">
           <div><span class="k">최고 라운드</span><br><b id="lbBest">0</b></div>
           <div><span class="k">플레이 횟수</span><br><b id="lbRuns">0</b></div>
-          <div><span class="k">보유 캐릭터</span><br><b id="lbOwned">0 / 18</b></div>
+          <div><span class="k">보유 캐릭터</span><br><b id="lbOwned">0 / 30</b></div>
           <div><span class="k">보유 장비</span><br><b id="lbItems">0</b></div>
         </div>
-        <p class="note" style="margin:10px 0 0">보석 보상: 게임 종료 시 <b>50 + 라운드 × 15</b> (클리어 시 +300). 게임 안에서는 <b>보유한 캐릭터만</b> 소환·합성됩니다. 상위 등급 캐릭터가 없으면 그 등급으로 합성할 수 없습니다.</p>
+        <p class="note" style="margin:10px 0 0">보석 보상: 게임 종료 시 <b>50 + 라운드 × 15</b> (클리어 시 +300). 기본 캐릭터 6종(등급별 1종)은 항상 보유하며, 뽑기 캐릭터는 같은 등급이라도 능력치가 20% 높고 더 강한 패시브를 가집니다. 게임 안에서는 <b>보유한 캐릭터만</b> 소환·합성됩니다.</p>
         <div style="margin-top:12px"><button class="primary" id="bStart" style="min-height:48px;width:100%;font-size:16px">게임 시작</button></div>
       </div>
       <div class="card">
@@ -182,8 +188,9 @@
         <h3 style="margin-top:12px">규칙</h3>
         <ul class="rules">
           <li>소환 20G · 같은 유닛 2개를 합쳐 상위 등급</li>
-          <li>라운드마다 몬스터 20마리 · 10·20·30 보스, 40 최종 보스(45초 제한)</li>
+          <li>라운드마다 몬스터 20마리 · 10·20·30 보스, 40 최종 보스(45초 제한, 건너뛰기 불가)</li>
           <li>살아있는 몬스터 80마리 이상이면 패배</li>
+          <li>모든 캐릭터는 고유 패시브, 영웅 이상은 자동 발동 스킬 보유</li>
           <li>가장자리 칸일수록 길에 가깝습니다 (사거리 확인)</li>
         </ul>
       </div>
@@ -195,7 +202,7 @@
         <div class="gacha-bar">
           <button class="gem" id="bPullChar1">1회 뽑기 · 100 보석</button>
           <button class="gem" id="bPullChar10">10회 뽑기 · 900 보석</button>
-          <span class="note">확률: 일반 45% · 고급 30% · 희귀 14% · 영웅 7% · 전설 3% · 신화 1%. 중복 시 캐릭터 레벨 +1 (공격력 +8%/Lv, 최대 Lv.10, 초과 시 30 보석 환급)</span>
+          <span class="note">확률: 일반 45% · 고급 30% · 희귀 14% · 영웅 7% · 전설 3% · 신화 1% (기본 캐릭터는 뽑기에서 제외). 중복 시 레벨 +1 (공격력 +8%/Lv, 최대 Lv.10, 초과 시 30 보석 환급)</span>
         </div>
         <div class="results" id="charResults"></div>
       </div>
@@ -281,7 +288,7 @@
     BOSS_HP_MUL: 25, BOSS_BOUNTY_MUL: 30, UPG_PCT: 0.12,
     gemsForRun: (round, cleared) => 50 + round * 15 + (cleared ? 300 : 0),
     PULL_COST: 100, PULL10_COST: 900, CHAR_LV_MAX: 10, CHAR_LV_PCT: 0.08, DUP_REFUND: 30,
-    START_GEMS: 300,
+    START_GEMS: 300, GACHA_STAT_MUL: 1.2,
   };
   const GRADE_NAMES = ['일반', '고급', '희귀', '영웅', '전설', '신화'];
   const GRADE_COLORS = ['#aab2bf', '#4cd27a', '#4aa3ff', '#b16cff', '#ff9f1c', '#ff4d6d'];
@@ -295,37 +302,112 @@
   const CHAR_PULL_W = [45, 30, 14, 7, 3, 1];
   const TYPE_LABEL = { single: '단일', splash: '광역', slow: '둔화', multi: '연쇄', crit: '치명타' };
   const TYPE_DESC = {
-    single: '한 대상에게 피해', splash: '대상 주변 45px 안의 몬스터에게 50% 추가 피해',
-    slow: '대상 이동 속도 40% 감소 1.5초', multi: '사거리 안 최대 3마리에게 70% 피해', crit: '25% 확률로 3배 피해',
+    single: '한 대상에게 피해', splash: '대상 주변 몬스터에게 추가 피해',
+    slow: '대상 이동 속도 감소', multi: '사거리 안 여러 마리에게 피해', crit: '확률로 치명타 피해',
   };
-  // n: name, t: attack type, d: damage mult, i: attack interval, r: range, sp: sprite spec (hat, wep, palette)
+  // Passive modifiers every unit's attack reads. A character's `mod` overrides these.
+  const MOD = {
+    atk: 0, aspd: 0, range: 0, splashR: 45, splashPct: 0.5, slowPct: 0.4, slowDur: 1.5, chain: 3, chainPct: 0.7,
+    critChance: 0.25, critMult: 3, bossDmg: 0, killGold: 0, goldPct: 0, roundGold: 0, pierce: 0, nth: 0, burn: 0,
+    vsSlowed: 0, vsLowHp: 0, auraAtk: 0, auraAspd: 0, upgMult: 1, farBonus: 0, focus: 0, execute: 0, harvest: 0,
+  };
+  // n: name, t: attack type, d: dmg mult, i: interval, r: range, base: starter (always owned, not in gacha),
+  // sp: sprite spec, mod: passive numbers, p: passive text, skill: {id, name, cd, desc} (auto-cast)
   const UNITS = [
-    [{ n: '궁수', t: 'single', d: 1.0, i: 0.9, r: 140, sp: { hat: 'hood', wep: 'bow', c: '#4e9a51', d: '#35703a', H: '#3b7a40', h: '#6b4a2b' } },
-     { n: '투석병', t: 'splash', d: 0.8, i: 1.3, r: 130, sp: { hat: 'band', wep: 'orb', c: '#8a6d4b', d: '#6a5238', G: '#c0392b', x: '#9a9a9a', h: '#2c2c2c' } },
-     { n: '창병', t: 'single', d: 1.3, i: 1.1, r: 120, sp: { hat: 'none', wep: 'spear', c: '#6c7a89', d: '#4f5b68', h: '#2c2c2c' } }],
-    [{ n: '사냥꾼', t: 'crit', d: 1.0, i: 0.9, r: 150, sp: { hat: 'hood', wep: 'bow', c: '#7a5230', d: '#5b3c22', H: '#9c6b3c', h: '#3a2a1a' } },
-     { n: '마법사', t: 'splash', d: 0.9, i: 1.2, r: 140, sp: { hat: 'wizard', wep: 'staff', c: '#3b5bdb', d: '#2a42a0', H: '#3b5bdb', x: '#8ec5ff' } },
-     { n: '냉기술사', t: 'slow', d: 0.8, i: 1.0, r: 140, sp: { hat: 'wizard', wep: 'orb', c: '#5bc0eb', d: '#3a8fb5', H: '#bfe9ff', x: '#e0f7ff' } }],
-    [{ n: '저격수', t: 'single', d: 1.6, i: 1.4, r: 220, sp: { hat: 'hood', wep: 'bow', c: '#2f3e46', d: '#1f2a30', H: '#4a5f6a', h: '#1a1a1a' } },
-     { n: '화염술사', t: 'splash', d: 1.0, i: 1.1, r: 150, sp: { hat: 'wizard', wep: 'staff', c: '#d9480f', d: '#a13508', H: '#ff6b35', x: '#ffd166' } },
-     { n: '폭풍술사', t: 'multi', d: 0.8, i: 1.0, r: 150, sp: { hat: 'band', wep: 'orb', c: '#6f42c1', d: '#4d2b8c', G: '#c8a2ff', x: '#e3d2ff', h: '#d0bfff' } }],
-    [{ n: '성기사', t: 'crit', d: 1.2, i: 0.9, r: 150, sp: { hat: 'helmet', wep: 'sword', c: '#e9ecef', d: '#adb5bd', W: '#dee2e6', G: '#f2b134', w: '#ffffff' } },
-     { n: '대마법사', t: 'splash', d: 1.1, i: 1.0, r: 160, sp: { hat: 'wizard', wep: 'staff', c: '#5f3dc4', d: '#3b1f8f', H: '#7048e8', x: '#ffe066' } },
-     { n: '서리여왕', t: 'slow', d: 1.0, i: 0.8, r: 160, sp: { hat: 'crown', wep: 'orb', c: '#a5d8ff', d: '#74c0fc', h: '#e7f5ff', G: '#f2b134', x: '#ffffff' } }],
-    [{ n: '용기사', t: 'splash', d: 1.3, i: 1.0, r: 170, sp: { hat: 'helmet', wep: 'spear', c: '#c92a2a', d: '#8a1c1c', W: '#e03131', G: '#f2b134', w: '#ffd43b' } },
-     { n: '암살자', t: 'crit', d: 1.5, i: 0.7, r: 150, sp: { hat: 'hood', wep: 'sword', c: '#212529', d: '#000000', H: '#343a40', w: '#ff6b6b' } },
-     { n: '뇌신', t: 'multi', d: 1.0, i: 0.8, r: 180, sp: { hat: 'horns', wep: 'orb', c: '#fcc419', d: '#e67700', G: '#ffffff', x: '#fff3bf', h: '#ffe066' } }],
-    [{ n: '태양신', t: 'splash', d: 1.5, i: 0.8, r: 200, sp: { hat: 'crown', wep: 'staff', c: '#ffd43b', d: '#f08c00', h: '#fff9db', G: '#ff922b', x: '#ffffff' } },
-     { n: '시간술사', t: 'slow', d: 1.3, i: 0.6, r: 190, sp: { hat: 'wizard', wep: 'orb', c: '#20c997', d: '#0ca678', H: '#12b886', x: '#c3fae8' } },
-     { n: '파멸자', t: 'single', d: 2.5, i: 1.0, r: 240, sp: { hat: 'horns', wep: 'scythe', c: '#495057', d: '#212529', G: '#ff4d6d', h: '#1a1a2e', w: '#ff4d6d', o: '#343a40' } }],
+    [ // 일반
+      { n: '궁수', t: 'single', d: 1.0, i: 0.9, r: 140, base: true, sp: { hat: 'hood', wep: 'bow', c: '#4e9a51', d: '#35703a', H: '#3b7a40', h: '#6b4a2b' },
+        mod: { focus: 0.05 }, p: '집중: 같은 대상을 연속 공격할 때마다 피해 +5% (최대 10중첩)' },
+      { n: '투석병', t: 'splash', d: 0.8, i: 1.3, r: 130, sp: { hat: 'band', wep: 'orb', c: '#8a6d4b', d: '#6a5238', G: '#c0392b', x: '#9a9a9a', h: '#2c2c2c' },
+        mod: { splashR: 60 }, p: '큰 돌: 광역 반경 45 → 60' },
+      { n: '창병', t: 'single', d: 1.3, i: 1.1, r: 120, sp: { hat: 'none', wep: 'spear', c: '#6c7a89', d: '#4f5b68', h: '#2c2c2c' },
+        mod: { pierce: 0.5 }, p: '관통: 대상 바로 뒤 몬스터에게 50% 추가 피해' },
+      { n: '견습술사', t: 'slow', d: 0.8, i: 1.0, r: 130, sp: { hat: 'cap', wep: 'staff', c: '#74c0fc', d: '#4dabf7', H: '#4dabf7', x: '#d0ebff' },
+        mod: { slowDur: 2.5 }, p: '끈질긴 서리: 둔화 지속 1.5초 → 2.5초' },
+      { n: '도적', t: 'crit', d: 1.0, i: 0.8, r: 120, sp: { hat: 'mask', wep: 'dagger', c: '#495057', d: '#343a40', G: '#868e96', w: '#ced4da' },
+        mod: { killGold: 1 }, p: '소매치기: 처치할 때마다 골드 +1' },
+    ],
+    [ // 고급
+      { n: '사냥꾼', t: 'crit', d: 1.0, i: 0.9, r: 150, base: true, sp: { hat: 'hood', wep: 'bow', c: '#7a5230', d: '#5b3c22', H: '#9c6b3c', h: '#3a2a1a' },
+        mod: { vsLowHp: 0.25 }, p: '사냥 본능: 체력 50% 이하 몬스터에게 피해 +25%' },
+      { n: '마법사', t: 'splash', d: 0.9, i: 1.2, r: 140, sp: { hat: 'wizard', wep: 'staff', c: '#3b5bdb', d: '#2a42a0', H: '#3b5bdb', x: '#8ec5ff' },
+        mod: { nth: 5 }, p: '마나 폭발: 매 5번째 공격 피해 2배' },
+      { n: '냉기술사', t: 'slow', d: 0.8, i: 1.0, r: 140, sp: { hat: 'wizard', wep: 'orb', c: '#5bc0eb', d: '#3a8fb5', H: '#bfe9ff', x: '#e0f7ff' },
+        mod: { slowPct: 0.55 }, p: '혹한: 둔화율 40% → 55%' },
+      { n: '쌍검사', t: 'multi', d: 0.8, i: 0.9, r: 130, sp: { hat: 'bandana', wep: 'sword', c: '#e8590c', d: '#c2410c', H: '#fd7e14', w: '#f1f3f5' },
+        mod: { chain: 4 }, p: '쌍검: 연쇄 대상 3 → 4마리' },
+      { n: '상인', t: 'single', d: 1.1, i: 1.0, r: 140, sp: { hat: 'cap', wep: 'book', c: '#a9e34b', d: '#74b816', H: '#5c940d', x: '#ffd43b', o: '#8b5a2b' },
+        mod: { roundGold: 10 }, p: '장부 정리: 라운드 종료마다 골드 +10' },
+    ],
+    [ // 희귀
+      { n: '저격수', t: 'single', d: 1.6, i: 1.4, r: 220, base: true, sp: { hat: 'hood', wep: 'bow', c: '#2f3e46', d: '#1f2a30', H: '#4a5f6a', h: '#1a1a1a' },
+        mod: { farBonus: 0.3 }, p: '조준: 멀리 있는 대상일수록 피해 증가 (최대 +30%)' },
+      { n: '화염술사', t: 'splash', d: 1.0, i: 1.1, r: 150, sp: { hat: 'wizard', wep: 'staff', c: '#d9480f', d: '#a13508', H: '#ff6b35', x: '#ffd166' },
+        mod: { burn: 0.2 }, p: '화상: 피격 몬스터에게 3초간 초당 공격력 20% 추가 피해' },
+      { n: '폭풍술사', t: 'multi', d: 0.8, i: 1.0, r: 150, sp: { hat: 'band', wep: 'orb', c: '#6f42c1', d: '#4d2b8c', G: '#c8a2ff', x: '#e3d2ff', h: '#d0bfff' },
+        mod: { chainPct: 0.9 }, p: '폭풍: 연쇄 피해 70% → 90%' },
+      { n: '암흑궁수', t: 'single', d: 1.3, i: 1.0, r: 170, sp: { hat: 'hood', wep: 'bow', c: '#2b2d42', d: '#14151f', H: '#3d2c5e', h: '#111', o: '#5f3dc4' },
+        mod: { bossDmg: 0.4 }, p: '보스 사냥: 보스에게 피해 +40%' },
+      { n: '수도승', t: 'crit', d: 1.0, i: 0.8, r: 130, sp: { hat: 'none', wep: 'none', c: '#f59f00', d: '#e67700', h: '#f1c27d' },
+        mod: { aspd: 0.2, critChance: 0.35 }, p: '연타: 공격 속도 +20%, 치명타 확률 25% → 35%' },
+    ],
+    [ // 영웅
+      { n: '성기사', t: 'crit', d: 1.2, i: 0.9, r: 150, base: true, sp: { hat: 'helmet', wep: 'sword', c: '#e9ecef', d: '#adb5bd', W: '#dee2e6', G: '#f2b134', w: '#ffffff' },
+        mod: { auraAtk: 0.1 }, p: '성스러운 빛: 인접 8칸 유닛 공격력 +10%',
+        skill: { id: 'smite', name: '심판', cd: 18, desc: '18초마다 사거리 안 모든 몬스터에게 공격력 ×6 피해' } },
+      { n: '대마법사', t: 'splash', d: 1.1, i: 1.0, r: 160, sp: { hat: 'wizard', wep: 'staff', c: '#5f3dc4', d: '#3b1f8f', H: '#7048e8', x: '#ffe066' },
+        mod: { upgMult: 1.5 }, p: '지혜: 등급 강화 효과를 1.5배로 받음',
+        skill: { id: 'meteor', name: '메테오', cd: 20, desc: '20초마다 사거리 안 모든 몬스터에게 공격력 ×8 피해' } },
+      { n: '서리여왕', t: 'slow', d: 1.0, i: 0.8, r: 160, sp: { hat: 'crown', wep: 'orb', c: '#a5d8ff', d: '#74c0fc', h: '#e7f5ff', G: '#f2b134', x: '#ffffff' },
+        mod: { vsSlowed: 0.3 }, p: '서리: 둔화된 몬스터에게 피해 +30%',
+        skill: { id: 'freeze', name: '빙결', cd: 25, desc: '25초마다 사거리 안 몬스터 2초 정지' } },
+      { n: '음유시인', t: 'single', d: 0.9, i: 1.0, r: 150, sp: { hat: 'cap', wep: 'lute', c: '#20c997', d: '#099268', H: '#c92a2a', x: '#8b5a2b', h: '#e8590c' },
+        mod: { auraAspd: 0.1 }, p: '노래: 인접 8칸 유닛 공격 속도 +10%',
+        skill: { id: 'warsong', name: '전투 찬가', cd: 20, desc: '20초마다 모든 유닛 공격력 +30% (5초)' } },
+      { n: '현상금사냥꾼', t: 'crit', d: 1.3, i: 1.0, r: 170, sp: { hat: 'cap', wep: 'gun', c: '#8d6e4f', d: '#5c4330', H: '#3a2a1a', w: '#ced4da' },
+        mod: { goldPct: 0.5 }, p: '현상금: 처치 골드 +50%',
+        skill: { id: 'snipe', name: '저격', cd: 15, desc: '15초마다 체력이 가장 높은 몬스터에게 공격력 ×10 피해' } },
+    ],
+    [ // 전설
+      { n: '용기사', t: 'splash', d: 1.3, i: 1.0, r: 170, base: true, sp: { hat: 'helmet', wep: 'spear', c: '#c92a2a', d: '#8a1c1c', W: '#e03131', G: '#f2b134', w: '#ffd43b' },
+        mod: { splashR: 65, splashPct: 0.75 }, p: '용의 숨결: 광역 반경 65, 광역 피해 75%',
+        skill: { id: 'breath', name: '화염 숨결', cd: 20, desc: '20초마다 사거리 안 모든 몬스터에게 공격력 ×5 피해 + 화상' } },
+      { n: '암살자', t: 'crit', d: 1.5, i: 0.7, r: 150, sp: { hat: 'hood', wep: 'dagger', c: '#212529', d: '#000000', H: '#343a40', w: '#ff6b6b' },
+        mod: { critMult: 5 }, p: '그림자: 치명타 배율 3배 → 5배',
+        skill: { id: 'assassinate', name: '암살', cd: 18, desc: '18초마다 체력이 가장 높은 일반 몬스터 즉사' } },
+      { n: '뇌신', t: 'multi', d: 1.0, i: 0.8, r: 180, sp: { hat: 'horns', wep: 'orb', c: '#fcc419', d: '#e67700', G: '#ffffff', x: '#fff3bf', h: '#ffe066' },
+        mod: { chain: 5 }, p: '전기: 연쇄 대상 3 → 5마리',
+        skill: { id: 'lightning', name: '낙뢰', cd: 15, desc: '15초마다 무작위 6마리에게 공격력 ×6 피해' } },
+      { n: '드루이드', t: 'slow', d: 1.1, i: 0.9, r: 160, sp: { hat: 'halo', wep: 'staff', c: '#2f9e44', d: '#2b8a3e', G: '#8ce99a', x: '#b2f2bb', h: '#5c940d' },
+        mod: { slowPct: 0.6 }, p: '뿌리: 둔화율 40% → 60%',
+        skill: { id: 'vines', name: '덩굴', cd: 25, desc: '25초마다 모든 몬스터 3초 둔화' } },
+      { n: '연금술사', t: 'splash', d: 1.0, i: 1.1, r: 150, sp: { hat: 'cap', wep: 'flask', c: '#e8590c', d: '#d9480f', H: '#f8f9fa', x: '#69db7c' },
+        mod: { goldPct: 0.15 }, p: '황금 변환: 모든 골드 획득 +15%',
+        skill: { id: 'transmute', name: '변환', cd: 30, desc: '30초마다 골드 +(라운드 × 5)' } },
+    ],
+    [ // 신화
+      { n: '파멸자', t: 'single', d: 2.5, i: 1.0, r: 240, base: true, sp: { hat: 'horns', wep: 'scythe', c: '#495057', d: '#212529', G: '#ff4d6d', h: '#1a1a2e', w: '#ff4d6d', o: '#343a40' },
+        mod: { execute: 0.15 }, p: '처형: 체력 15% 이하 일반 몬스터 즉사',
+        skill: { id: 'doom', name: '파멸', cd: 25, desc: '25초마다 체력이 가장 높은 몬스터에게 공격력 ×15 피해' } },
+      { n: '태양신', t: 'splash', d: 1.5, i: 0.8, r: 200, sp: { hat: 'crown', wep: 'staff', c: '#ffd43b', d: '#f08c00', h: '#fff9db', G: '#ff922b', x: '#ffffff' },
+        mod: { splashPct: 1.0 }, p: '태양: 광역 피해 100%',
+        skill: { id: 'sunburst', name: '태양 폭발', cd: 20, desc: '20초마다 모든 몬스터에게 공격력 ×5 피해' } },
+      { n: '시간술사', t: 'slow', d: 1.3, i: 0.6, r: 190, sp: { hat: 'wizard', wep: 'orb', c: '#20c997', d: '#0ca678', H: '#12b886', x: '#c3fae8' },
+        mod: { aspd: 0.25 }, p: '가속: 자신의 공격 속도 +25%',
+        skill: { id: 'timestop', name: '시간 정지', cd: 30, desc: '30초마다 모든 몬스터 3초 정지, 라운드 시간 +5초' } },
+      { n: '용왕', t: 'multi', d: 1.4, i: 0.9, r: 190, sp: { hat: 'horns', wep: 'axe', c: '#9c36b5', d: '#702c8c', G: '#ffd43b', w: '#ffd43b', h: '#e599f7' },
+        mod: { bossDmg: 1.0 }, p: '지배: 보스에게 피해 +100%',
+        skill: { id: 'dragonrage', name: '용의 분노', cd: 25, desc: '25초마다 보스(없으면 최대 체력 몬스터)에게 공격력 ×20 피해' } },
+      { n: '사신', t: 'single', d: 1.8, i: 0.8, r: 200, sp: { hat: 'hood', wep: 'scythe', c: '#0b0c10', d: '#000', H: '#1a1a2e', w: '#c3fae8', o: '#495057', s: '#dee2e6' },
+        mod: { harvest: 0.005 }, p: '수확: 처치할 때마다 자신의 공격력 영구 +0.5% (최대 +50%)',
+        skill: { id: 'deathtouch', name: '죽음의 손길', cd: 20, desc: '20초마다 체력 30% 이하 모든 일반 몬스터 즉사' } },
+    ],
   ];
   const ALL_UNITS = UNITS.flat();
-  ALL_UNITS.forEach(def => { def.grade = UNITS.findIndex(g => g.includes(def)); });
-  const defByName = name => ALL_UNITS.find(d => d.n === name) || null;
+  ALL_UNITS.forEach(def => { def.grade = UNITS.findIndex(g => g.includes(def)); def.m = Object.assign({}, MOD, def.mod || {}); def.statMul = def.base ? 1 : CFG.GACHA_STAT_MUL; });
+  const GACHA_UNITS = UNITS.map(g => g.filter(d => !d.base));
 
   // ---------- Equipment ----------
   const RARITY_NAMES = ['일반', '희귀', '영웅', '전설'];
-  const RARITY_COLORS = ['#aab2bf', '#4aa3ff', '#b16cff', '#ff9f1c'];
   const GEAR_W = [55, 30, 12, 3];
   const GEAR_SELL = [10, 30, 80, 200];
   const SLOT_NAMES = { weapon: '무기', boots: '신발', trinket: '장신구' };
@@ -334,7 +416,6 @@
     boots: ['가죽 신발', '질주의 장화', '바람의 장화', '천공의 장화'],
     trinket: ['동전 주머니', '행운의 반지', '황금 목걸이', '왕의 인장'],
   };
-  // stat: key, label, base per rarity, unit
   const GEAR_STATS = {
     weapon: [{ k: 'atk', l: '공격력', b: [5, 10, 18, 30], u: '%' }],
     boots: [{ k: 'aspd', l: '공격 속도', b: [4, 8, 14, 22], u: '%' }, { k: 'range', l: '사거리', b: [10, 20, 35, 50], u: '' }],
@@ -353,6 +434,10 @@
     crown: ['...G.G.G....', '...kGGGGk...'],
     horns: ['..G......G..', '..kGhhhhGk..'],
     band: ['....kkkk....', '...kGGGGk...'],
+    cap: ['....kkkk....', '...kHHHHk...', '..kHHHHHHk..', '.kkkkkkkkk..'],
+    mask: ['....kkkk....', '...kGGGGk...', '', '', '', '..kGGGGGGk..'],
+    halo: ['..GGGGGGGG..'],
+    bandana: ['....kkkk....', '...kHHHHk...', '..kHHHHHHkH.'],
   };
   const WEAPONS = {
     none: [],
@@ -362,6 +447,12 @@
     spear: ['..........w.', '..........w.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.'],
     orb: ['', '', '', '..........x.', '.........x.x', '..........x.'],
     scythe: ['........kwww', '.........kkw', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.'],
+    axe: ['', '.........kww', '.........kww', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.'],
+    dagger: ['', '', '', '', '..........w.', '..........w.', '.........kwk'],
+    gun: ['', '', '', '', '', '........wwww', '..........o.'],
+    book: ['', '', '', '', '', '.........xxx', '.........xxx', '.........ooo'],
+    lute: ['', '', '', '', '..........o.', '..........o.', '.........xxx', '.........xxx', '..........x.'],
+    flask: ['', '', '', '', '', '..........x.', '.........xxx', '.........xxx'],
   };
   const MONSTERS = [
     ['........', '...kk...', '..kcck..', '.kcccck.', '.kecccek', '.kcccck.', 'kcccccck', 'kkkkkkkk'],
@@ -398,8 +489,7 @@
   }
   function monsterSprite(kind, hue, slowed, scale) {
     const body = slowed ? `hsl(${hue} 45% 45%)` : `hsl(${hue} 65% 58%)`;
-    const pal = { k: '#1a1a2e', c: body, e: '#ffffff' };
-    return makeSprite(`m:${kind}:${hue}:${slowed ? 1 : 0}`, MONSTERS[kind], pal, scale);
+    return makeSprite(`m:${kind}:${hue}:${slowed ? 1 : 0}`, MONSTERS[kind], { k: '#1a1a2e', c: body, e: '#ffffff' }, scale);
   }
   function bossSprite(hue, scale) {
     return makeSprite('boss:' + hue, BOSS, { k: '#1a1a2e', c: `hsl(${hue} 60% 40%)`, e: '#ff4d6d', G: '#f2b134' }, scale);
@@ -414,15 +504,15 @@
   // ---------- Persistent meta (localStorage; per browser) ----------
   let M = null, S = null, uid = 0;
   function defaultMeta() {
-    return { gems: CFG.START_GEMS, chars: { '궁수': 1, '투석병': 1, '창병': 1, '사냥꾼': 1 }, items: [], equip: { weapon: null, boots: null, trinket: null }, best: 0, runs: 0, seq: 0 };
+    return { gems: CFG.START_GEMS, chars: {}, items: [], equip: { weapon: null, boots: null, trinket: null }, best: 0, runs: 0, seq: 0 };
   }
   function loadMeta() {
-    try { const raw = localStorage.getItem('rtd_meta'); if (raw) { const m = JSON.parse(raw); return Object.assign(defaultMeta(), m); } } catch (e) { /* unavailable */ }
+    try { const raw = localStorage.getItem('rtd_meta'); if (raw) return Object.assign(defaultMeta(), JSON.parse(raw)); } catch (e) { /* unavailable */ }
     return defaultMeta();
   }
   function saveMeta() { try { localStorage.setItem('rtd_meta', JSON.stringify(M)); } catch (e) { /* unavailable */ } }
-  const owned = def => (M.chars[def.n] || 0) > 0;
-  const charLv = def => M.chars[def.n] || 0;
+  const owned = def => def.base || (M.chars[def.n] || 0) > 0;
+  const charLv = def => def.base ? 1 : (M.chars[def.n] || 0);
   const ownedOf = g => UNITS[g].filter(owned);
   function equipMods() {
     const mods = { atk: 0, aspd: 0, range: 0, gold: 0, luck: 0, startGold: 0 };
@@ -440,7 +530,7 @@
       phase: 'play', gold: CFG.START_GOLD + mods.startGold, round: 0, timer: 0,
       units: [], monsters: [], shots: [], spawnQ: 0, spawnT: 0,
       upg: [0, 0, 0, 0, 0, 0], luck: mods.luck, kills: 0, speed: 1, paused: false,
-      sel: null, log: [], mods, time: 0,
+      sel: null, log: [], mods, time: 0, buff: { atk: 0, t: 0 },
     };
   }
   const $ = id => document.getElementById(id);
@@ -465,7 +555,7 @@
   }
   function weightedIndex(w) { let r = Math.random() * w.reduce((a, b) => a + b, 0); for (let i = 0; i < w.length; i++) { r -= w[i]; if (r < 0) return i; } return w.length - 1; }
   const pick = arr => arr[Math.floor(Math.random() * arr.length)];
-  function makeUnit(def, c, r) { return { id: ++uid, grade: def.grade, def, col: c, row: r, cd: Math.random() * 0.3 }; }
+  function makeUnit(def, c, r) { return { id: ++uid, grade: def.grade, def, col: c, row: r, cd: Math.random() * 0.3, scd: def.skill ? def.skill.cd * 0.5 : 0, shots: 0, focusN: 0, lastT: null, harvest: 0 }; }
   const C0 = T / 2, L = (N - 1) * T, P = 4 * L;
   function pathPos(d) {
     d = ((d % P) + P) % P;
@@ -475,17 +565,29 @@
     return { x: C0, y: C0 + L - (d - 3 * L) };
   }
   const tileCenter = (c, r) => ({ x: (c + 0.5) * T, y: (r + 0.5) * T });
-  const dmgOf = u => BASE_DMG[u.grade] * u.def.d * (1 + CFG.UPG_PCT * S.upg[u.grade]) * (1 + CFG.CHAR_LV_PCT * (charLv(u.def) - 1)) * (1 + S.mods.atk / 100);
-  const intervalOf = u => u.def.i * (1 - S.mods.aspd / 100);
-  const rangeOf = u => u.def.r + S.mods.range;
+  function aura(u, key) {
+    let s = 0;
+    for (const o of S.units) { if (o !== u && o.def.m[key] && Math.abs(o.col - u.col) <= 1 && Math.abs(o.row - u.row) <= 1) s += o.def.m[key]; }
+    return s;
+  }
+  function dmgOf(u) {
+    const m = u.def.m;
+    return BASE_DMG[u.grade] * u.def.d * u.def.statMul
+      * (1 + CFG.UPG_PCT * S.upg[u.grade] * m.upgMult)
+      * (1 + CFG.CHAR_LV_PCT * (charLv(u.def) - 1))
+      * (1 + S.mods.atk / 100 + m.atk + aura(u, 'auraAtk') + (S.buff.t > 0 ? S.buff.atk : 0) + Math.min(0.5, u.harvest * m.harvest));
+  }
+  const intervalOf = u => u.def.i * Math.max(0.3, 1 - S.mods.aspd / 100 - u.def.m.aspd - aura(u, 'auraAspd'));
+  const rangeOf = u => u.def.r + S.mods.range + u.def.m.range;
   function dpsOf(u) {
-    const base = dmgOf(u) / intervalOf(u);
-    if (u.def.t === 'crit') return base * 1.5;
-    if (u.def.t === 'multi') return base * 2.1;
+    const m = u.def.m, base = dmgOf(u) / intervalOf(u);
+    if (u.def.t === 'crit') return base * (1 + m.critChance * (m.critMult - 1));
+    if (u.def.t === 'multi') return base * m.chainPct * m.chain;
     return base;
   }
   const fmt = n => n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e4 ? (n / 1e3).toFixed(1) + 'k' : Math.round(n).toLocaleString('ko-KR');
-  const goldGain = n => Math.round(n * (1 + S.mods.gold / 100));
+  function goldPctTotal() { let p = S.mods.gold / 100; for (const u of S.units) p += u.def.m.goldPct; return p; }
+  const goldGain = n => Math.round(n * (1 + goldPctTotal()));
 
   // ---------- In-game actions ----------
   function summon() {
@@ -562,13 +664,18 @@
     S.gold -= cost; S.luck++;
     log(`행운 강화 Lv.${S.luck}`); renderPanel();
   }
-  function skipRound() { if (!S || S.phase !== 'play' || S.spawnQ > 0) return; endRound(); }
+  const isBossRound = () => S.round % 10 === 0;
+  function skipRound() {
+    if (!S || S.phase !== 'play' || S.spawnQ > 0) return;
+    if (isBossRound()) { log('보스 라운드는 건너뛸 수 없습니다.'); return; }
+    endRound();
+  }
 
   // ---------- Rounds / monsters ----------
   function spawnMonster(n, boss) {
     const hp = CFG.hp(n) * (boss ? CFG.BOSS_HP_MUL : 1);
     S.monsters.push({
-      d: 0, x: C0, y: C0, hp, maxHp: hp, speed: boss ? 40 : CFG.speed(n), slowT: 0,
+      d: 0, x: C0, y: C0, hp, maxHp: hp, speed: boss ? 40 : CFG.speed(n), slowT: 0, slowPct: 0, freezeT: 0, burnT: 0, burnDps: 0,
       bounty: CFG.bounty(n) * (boss ? CFG.BOSS_BOUNTY_MUL : 1), boss, round: n, dead: false,
       hue: (n * 41) % 360, kind: n % MONSTERS.length,
     });
@@ -584,8 +691,10 @@
   function endRound() {
     const r = S.round;
     if (r % 10 === 0 && S.monsters.some(m => m.boss && !m.dead && m.round === r)) { finishRun(false, `${r}라운드 보스를 시간 안에 처치하지 못했습니다.`); return; }
-    S.gold += goldGain(CFG.roundBonus(r));
-    log(`${r}라운드 종료 +${goldGain(CFG.roundBonus(r))}G`);
+    let extra = 0; for (const u of S.units) extra += u.def.m.roundGold;
+    const bonus = goldGain(CFG.roundBonus(r) + extra);
+    S.gold += bonus;
+    log(`${r}라운드 종료 +${bonus}G`);
     if (r >= CFG.MAX_ROUND) { finishRun(true, `${CFG.MAX_ROUND}라운드를 모두 막아냈습니다.`); return; }
     startRound(r + 1);
   }
@@ -623,38 +732,98 @@
   }
 
   // ---------- Combat ----------
-  function hit(m, amt) {
+  function hit(m, amt, u) {
     if (m.dead) return;
-    m.hp -= amt;
-    if (m.hp <= 0) { m.dead = true; S.gold += goldGain(m.bounty); S.kills++; if (m.boss) log(`보스 처치! +${goldGain(m.bounty)}G`, 'g4'); }
+    const mm = u ? u.def.m : MOD;
+    let mult = 1;
+    if (m.boss) mult += mm.bossDmg;
+    if (m.slowT > 0 || m.freezeT > 0) mult += mm.vsSlowed;
+    if (mm.vsLowHp && m.hp < m.maxHp * 0.5) mult += mm.vsLowHp;
+    if (mm.farBonus && u) { const uc = tileCenter(u.col, u.row); mult += mm.farBonus * Math.min(1, Math.hypot(m.x - uc.x, m.y - uc.y) / rangeOf(u)); }
+    m.hp -= amt * mult;
+    if (!m.dead && !m.boss && mm.execute && m.hp > 0 && m.hp <= m.maxHp * mm.execute) m.hp = 0;
+    if (m.hp <= 0) {
+      m.dead = true; S.kills++;
+      const g = goldGain(m.bounty) + (u ? u.def.m.killGold : 0);
+      S.gold += g;
+      if (u) u.harvest++;
+      if (m.boss) log(`보스 처치! +${g}G`, 'g4');
+    }
   }
   function fire(u, target, cands) {
-    const base = dmgOf(u), col = GRADE_COLORS[u.grade], uc = tileCenter(u.col, u.row);
-    const shot = (m, w) => S.shots.push({ x1: uc.x, y1: uc.y, x2: m.x, y2: m.y, t: 0.18, col, w });
+    const m = u.def.m, base0 = dmgOf(u), col = GRADE_COLORS[u.grade], uc = tileCenter(u.col, u.row);
+    const shot = (mon, w) => S.shots.push({ x1: uc.x, y1: uc.y, x2: mon.x, y2: mon.y, t: 0.18, col, w });
+    u.shots++;
+    let base = base0;
+    if (m.nth && u.shots % m.nth === 0) base *= 2;
+    if (m.focus) { if (u.lastT === target) u.focusN = Math.min(10, u.focusN + 1); else u.focusN = 0; u.lastT = target; base *= 1 + m.focus * u.focusN; }
+    const applyBurn = mon => { if (m.burn) { mon.burnT = 3; mon.burnDps = Math.max(mon.burnDps, base * m.burn); } };
+    const pierce = () => {
+      if (!m.pierce) return;
+      let best = null, bd = 1e9;
+      for (const o of S.monsters) { if (o === target || o.dead) continue; const d = Math.hypot(o.x - target.x, o.y - target.y); if (d < 30 && d < bd) { bd = d; best = o; } }
+      if (best) { hit(best, base * m.pierce, u); shot(best, 1); }
+    };
     switch (u.def.t) {
-      case 'single': hit(target, base); shot(target, 1.5); break;
-      case 'crit': { const c = Math.random() < 0.25; hit(target, c ? base * 3 : base); shot(target, c ? 3 : 1.5); break; }
+      case 'single': hit(target, base, u); applyBurn(target); shot(target, 1.5); pierce(); break;
+      case 'crit': { const c = Math.random() < m.critChance; hit(target, c ? base * m.critMult : base, u); shot(target, c ? 3 : 1.5); pierce(); break; }
       case 'splash':
-        hit(target, base); shot(target, 2);
-        for (const m of S.monsters) { if (m !== target && !m.dead && Math.hypot(m.x - target.x, m.y - target.y) <= 45) hit(m, base * 0.5); }
-        S.shots.push({ ring: true, x: target.x, y: target.y, r: 45, t: 0.25, col });
+        hit(target, base, u); applyBurn(target); shot(target, 2);
+        for (const o of S.monsters) { if (o !== target && !o.dead && Math.hypot(o.x - target.x, o.y - target.y) <= m.splashR) { hit(o, base * m.splashPct, u); applyBurn(o); } }
+        S.shots.push({ ring: true, x: target.x, y: target.y, r: m.splashR, t: 0.25, col });
         break;
-      case 'slow': hit(target, base); target.slowT = Math.max(target.slowT, 1.5); shot(target, 1.5); break;
-      case 'multi': { for (const m of cands.slice(0, 3)) { hit(m, base * 0.7); shot(m, 1.2); } break; }
+      case 'slow':
+        hit(target, base, u); shot(target, 1.5);
+        if (!target.dead) { target.slowT = Math.max(target.slowT, m.slowDur); target.slowPct = Math.max(target.slowPct, m.slowPct); }
+        break;
+      case 'multi': { for (const mon of cands.slice(0, m.chain)) { hit(mon, base * m.chainPct, u); applyBurn(mon); shot(mon, 1.2); } break; }
     }
+  }
+  const strongest = (list) => list.reduce((a, b) => (!a || b.hp > a.hp) ? b : a, null);
+  function castSkill(u) {
+    const sk = u.def.skill, base = dmgOf(u), uc = tileCenter(u.col, u.row), rg = rangeOf(u), col = GRADE_COLORS[u.grade];
+    const alive = S.monsters.filter(m => !m.dead);
+    if (!alive.length && sk.id !== 'transmute') return false;
+    const inRange = alive.filter(m => Math.hypot(m.x - uc.x, m.y - uc.y) <= rg);
+    const ring = (x, y, r) => S.shots.push({ ring: true, x, y, r, t: 0.5, col, w: 3 });
+    switch (sk.id) {
+      case 'smite': if (!inRange.length) return false; inRange.forEach(m => hit(m, base * 6, u)); ring(uc.x, uc.y, rg); break;
+      case 'meteor': if (!inRange.length) return false; inRange.forEach(m => hit(m, base * 8, u)); ring(uc.x, uc.y, rg); break;
+      case 'breath': if (!inRange.length) return false; inRange.forEach(m => { hit(m, base * 5, u); m.burnT = 3; m.burnDps = Math.max(m.burnDps, base * 0.2); }); ring(uc.x, uc.y, rg); break;
+      case 'freeze': if (!inRange.length) return false; inRange.forEach(m => { m.freezeT = Math.max(m.freezeT, 2); }); ring(uc.x, uc.y, rg); break;
+      case 'warsong': S.buff = { atk: 0.3, t: 5 }; ring(uc.x, uc.y, 60); break;
+      case 'snipe': { const t = strongest(alive); hit(t, base * 10, u); S.shots.push({ x1: uc.x, y1: uc.y, x2: t.x, y2: t.y, t: 0.4, col, w: 4 }); break; }
+      case 'doom': { const t = strongest(alive); hit(t, base * 15, u); S.shots.push({ x1: uc.x, y1: uc.y, x2: t.x, y2: t.y, t: 0.4, col, w: 4 }); break; }
+      case 'assassinate': { const t = strongest(alive.filter(m => !m.boss)); if (!t) return false; hit(t, t.hp * 100, u); S.shots.push({ x1: uc.x, y1: uc.y, x2: t.x, y2: t.y, t: 0.4, col, w: 4 }); break; }
+      case 'lightning': { const pool = [...alive]; for (let i = 0; i < 6 && pool.length; i++) { const t = pool.splice(Math.floor(Math.random() * pool.length), 1)[0]; hit(t, base * 6, u); S.shots.push({ x1: t.x, y1: 0, x2: t.x, y2: t.y, t: 0.3, col: '#fff3bf', w: 3 }); } break; }
+      case 'vines': alive.forEach(m => { m.slowT = Math.max(m.slowT, 3); m.slowPct = Math.max(m.slowPct, 0.4); }); ring(SIZE / 2, SIZE / 2, SIZE / 2); break;
+      case 'transmute': { const g = S.round * 5; S.gold += g; ring(uc.x, uc.y, 50); break; }
+      case 'sunburst': alive.forEach(m => hit(m, base * 5, u)); ring(SIZE / 2, SIZE / 2, SIZE / 2); break;
+      case 'timestop': alive.forEach(m => { m.freezeT = Math.max(m.freezeT, 3); }); S.timer += 5; ring(SIZE / 2, SIZE / 2, SIZE / 2); break;
+      case 'dragonrage': { const t = alive.find(m => m.boss) || strongest(alive); hit(t, base * 20, u); S.shots.push({ x1: uc.x, y1: uc.y, x2: t.x, y2: t.y, t: 0.4, col, w: 5 }); break; }
+      case 'deathtouch': { const ts = alive.filter(m => !m.boss && m.hp <= m.maxHp * 0.3); if (!ts.length) return false; ts.forEach(m => hit(m, m.hp * 100, u)); ring(SIZE / 2, SIZE / 2, SIZE / 2); break; }
+      default: return false;
+    }
+    log(`${u.def.n}: ${sk.name} 발동`, 'g' + u.grade);
+    return true;
   }
   function update(dt) {
     if (!S || S.phase !== 'play' || S.paused) return;
     S.time += dt; S.timer -= dt;
+    if (S.buff.t > 0) S.buff.t -= dt;
     if (S.spawnQ > 0) {
       S.spawnT -= dt;
       while (S.spawnT <= 0 && S.spawnQ > 0) { spawnMonster(S.round, false); S.spawnQ--; S.spawnT += CFG.SPAWN_INTERVAL; }
     }
     for (const m of S.monsters) {
-      m.d += m.speed * (m.slowT > 0 ? 0.6 : 1) * dt; m.slowT -= dt;
+      if (m.freezeT > 0) m.freezeT -= dt;
+      else { m.d += m.speed * (m.slowT > 0 ? 1 - m.slowPct : 1) * dt; }
+      m.slowT -= dt; if (m.slowT <= 0) m.slowPct = 0;
+      if (m.burnT > 0) { m.burnT -= dt; hit(m, m.burnDps * dt, null); }
       const p = pathPos(m.d); m.x = p.x; m.y = p.y;
     }
     for (const u of S.units) {
+      if (u.def.skill) { u.scd -= dt; if (u.scd <= 0 && castSkill(u)) u.scd = u.def.skill.cd; }
       u.cd -= dt; if (u.cd > 0) continue;
       const uc = tileCenter(u.col, u.row), rg = rangeOf(u), r2 = rg * rg, cands = [];
       for (const m of S.monsters) {
@@ -714,23 +883,31 @@
       const sp = unitSprite(u.def, 3);
       ctx.drawImage(sp, x + (w - sp.width) / 2, y + (w - sp.height) / 2);
       if (S.upg[u.grade] > 0) { ctx.fillStyle = '#f2b134'; ctx.beginPath(); ctx.arc(x + w - 5, y + 5, 3, 0, Math.PI * 2); ctx.fill(); }
+      if (u.def.skill) { // skill cooldown bar
+        const f = 1 - Math.max(0, u.scd) / u.def.skill.cd;
+        ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(x + 4, y + w - 5, w - 8, 3);
+        ctx.fillStyle = f >= 1 ? '#7ee8fa' : '#4aa3ff'; ctx.fillRect(x + 4, y + w - 5, (w - 8) * f, 3);
+      }
     }
     for (const s of S.shots) {
-      ctx.globalAlpha = Math.max(0, s.t / 0.25); ctx.strokeStyle = s.col; ctx.lineWidth = s.w || 1.5;
+      ctx.globalAlpha = Math.max(0, Math.min(1, s.t / 0.25)); ctx.strokeStyle = s.col; ctx.lineWidth = s.w || 1.5;
       ctx.beginPath();
       if (s.ring) ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); else { ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); }
       ctx.stroke();
     }
     ctx.globalAlpha = 1;
     for (const m of S.monsters) {
-      const sp = m.boss ? bossSprite(m.hue, 3) : monsterSprite(m.kind, m.hue, m.slowT > 0, 2);
+      const sp = m.boss ? bossSprite(m.hue, 3) : monsterSprite(m.kind, m.hue, m.slowT > 0 || m.freezeT > 0, 2);
       ctx.drawImage(sp, Math.round(m.x - sp.width / 2), Math.round(m.y - sp.height / 2));
       const r = sp.height / 2;
-      if (m.slowT > 0) { ctx.strokeStyle = '#4aa3ff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(m.x, m.y, r + 2, 0, Math.PI * 2); ctx.stroke(); }
+      if (m.freezeT > 0) { ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(m.x, m.y, r + 2, 0, Math.PI * 2); ctx.stroke(); }
+      else if (m.slowT > 0) { ctx.strokeStyle = '#4aa3ff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(m.x, m.y, r + 2, 0, Math.PI * 2); ctx.stroke(); }
+      if (m.burnT > 0) { ctx.fillStyle = '#ff6b35'; ctx.fillRect(m.x - 2, m.y - r - 9, 4, 4); }
       const bw = m.boss ? 40 : 18, bh = m.boss ? 5 : 3, frac = Math.max(0, m.hp / m.maxHp);
       ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(m.x - bw / 2, m.y - r - bh - 3, bw, bh);
       ctx.fillStyle = frac > 0.5 ? '#4cd27a' : frac > 0.25 ? '#f2b134' : '#ff5a5f'; ctx.fillRect(m.x - bw / 2, m.y - r - bh - 3, bw * frac, bh);
     }
+    if (S.buff.t > 0) { ctx.strokeStyle = 'rgba(242,177,52,.6)'; ctx.lineWidth = 3; ctx.strokeRect(T + 2, T + 2, SIZE - 2 * T - 4, SIZE - 2 * T - 4); }
     if (S.paused && S.phase === 'play') {
       ctx.fillStyle = 'rgba(13,17,23,.6)'; ctx.fillRect(0, 0, SIZE, SIZE);
       ctx.fillStyle = '#f2b134'; ctx.font = '400 40px "Black Han Sans", "Noto Sans KR", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -742,19 +919,20 @@
   function renderHud() {
     $('hGems').textContent = fmt(M.gems);
     if (!S) return;
-    const bossRound = S.round % 10 === 0;
-    $('hRound').textContent = S.round ? (bossRound ? `${S.round} 보스` : String(S.round)) : '-';
+    $('hRound').textContent = S.round ? (isBossRound() ? `${S.round} 보스` : String(S.round)) : '-';
     $('hTime').textContent = S.phase === 'play' ? Math.max(0, Math.ceil(S.timer)) + 's' : '-';
     $('hGold').textContent = fmt(S.gold);
     $('hMon').textContent = `${S.monsters.length} / ${CFG.MONSTER_CAP}`;
     $('hMonWrap').classList.toggle('warn', S.monsters.length >= CFG.MONSTER_CAP * 0.7);
     $('hUnits').textContent = `${S.units.length} / ${(INNER_MAX - INNER_MIN + 1) ** 2}`;
     $('bSummon').disabled = S.phase !== 'play' || S.gold < CFG.SUMMON_COST || S.units.length >= 49;
-    $('bSkip').disabled = S.phase !== 'play' || S.spawnQ > 0;
+    $('bSkip').disabled = S.phase !== 'play' || S.spawnQ > 0 || isBossRound();
+    $('bSkip').textContent = isBossRound() ? '보스 라운드 (건너뛰기 불가)' : '다음 라운드 바로 시작';
     $('bLuck').disabled = S.phase !== 'play' || S.luck >= LUCK_MAX || S.gold < LUCK_COST(S.luck);
     for (let g = 0; g < 6; g++) { const b = $('upgBtn' + g); if (b) b.disabled = S.phase !== 'play' || S.gold < upgCost(g); }
     const cb = $('bSelCombine');
     if (cb && S.sel) cb.disabled = S.units.filter(x => x.def === S.sel.def).length < CFG.COMBINE_NEED || S.sel.grade >= 5 || !ownedOf(S.sel.grade + 1).length;
+    const cd = $('selCd'); if (cd && S.sel && S.sel.def.skill) cd.textContent = S.sel.scd > 0 ? `쿨다운 ${Math.ceil(S.sel.scd)}s` : '준비 완료';
   }
   function renderLog() {
     const ul = $('log'); ul.innerHTML = '';
@@ -786,9 +964,11 @@
       const u = S.sel, same = S.units.filter(x => x.def === u.def).length;
       const head = document.createElement('div'); head.className = 'head';
       head.appendChild(spriteCanvas(unitSprite(u.def, 4), 48));
-      const name = document.createElement('div'); name.className = 'name g' + u.grade; name.textContent = `[${GRADE_NAMES[u.grade]}] ${u.def.n} Lv.${charLv(u.def)}`;
+      const name = document.createElement('div'); name.className = 'name g' + u.grade;
+      name.textContent = `[${GRADE_NAMES[u.grade]}] ${u.def.n}${u.def.base ? ' (기본)' : ' Lv.' + charLv(u.def)}`;
       head.appendChild(name);
       const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = `${TYPE_LABEL[u.def.t]} · ${TYPE_DESC[u.def.t]}`;
+      const pv = document.createElement('div'); pv.className = 'pv'; pv.innerHTML = `<b>패시브</b> ${u.def.p}`;
       const dl = document.createElement('dl');
       dl.innerHTML = `<dt>공격력</dt><dd>${fmt(dmgOf(u))}</dd><dt>공격 간격</dt><dd>${intervalOf(u).toFixed(2)}s</dd><dt>사거리</dt><dd>${rangeOf(u)}</dd><dt>예상 DPS</dt><dd>${fmt(dpsOf(u))}</dd><dt>같은 유닛</dt><dd>${same} / ${CFG.COMBINE_NEED}</dd><dt>판매가</dt><dd>${SELL[u.grade]}G</dd>`;
       const btns = document.createElement('div'); btns.className = 'btns';
@@ -798,7 +978,9 @@
       const bs = document.createElement('button'); bs.className = 'danger'; bs.textContent = `판매 +${SELL[u.grade]}G`;
       bs.addEventListener('click', sellSelected);
       btns.append(bc, bs);
-      sel.append(head, meta, dl, btns);
+      sel.append(head, meta, pv);
+      if (u.def.skill) { const sk = document.createElement('div'); sk.className = 'pv'; sk.innerHTML = `<b>스킬 · ${u.def.skill.name}</b> ${u.def.skill.desc} <span class="cd" id="selCd"></span>`; sel.appendChild(sk); }
+      sel.append(dl, btns);
     }
     renderHud();
   }
@@ -824,9 +1006,7 @@
     $('lbBest').textContent = M.best; $('lbRuns').textContent = M.runs;
     $('lbOwned').textContent = `${ALL_UNITS.filter(owned).length} / ${ALL_UNITS.length}`;
     $('lbItems').textContent = M.items.length;
-    const pool = GRADE_NAMES.map((g, i) => `${g} ${ownedOf(i).length}/3`).join(' · ');
-    $('deployPool').textContent = `등급별 보유: ${pool}`;
-    // equipment slots (deploy + gear tab)
+    $('deployPool').textContent = '등급별 보유: ' + GRADE_NAMES.map((g, i) => `${g} ${ownedOf(i).length}/${UNITS[i].length}`).join(' · ');
     for (const id of ['deployGear', 'equipSlots']) {
       const box = $(id); box.innerHTML = '';
       for (const slot of Object.keys(SLOT_NAMES)) {
@@ -837,16 +1017,19 @@
         box.appendChild(d);
       }
     }
-    // roster
     const ro = $('roster'); ro.innerHTML = '';
     for (const def of ALL_UNITS) {
-      const c = document.createElement('div'); c.className = 'ccard' + (owned(def) ? '' : ' locked');
+      const c = document.createElement('div'); c.className = 'ccard' + (owned(def) ? '' : ' locked') + (def.base ? ' base' : '');
       c.appendChild(spriteCanvas(unitSprite(def, 4), 48));
       const nm = document.createElement('div'); nm.className = 'nm g' + def.grade; nm.textContent = def.n;
-      const lv = document.createElement('div'); lv.className = 'lv'; lv.textContent = `${GRADE_NAMES[def.grade]} · ${TYPE_LABEL[def.t]} · ${owned(def) ? 'Lv.' + charLv(def) : '미보유'}`;
-      c.append(nm, lv); ro.appendChild(c);
+      const lv = document.createElement('div'); lv.className = 'lv';
+      lv.textContent = `${GRADE_NAMES[def.grade]} · ${TYPE_LABEL[def.t]} · ${def.base ? '기본' : owned(def) ? 'Lv.' + charLv(def) : '미보유'}`;
+      const ps = document.createElement('div'); ps.className = 'ps'; ps.textContent = def.p;
+      c.append(nm, lv, ps);
+      if (def.skill) { const sk = document.createElement('div'); sk.className = 'sk'; sk.textContent = `스킬 ${def.skill.name}: ${def.skill.desc}`; c.appendChild(sk); }
+      if (!def.base) { const tg = document.createElement('div'); tg.className = 'tagb'; tg.textContent = `능력치 ×${CFG.GACHA_STAT_MUL}`; c.appendChild(tg); }
+      ro.appendChild(c);
     }
-    // inventory
     const inv = $('inv'); inv.innerHTML = '';
     if (!M.items.length) inv.innerHTML = '<span class="empty">장비가 없습니다. 보석으로 뽑아 보세요.</span>';
     const sorted = [...M.items].sort((a, b) => b.rarity - a.rarity || a.slot.localeCompare(b.slot));
@@ -864,7 +1047,7 @@
     $('bPullChar1').disabled = !can1; $('bPullChar10').disabled = !can10; $('bPullGear1').disabled = !can1; $('bPullGear10').disabled = !can10;
   }
   function pullChar() {
-    const def = pick(UNITS[weightedIndex(CHAR_PULL_W)]);
+    const def = pick(GACHA_UNITS[weightedIndex(CHAR_PULL_W)]);
     const cur = M.chars[def.n] || 0;
     let tag;
     if (cur === 0) { M.chars[def.n] = 1; tag = 'NEW'; }
