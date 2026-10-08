@@ -99,7 +99,7 @@
   .empty { color: var(--muted); }
   .log { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .log li:first-child { color: var(--fg); }
-  .g0 { color: #aab2bf; } .g1 { color: #4cd27a; } .g2 { color: #4aa3ff; } .g3 { color: #b16cff; } .g4 { color: #ff9f1c; } .g5 { color: #ff4d6d; }
+  .g0 { color: #aab2bf; } .g1 { color: #4cd27a; } .g2 { color: #4aa3ff; } .g3 { color: #b16cff; } .g4 { color: #ff9f1c; } .g5 { color: #ff4d6d; } .g6 { color: #7ee8fa; }
   .r0 { color: #aab2bf; } .r1 { color: #4aa3ff; } .r2 { color: #b16cff; } .r3 { color: #ff9f1c; }
   .note { font-size: 12px; color: var(--muted); }
   .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); padding: 0 4px; }
@@ -198,7 +198,7 @@
           <div><span class="k">보유 캐릭터</span><br><b id="lbOwned">0 / 56</b></div>
           <div><span class="k">보유 장비</span><br><b id="lbItems">0</b></div>
         </div>
-        <p class="note" style="margin:10px 0 0">기본 캐릭터 6종(등급별 1종)은 항상 보유하며, 뽑기 캐릭터는 같은 등급이라도 능력치가 20% 높고 더 강한 패시브를 가집니다. 게임 안에서는 <b>보유한 캐릭터만</b> 소환·합성됩니다.</p>
+        <p class="note" style="margin:10px 0 0">기본 캐릭터 6종(등급별 1종)은 항상 보유하며, 뽑기 캐릭터는 같은 등급이라도 능력치가 20% 높고 더 강한 패시브를 가집니다. 게임 안에서는 <b>보유한 캐릭터만</b> 소환·합성됩니다. 성장은 뽑기 중복으로만 이루어집니다(신화 캐릭터 ★, 전설 장비 ★).</p>
         <h3 style="margin-top:12px">모드 선택</h3>
         <div class="modes" id="modes"></div>
         <p class="note" style="margin:8px 0 0">스테이지는 40라운드 클리어 시 <b>최초 1회</b> 보석 보상(이후 재도전은 라운드 보상의 1/3). 무한 모드는 보석 <b>50 + 라운드 × 15</b>, 10라운드마다 디버프가 하나씩 추가되어 중첩됩니다.</p>
@@ -215,7 +215,7 @@
           <li>살아있는 몬스터 80마리 이상이면 패배</li>
           <li>모든 캐릭터는 고유 패시브, 신화 등급만 자동 발동 스킬 보유</li>
           <li>조합식: 지정 재료 유닛을 보드에 모아 조합 전용 캐릭터 제작 (예: 검사×2 + 마법사×1 → 마검사)</li>
-          <li>조합 전용 캐릭터는 전체 합성(C)에서 기본 제외 · 선택 패널/K 키로 유닛별 변경</li>
+          <li>조합 전용 캐릭터는 <b>특수</b> 등급: 상위 등급으로 합성 불가, 전체 합성(C)에서 기본 제외</li>
           <li>가장자리 칸일수록 길에 가깝습니다 (사거리 확인)</li>
         </ul>
       </div>
@@ -227,7 +227,7 @@
         <div class="gacha-bar">
           <button class="gem" id="bPullChar1">1회 뽑기 · 100 보석</button>
           <button class="gem" id="bPullChar10">10회 뽑기 · 900 보석</button>
-          <span class="note">확률: 일반 45% · 고급 30% · 희귀 14% · 영웅 7% · 전설 3% · 신화 1% (기본 캐릭터는 뽑기에서 제외). 중복 시 레벨 +1 (공격력 +8%/Lv, 최대 Lv.10, 초과 시 30 보석 환급)</span>
+          <span class="note">확률: 일반 45% · 고급 30% · 희귀 14% · 영웅 7% · 전설 3% · 신화 1% (기본·특수 캐릭터는 뽑기 제외). <b>신화</b> 중복: ★+1 (공격력 +15%/★, 최대 ★10). 그 외 등급 중복: 보석 환급 (일반 10 · 고급 15 · 희귀 25 · 영웅 40 · 전설 60)</span>
         </div>
         <div class="results" id="charResults"></div>
       </div>
@@ -243,7 +243,7 @@
         <div class="gacha-bar">
           <button class="gem" id="bPullGear1">1회 뽑기 · 100 보석</button>
           <button class="gem" id="bPullGear10">10회 뽑기 · 900 보석</button>
-          <span class="note">확률: 일반 55% · 희귀 30% · 영웅 12% · 전설 3%. 장비는 출격한 모든 유닛에 적용됩니다.</span>
+          <span class="note">확률: 일반 55% · 희귀 30% · 영웅 12% · 전설 3%. 장비는 출격한 모든 유닛에 적용됩니다. <b>전설</b> 장비는 같은 종류(슬롯·옵션) 중복 시 ★+1 (효과 +20%/★, 최대 ★10). 그 외 등급은 개별 아이템으로 보관(판매 가능)</span>
         </div>
         <div class="results" id="gearResults"></div>
       </div>
@@ -288,11 +288,6 @@
       </div>
 
       <div class="card">
-        <h3>등급별 공격력 강화 (+12% / Lv)</h3>
-        <div class="upg" id="upg"></div>
-      </div>
-
-      <div class="card">
         <h3>선택한 유닛</h3>
         <div class="sel" id="sel"></div>
         <p class="note" style="margin:8px 0 0">단축키: S 소환 · C 전체 합성 · K 잠금 전환 · L 행운 · N 다음 라운드 · Space 일시정지 · Esc 선택 해제</p>
@@ -320,9 +315,9 @@
     speed: n => 55 + Math.min(n, 30) * 1.0,
     bounty: n => 1 + Math.floor(n / 8),
     roundBonus: n => 15 + n * 2,
-    BOSS_HP_MUL: 25, BOSS_BOUNTY_MUL: 30, UPG_PCT: 0.12,
+    BOSS_HP_MUL: 25, BOSS_BOUNTY_MUL: 30,
     gemsForRun: (round, cleared) => 50 + round * 15 + (cleared ? 300 : 0),
-    PULL_COST: 100, PULL10_COST: 900, CHAR_LV_MAX: 10, CHAR_LV_PCT: 0.08, DUP_REFUND: 30,
+    PULL_COST: 100, PULL10_COST: 900,
     START_GEMS: 300, GACHA_STAT_MUL: 1.2,
     STAGE_HP_MUL: [1, 1.7, 2.8, 4.5], STAGE_REWARD: [500, 1000, 2000, 4000], STAGE_RETRY_DIV: 3,
   };
@@ -343,11 +338,13 @@
     for (const id of list) { const db = DEBUFFS.find(x => x.id === id); if (db) db.f(d); }
     return d;
   }
-  const GRADE_NAMES = ['일반', '고급', '희귀', '영웅', '전설', '신화'];
-  const GRADE_COLORS = ['#aab2bf', '#4cd27a', '#4aa3ff', '#b16cff', '#ff9f1c', '#ff4d6d'];
-  const BASE_DMG = [6, 15, 38, 95, 240, 600];
-  const SELL = [10, 20, 40, 80, 160, 320];
-  const UPG_BASE = [30, 80, 200, 500, 1200, 3000];
+  const GRADE_NAMES = ['일반', '고급', '희귀', '영웅', '전설', '신화', '특수'];
+  const GRADE_COLORS = ['#aab2bf', '#4cd27a', '#4aa3ff', '#b16cff', '#ff9f1c', '#ff4d6d', '#7ee8fa'];
+  const BASE_DMG = [6, 15, 38, 95, 240, 600, 0];
+  const SELL = [10, 20, 40, 80, 160, 320, 0];
+  const TOP_GRADE = 5, SPECIAL = 6;
+  const DUP_REFUND_BY_GRADE = [10, 15, 25, 40, 60];
+  const STAR_MAX = 10, STAR_PCT = 0.15, GEAR_STAR_PCT = 0.2;
   const BASE_W = [45, 30, 15, 7, 2.5, 0.5];
   const LUCK_MUL = [0.82, 1.0, 1.12, 1.25, 1.4, 1.6];
   const LUCK_MAX = 8;
@@ -362,7 +359,7 @@
   const MOD = {
     atk: 0, aspd: 0, range: 0, splashR: 45, splashPct: 0.5, slowPct: 0.4, slowDur: 1.5, chain: 3, chainPct: 0.7,
     critChance: 0.25, critMult: 3, bossDmg: 0, killGold: 0, goldPct: 0, roundGold: 0, pierce: 0, nth: 0, burn: 0,
-    vsSlowed: 0, vsLowHp: 0, auraAtk: 0, auraAspd: 0, upgMult: 1, farBonus: 0, focus: 0, execute: 0, harvest: 0,
+    vsSlowed: 0, vsLowHp: 0, auraAtk: 0, auraAspd: 0, farBonus: 0, focus: 0, execute: 0, harvest: 0,
     burnDur: 3, rapid: 0, bossRoundAtk: 0, auraRange: 0, roundGoldPct: 0, critSplash: 0, frenzy: 0, globalAtk: 0, summonDisc: 0, chaos: 0, countAtk: 0,
     pctDmg: 0, miniSlow: 0, critRapid: 0, roundScale: 0, chainSlow: 0,
   };
@@ -422,14 +419,12 @@
         mod: { roundGoldPct: 0.25 }, p: '축복: 라운드 종료 골드 보너스 +25%' },
       { n: '암흑기사', t: 'crit', d: 1.3, i: 1.0, r: 140, sp: { hat: 'helmet', wep: 'sword', c: '#343a40', d: '#212529', W: '#495057', G: '#ff4d6d', w: '#ff6b6b' },
         mod: { critRapid: 0.3 }, p: '피의 갈망: 치명타 시 다음 공격 간격 -30%' },
-      { n: '마검사', t: 'crit', d: 1.6, i: 0.9, r: 150, recipeOnly: true, recipe: [['검사', 2], ['마법사', 1]], sp: { hat: 'hood', wep: 'sword', c: '#7048e8', d: '#5f3dc4', H: '#3b5bdb', w: '#d0bfff' },
-        mod: { critSplash: 1.0, critChance: 0.3 }, p: '마검: 치명타 시 대상 주변 40px에 치명타 피해 100% 광역, 치명타 확률 30%' },
     ],
     [ // 영웅
       { n: '성기사', t: 'crit', d: 1.2, i: 0.9, r: 150, base: true, sp: { hat: 'helmet', wep: 'sword', c: '#e9ecef', d: '#adb5bd', W: '#dee2e6', G: '#f2b134', w: '#ffffff' },
         mod: { auraAtk: 0.15 }, p: '성스러운 빛: 인접 8칸 유닛 공격력 +15%' },
       { n: '대마법사', t: 'splash', d: 1.1, i: 1.0, r: 160, sp: { hat: 'wizard', wep: 'staff', c: '#5f3dc4', d: '#3b1f8f', H: '#7048e8', x: '#ffe066' },
-        mod: { upgMult: 1.5 }, p: '지혜: 등급 강화 효과를 1.5배로 받음' },
+        mod: { atk: 0.25, splashR: 55 }, p: '지혜: 공격력 +25%, 광역 반경 55' },
       { n: '서리여왕', t: 'slow', d: 1.0, i: 0.8, r: 160, sp: { hat: 'crown', wep: 'orb', c: '#a5d8ff', d: '#74c0fc', h: '#e7f5ff', G: '#f2b134', x: '#ffffff' },
         mod: { vsSlowed: 0.3 }, p: '서리: 둔화된 몬스터에게 피해 +30%' },
       { n: '음유시인', t: 'single', d: 0.9, i: 1.0, r: 150, sp: { hat: 'cap', wep: 'lute', c: '#20c997', d: '#099268', H: '#c92a2a', x: '#8b5a2b', h: '#e8590c' },
@@ -442,12 +437,6 @@
         mod: { chain: 4, chainPct: 0.8 }, p: '정령: 연쇄 대상 4마리, 연쇄 피해 80%' },
       { n: '현자', t: 'splash', d: 1.0, i: 1.0, r: 160, sp: { hat: 'wizard', wep: 'book', c: '#1c7ed6', d: '#1864ab', H: '#f8f9fa', x: '#a5d8ff', o: '#8b5a2b', h: '#e9ecef' },
         mod: { roundScale: 0.01 }, p: '세월의 지혜: 라운드당 공격력 +1% (최대 +60%)' },
-      { n: '성전사', t: 'crit', d: 1.5, i: 0.9, r: 160, recipeOnly: true, recipe: [['성기사', 1], ['성직자', 1], ['수도승', 1]], sp: { hat: 'helmet', wep: 'sword', c: '#fff3bf', d: '#ffd43b', W: '#ffffff', G: '#f2b134', w: '#fff9db' },
-        mod: { auraAtk: 0.2, bossDmg: 0.5 }, p: '신성: 인접 8칸 유닛 공격력 +20%, 보스 피해 +50%' },
-      { n: '설풍술사', t: 'multi', d: 1.2, i: 0.9, r: 170, recipeOnly: true, recipe: [['냉기술사', 2], ['폭풍술사', 1]], sp: { hat: 'wizard', wep: 'orb', c: '#99e9f2', d: '#3bc9db', H: '#e3fafc', x: '#ffffff' },
-        mod: { chain: 4, chainSlow: 0.4 }, p: '설풍: 연쇄 대상 4마리, 연쇄 피격 몬스터 1.5초 둔화 40%' },
-      { n: '황금기사', t: 'single', d: 1.2, i: 1.0, r: 150, recipeOnly: true, recipe: [['상인', 2], ['도적', 1]], sp: { hat: 'helmet', wep: 'spear', c: '#ffd43b', d: '#f08c00', W: '#ffe066', G: '#ffffff', w: '#ffd43b' },
-        mod: { killGold: 3, roundGold: 30, goldPct: 0.2 }, p: '황금률: 처치 골드 +3, 라운드 종료 골드 +30, 모든 골드 +20%' },
     ],
     [ // 전설
       { n: '용기사', t: 'splash', d: 1.3, i: 1.0, r: 170, base: true, sp: { hat: 'helmet', wep: 'spear', c: '#c92a2a', d: '#8a1c1c', W: '#e03131', G: '#f2b134', w: '#ffd43b' },
@@ -466,12 +455,6 @@
         mod: { globalAtk: 0.05 }, p: '성역: 보드 위 모든 유닛 공격력 +5% (최대 +25% 중첩)' },
       { n: '용사', t: 'single', d: 1.4, i: 0.9, r: 160, sp: { hat: 'band', wep: 'sword', c: '#2f9e44', d: '#2b8a3e', G: '#ffd43b', w: '#e9ecef', h: '#f08c00' },
         mod: { bossDmg: 0.3, bossRoundAtk: 0.3 }, p: '용맹: 보스 피해 +30%, 보스 라운드 동안 공격력 +30%' },
-      { n: '화염룡기사', t: 'splash', d: 1.6, i: 1.0, r: 180, recipeOnly: true, recipe: [['용기사', 1], ['화염술사', 2]], sp: { hat: 'helmet', wep: 'spear', c: '#ff6b35', d: '#d9480f', W: '#ff922b', G: '#ffd43b', w: '#ffe066' },
-        mod: { splashR: 70, splashPct: 0.9, burn: 0.3, burnDur: 4 }, p: '용염: 광역 반경 70, 광역 피해 90%, 4초간 초당 30% 화상' },
-      { n: '대현자', t: 'splash', d: 1.4, i: 0.9, r: 180, recipeOnly: true, recipe: [['대마법사', 1], ['현자', 1], ['점술사', 1]], sp: { hat: 'wizard', wep: 'book', c: '#5f3dc4', d: '#3b1f8f', H: '#ffffff', x: '#ffe066', o: '#8b5a2b', h: '#e9ecef' },
-        mod: { upgMult: 2, bossRoundAtk: 0.5 }, p: '통찰: 등급 강화 효과 2배, 보스 라운드 동안 공격력 +50%' },
-      { n: '암흑마검사', t: 'crit', d: 1.8, i: 0.8, r: 160, recipeOnly: true, recipe: [['마검사', 1], ['암살자', 1], ['암흑궁수', 1]], sp: { hat: 'hood', wep: 'sword', c: '#1a1a2e', d: '#000000', H: '#5f3dc4', w: '#ff4d6d' },
-        mod: { critMult: 6, critSplash: 0.5, bossDmg: 0.4 }, p: '암흑마검: 치명타 6배, 치명타 광역 50%, 보스 피해 +40%' },
     ],
     [ // 신화
       { n: '파멸자', t: 'single', d: 2.5, i: 1.0, r: 240, base: true, sp: { hat: 'horns', wep: 'scythe', c: '#495057', d: '#212529', G: '#ff4d6d', h: '#1a1a2e', w: '#ff4d6d', o: '#343a40' },
@@ -498,7 +481,23 @@
       { n: '명왕', t: 'slow', d: 1.5, i: 0.8, r: 200, sp: { hat: 'crown', wep: 'scythe', c: '#212529', d: '#000000', G: '#b16cff', w: '#b16cff', o: '#343a40', h: '#1a1a2e', s: '#ced4da' },
         mod: { slowDur: 3 }, p: '명계: 둔화 지속 1.5초 → 3초',
         skill: { id: 'gate', name: '명계의 문', cd: 30, desc: '30초마다 사거리 안 일반 몬스터 최대 5마리 즉사' } },
-      { n: '창조주', t: 'splash', d: 2.0, i: 0.8, r: 220, recipeOnly: true, recipe: [['창조신', 1], ['태양신', 1], ['시간술사', 1]], sp: { hat: 'halo', wep: 'staff', c: '#ffffff', d: '#ffd43b', G: '#ffd43b', x: '#ffffff', h: '#fff9db' },
+    ],
+    [ // 특수 (조합 전용: 뽑기·소환·합성 결과로 나오지 않으며 상위 등급으로 합성 불가)
+      { n: '마검사', t: 'crit', d: 1.6, i: 0.9, r: 150, recipeOnly: true, bd: 38, sell: 40, recipe: [['검사', 2], ['마법사', 1]], sp: { hat: 'hood', wep: 'sword', c: '#7048e8', d: '#5f3dc4', H: '#3b5bdb', w: '#d0bfff' },
+        mod: { critSplash: 1.0, critChance: 0.3 }, p: '마검: 치명타 시 대상 주변 40px에 치명타 피해 100% 광역, 치명타 확률 30%' },
+      { n: '성전사', t: 'crit', d: 1.5, i: 0.9, r: 160, recipeOnly: true, bd: 95, sell: 80, recipe: [['성기사', 1], ['성직자', 1], ['수도승', 1]], sp: { hat: 'helmet', wep: 'sword', c: '#fff3bf', d: '#ffd43b', W: '#ffffff', G: '#f2b134', w: '#fff9db' },
+        mod: { auraAtk: 0.2, bossDmg: 0.5 }, p: '신성: 인접 8칸 유닛 공격력 +20%, 보스 피해 +50%' },
+      { n: '설풍술사', t: 'multi', d: 1.2, i: 0.9, r: 170, recipeOnly: true, bd: 95, sell: 80, recipe: [['냉기술사', 2], ['폭풍술사', 1]], sp: { hat: 'wizard', wep: 'orb', c: '#99e9f2', d: '#3bc9db', H: '#e3fafc', x: '#ffffff' },
+        mod: { chain: 4, chainSlow: 0.4 }, p: '설풍: 연쇄 대상 4마리, 연쇄 피격 몬스터 1.5초 둔화 40%' },
+      { n: '황금기사', t: 'single', d: 1.2, i: 1.0, r: 150, recipeOnly: true, bd: 95, sell: 80, recipe: [['상인', 2], ['도적', 1]], sp: { hat: 'helmet', wep: 'spear', c: '#ffd43b', d: '#f08c00', W: '#ffe066', G: '#ffffff', w: '#ffd43b' },
+        mod: { killGold: 3, roundGold: 30, goldPct: 0.2 }, p: '황금률: 처치 골드 +3, 라운드 종료 골드 +30, 모든 골드 +20%' },
+      { n: '화염룡기사', t: 'splash', d: 1.6, i: 1.0, r: 180, recipeOnly: true, bd: 240, sell: 160, recipe: [['용기사', 1], ['화염술사', 2]], sp: { hat: 'helmet', wep: 'spear', c: '#ff6b35', d: '#d9480f', W: '#ff922b', G: '#ffd43b', w: '#ffe066' },
+        mod: { splashR: 70, splashPct: 0.9, burn: 0.3, burnDur: 4 }, p: '용염: 광역 반경 70, 광역 피해 90%, 4초간 초당 30% 화상' },
+      { n: '대현자', t: 'splash', d: 1.4, i: 0.9, r: 180, recipeOnly: true, bd: 240, sell: 160, recipe: [['대마법사', 1], ['현자', 1], ['점술사', 1]], sp: { hat: 'wizard', wep: 'book', c: '#5f3dc4', d: '#3b1f8f', H: '#ffffff', x: '#ffe066', o: '#8b5a2b', h: '#e9ecef' },
+        mod: { atk: 0.4, bossRoundAtk: 0.5, splashR: 60 }, p: '통찰: 공격력 +40%, 광역 반경 60, 보스 라운드 동안 공격력 +50%' },
+      { n: '암흑마검사', t: 'crit', d: 1.8, i: 0.8, r: 160, recipeOnly: true, bd: 240, sell: 160, recipe: [['마검사', 1], ['암살자', 1], ['암흑궁수', 1]], sp: { hat: 'hood', wep: 'sword', c: '#1a1a2e', d: '#000000', H: '#5f3dc4', w: '#ff4d6d' },
+        mod: { critMult: 6, critSplash: 0.5, bossDmg: 0.4 }, p: '암흑마검: 치명타 6배, 치명타 광역 50%, 보스 피해 +40%' },
+      { n: '창조주', t: 'splash', d: 2.0, i: 0.8, r: 220, recipeOnly: true, bd: 600, sell: 320, recipe: [['창조신', 1], ['태양신', 1], ['시간술사', 1]], sp: { hat: 'halo', wep: 'staff', c: '#ffffff', d: '#ffd43b', G: '#ffd43b', x: '#ffffff', h: '#fff9db' },
         mod: { splashPct: 1.0, summonDisc: 10 }, p: '창조: 광역 피해 100%, 소환 비용 -10G',
         skill: { id: 'genesis', name: '천지개벽', cd: 30, desc: '30초마다 모든 몬스터에게 공격력 ×8 피해 + 2초 정지' } },
     ],
@@ -622,13 +621,15 @@
   }
   function saveMeta() { try { localStorage.setItem('rtd_meta', JSON.stringify(M)); } catch (e) { /* unavailable */ } }
   const owned = def => def.base || (def.recipeOnly ? def.recipe.every(([n]) => owned(defByName(n))) : (M.chars[def.n] || 0) > 0);
-  const charLv = def => (def.base || def.recipeOnly) ? 1 : (M.chars[def.n] || 0);
-  const ownedOf = g => UNITS[g].filter(d => owned(d) && !d.recipeOnly);
+  // Only top-grade (신화) characters grow with duplicate pulls: ★1..★10, +15% attack per star.
+  const starsOf = def => def.grade === TOP_GRADE && !def.base ? Math.max(1, Math.min(STAR_MAX, M.chars[def.n] || 1)) : 1;
+  const ownedOf = g => (UNITS[g] || []).filter(d => owned(d) && !d.recipeOnly);
+  const gearVal = it => Math.round(it.val * (1 + GEAR_STAR_PCT * ((it.star || 1) - 1)));
   function equipMods() {
     const mods = { atk: 0, aspd: 0, range: 0, gold: 0, luck: 0, startGold: 0 };
     for (const slot of Object.keys(M.equip)) {
       const it = M.items.find(i => i.id === M.equip[slot]); if (!it) continue;
-      mods[it.stat] += it.val;
+      mods[it.stat] += gearVal(it);
     }
     return mods;
   }
@@ -639,7 +640,7 @@
     return {
       phase: 'play', gold: CFG.START_GOLD + mods.startGold, round: 0, timer: 0,
       units: [], monsters: [], shots: [], spawnQ: 0, spawnT: 0,
-      upg: [0, 0, 0, 0, 0, 0], luck: mods.luck, kills: 0, speed: 1, paused: false,
+      luck: mods.luck, kills: 0, speed: 1, paused: false,
       sel: null, log: [], mods, time: 0, buff: { atk: 0, t: 0 },
       mode, maxRound: mode.type === 'stage' ? CFG.MAX_ROUND : Infinity,
       stageMul: mode.type === 'stage' ? CFG.STAGE_HP_MUL[mode.stage - 1] : 1,
@@ -694,9 +695,8 @@
     if (m.countAtk) extra += m.countAtk * S.units.filter(o => o.grade === u.grade).length;
     if (m.bossRoundAtk && isBossRound()) extra += m.bossRoundAtk;
     if (m.roundScale) extra += Math.min(0.6, m.roundScale * S.round);
-    return BASE_DMG[u.grade] * u.def.d * u.def.statMul
-      * (1 + CFG.UPG_PCT * S.upg[u.grade] * m.upgMult)
-      * (1 + CFG.CHAR_LV_PCT * (charLv(u.def) - 1))
+    return (u.def.bd || BASE_DMG[u.grade]) * u.def.d * u.def.statMul
+      * (1 + STAR_PCT * (starsOf(u.def) - 1))
       * (1 + S.mods.atk / 100 + m.atk + aura(u, 'auraAtk') + globalAtk() + (S.buff.t > 0 ? S.buff.atk : 0) + Math.min(0.5, u.harvest * m.harvest) + extra)
       * S.dmul.atk;
   }
@@ -764,9 +764,10 @@
     }
   }
   function toggleLock() { const u = S.sel; if (!u) return; u.lock = !u.lock; log(`${u.def.n}: 전체 합성 ${u.lock ? '제외' : '허용'}`); renderPanel(); }
+  const canCombine = def => !def.recipeOnly && def.grade < TOP_GRADE;
   function combineGroup(group) {
     const grade = group[0].grade;
-    if (grade >= UNITS.length - 1) return false;
+    if (!canCombine(group[0].def)) return false;
     const pool = ownedOf(grade + 1);
     if (!pool.length) { log(`${GRADE_NAMES[grade + 1]} 등급 캐릭터를 보유해야 합성할 수 있습니다.`); return false; }
     group.sort((a, b) => edgeDist(a.col, a.row) - edgeDist(b.col, b.row));
@@ -782,6 +783,7 @@
   function combineSelected() {
     const u = S.sel; if (!u) return;
     const same = S.units.filter(x => x.def === u.def);
+    if (!canCombine(u.def)) { log(`${u.def.n}은(는) 합성할 수 없습니다.`); return; }
     if (same.length < CFG.COMBINE_NEED) { log(`${u.def.n}이(가) ${CFG.COMBINE_NEED}개 필요합니다. (현재 ${same.length}개)`); return; }
     const partners = same.filter(x => x !== u).sort((a, b) => a.lock - b.lock);
     combineGroup([u, ...partners.slice(0, CFG.COMBINE_NEED - 1)]);
@@ -795,7 +797,7 @@
       const byDef = new Map();
       for (const u of S.units) { if (u.lock) continue; if (!byDef.has(u.def)) byDef.set(u.def, []); byDef.get(u.def).push(u); }
       for (const [def, arr] of byDef) {
-        if (arr.length >= CFG.COMBINE_NEED && def.grade < UNITS.length - 1 && ownedOf(def.grade + 1).length) {
+        if (arr.length >= CFG.COMBINE_NEED && canCombine(def) && ownedOf(def.grade + 1).length) {
           if (combineGroup(arr.slice(0, CFG.COMBINE_NEED))) { n++; changed = true; break; }
         }
       }
@@ -803,20 +805,13 @@
     if (!n) log('합성할 조합이 없습니다. (🔒 잠긴 유닛은 제외)');
     renderPanel();
   }
+  const sellOf = def => def.sell || SELL[def.grade];
   function sellSelected() {
     const u = S.sel; if (!u) return;
     S.units = S.units.filter(x => x !== u);
-    S.gold += SELL[u.grade];
-    log(`판매: ${u.def.n} +${SELL[u.grade]}G`);
+    S.gold += sellOf(u.def);
+    log(`판매: ${u.def.n} +${sellOf(u.def)}G`);
     S.sel = null; renderPanel();
-  }
-  const upgCost = g => Math.round(UPG_BASE[g] * Math.pow(1.25, S.upg[g]));
-  function upgradeGrade(g) {
-    if (S.phase !== 'play') return;
-    const cost = upgCost(g);
-    if (S.gold < cost) { log('골드가 부족합니다.'); return; }
-    S.gold -= cost; S.upg[g]++;
-    log(`${GRADE_NAMES[g]} 공격력 강화 Lv.${S.upg[g]}`, 'g' + g); renderPanel();
   }
   function upgradeLuck() {
     if (!S || S.phase !== 'play') return;
@@ -1088,7 +1083,7 @@
       ctx.strokeStyle = GRADE_COLORS[u.grade]; ctx.lineWidth = u.grade >= 4 ? 3 : 2; ctx.stroke();
       const sp = unitSprite(u.def, 3);
       ctx.drawImage(sp, x + (w - sp.width) / 2, y + (w - sp.height) / 2);
-      if (S.upg[u.grade] > 0) { ctx.fillStyle = '#f2b134'; ctx.beginPath(); ctx.arc(x + w - 5, y + 5, 3, 0, Math.PI * 2); ctx.fill(); }
+      if (u.def.grade === TOP_GRADE && starsOf(u.def) > 1) { ctx.fillStyle = '#f2b134'; ctx.font = '700 9px sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.fillText('★' + starsOf(u.def), x + w - 3, y + 2); }
       if (u.lock) { ctx.fillStyle = '#ff5a5f'; ctx.fillRect(x + 3, y + 4, 6, 5); ctx.strokeStyle = '#ff5a5f'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x + 6, y + 4, 2, Math.PI, 0); ctx.stroke(); }
       if (u.def.skill) { // skill cooldown bar
         const f = 1 - Math.max(0, u.scd) / u.def.skill.cd;
@@ -1137,9 +1132,8 @@
     $('bSkip').disabled = S.phase !== 'play' || S.spawnQ > 0 || isBossRound();
     $('bSkip').textContent = isBossRound() ? '보스 라운드 (건너뛰기 불가)' : '다음 라운드 바로 시작';
     $('bLuck').disabled = S.phase !== 'play' || S.luck >= LUCK_MAX || S.gold < LUCK_COST(S.luck);
-    for (let g = 0; g < 6; g++) { const b = $('upgBtn' + g); if (b) b.disabled = S.phase !== 'play' || S.gold < upgCost(g); }
     const cb = $('bSelCombine');
-    if (cb && S.sel) cb.disabled = S.units.filter(x => x.def === S.sel.def).length < CFG.COMBINE_NEED || S.sel.grade >= 5 || !ownedOf(S.sel.grade + 1).length;
+    if (cb && S.sel) cb.disabled = !canCombine(S.sel.def) || S.units.filter(x => x.def === S.sel.def).length < CFG.COMBINE_NEED || !ownedOf(S.sel.grade + 1).length;
     const cd = $('selCd'); if (cd && S.sel && S.sel.def.skill) cd.textContent = S.sel.scd > 0 ? `쿨다운 ${Math.ceil(S.sel.scd)}s` : '준비 완료';
   }
   function renderLog() {
@@ -1155,15 +1149,6 @@
       rates.appendChild(d);
     });
     $('luckCost').textContent = S.luck >= LUCK_MAX ? 'MAX' : `${LUCK_COST(S.luck)}G · Lv.${S.luck}`;
-    const up = $('upg'); up.innerHTML = '';
-    for (let g = 0; g < 6; g++) {
-      const row = document.createElement('div'); row.className = 'row';
-      const cnt = S.units.filter(u => u.grade === g).length;
-      row.innerHTML = `<span class="g g${g}">${GRADE_NAMES[g]}</span><span class="lv">Lv.${S.upg[g]} · 보유 ${cnt}</span>`;
-      const b = document.createElement('button'); b.id = 'upgBtn' + g; b.textContent = `${upgCost(g)}G`;
-      b.addEventListener('click', () => upgradeGrade(g));
-      row.appendChild(b); up.appendChild(row);
-    }
     renderRecipes();
     const sel = $('sel'); sel.innerHTML = '';
     if (!S.sel || !S.units.includes(S.sel)) {
@@ -1174,18 +1159,18 @@
       const head = document.createElement('div'); head.className = 'head';
       head.appendChild(spriteCanvas(unitSprite(u.def, 4), 48));
       const name = document.createElement('div'); name.className = 'name g' + u.grade;
-      name.textContent = `[${GRADE_NAMES[u.grade]}] ${u.def.n}${u.def.base ? ' (기본)' : ' Lv.' + charLv(u.def)}`;
+      name.textContent = `[${GRADE_NAMES[u.grade]}] ${u.def.n}${u.def.base ? ' (기본)' : u.def.grade === TOP_GRADE ? ' ★' + starsOf(u.def) : ''}`;
       head.appendChild(name);
       const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = `${TYPE_LABEL[u.def.t]} · ${TYPE_DESC[u.def.t]}`;
       const pv = document.createElement('div'); pv.className = 'pv'; pv.innerHTML = `<b>패시브</b> ${u.def.p}`;
       if (isMaterial(u.def)) { const mats = RECIPE_UNITS.filter(r => owned(r) && r.recipe.some(([n]) => n === u.def.n)).map(r => r.n); if (mats.length) meta.textContent += ` · ⚗️ 조합 재료 (${mats.join(', ')})`; }
       const dl = document.createElement('dl');
-      dl.innerHTML = `<dt>공격력</dt><dd>${fmt(dmgOf(u))}</dd><dt>공격 간격</dt><dd>${intervalOf(u).toFixed(2)}s</dd><dt>사거리</dt><dd>${rangeOf(u)}</dd><dt>예상 DPS</dt><dd>${fmt(dpsOf(u))}</dd><dt>같은 유닛</dt><dd>${same} / ${CFG.COMBINE_NEED}</dd><dt>판매가</dt><dd>${SELL[u.grade]}G</dd>`;
+      dl.innerHTML = `<dt>공격력</dt><dd>${fmt(dmgOf(u))}</dd><dt>공격 간격</dt><dd>${intervalOf(u).toFixed(2)}s</dd><dt>사거리</dt><dd>${rangeOf(u)}</dd><dt>예상 DPS</dt><dd>${fmt(dpsOf(u))}</dd><dt>같은 유닛</dt><dd>${same} / ${CFG.COMBINE_NEED}</dd><dt>판매가</dt><dd>${sellOf(u.def)}G</dd>`;
       const btns = document.createElement('div'); btns.className = 'btns';
       const bc = document.createElement('button'); bc.id = 'bSelCombine';
-      bc.textContent = u.grade >= 5 ? '최고 등급' : ownedOf(u.grade + 1).length ? `합성 (${CFG.COMBINE_NEED}개 → ${GRADE_NAMES[u.grade + 1]})` : `${GRADE_NAMES[u.grade + 1]} 캐릭터 미보유`;
+      bc.textContent = u.def.recipeOnly ? '특수 등급 (합성 불가)' : u.grade >= TOP_GRADE ? '최고 등급' : ownedOf(u.grade + 1).length ? `합성 (${CFG.COMBINE_NEED}개 → ${GRADE_NAMES[u.grade + 1]})` : `${GRADE_NAMES[u.grade + 1]} 캐릭터 미보유`;
       bc.addEventListener('click', combineSelected);
-      const bs = document.createElement('button'); bs.className = 'danger'; bs.textContent = `판매 +${SELL[u.grade]}G`;
+      const bs = document.createElement('button'); bs.className = 'danger'; bs.textContent = `판매 +${sellOf(u.def)}G`;
       bs.addEventListener('click', sellSelected);
       const bl = document.createElement('button'); bl.className = 'lockb'; bl.textContent = u.lock ? '🔒 전체 합성 제외 중' : '🔓 전체 합성 허용 중';
       bl.title = '클릭하여 전환'; bl.addEventListener('click', toggleLock);
@@ -1211,7 +1196,7 @@
   }
   function itemLabel(it) {
     const st = GEAR_STATS[it.slot].find(s => s.k === it.stat);
-    return `${st.l} +${it.val}${st.u}`;
+    return `${st.l} +${gearVal(it)}${st.u}${it.rarity === 3 ? ' ★' + (it.star || 1) : ''}`;
   }
   function renderLobby() {
     renderHud();
@@ -1230,7 +1215,7 @@
     inf.appendChild(ib); modes.appendChild(inf);
     $('lbOwned').textContent = `${ALL_UNITS.filter(owned).length} / ${ALL_UNITS.length}`;
     $('lbItems').textContent = M.items.length;
-    $('deployPool').textContent = '등급별 보유: ' + GRADE_NAMES.map((g, i) => `${g} ${ownedOf(i).length}/${UNITS[i].length}`).join(' · ');
+    $('deployPool').textContent = '등급별 보유: ' + GRADE_NAMES.map((g, i) => `${g} ${UNITS[i].filter(owned).length}/${UNITS[i].length}`).join(' · ');
     for (const id of ['deployGear', 'equipSlots']) {
       const box = $(id); box.innerHTML = '';
       for (const slot of Object.keys(SLOT_NAMES)) {
@@ -1247,7 +1232,7 @@
       c.appendChild(spriteCanvas(unitSprite(def, 4), 48));
       const nm = document.createElement('div'); nm.className = 'nm g' + def.grade; nm.textContent = def.n;
       const lv = document.createElement('div'); lv.className = 'lv';
-      lv.textContent = `${GRADE_NAMES[def.grade]} · ${TYPE_LABEL[def.t]} · ${def.base ? '기본' : def.recipeOnly ? (owned(def) ? '조합 가능' : '재료 미보유') : owned(def) ? 'Lv.' + charLv(def) : '미보유'}`;
+      lv.textContent = `${GRADE_NAMES[def.grade]} · ${TYPE_LABEL[def.t]} · ${def.base ? '기본' : def.recipeOnly ? (owned(def) ? '조합 가능' : '재료 미보유') : !owned(def) ? '미보유' : def.grade === TOP_GRADE ? '★' + starsOf(def) : '보유'}`;
       const ps = document.createElement('div'); ps.className = 'ps'; ps.textContent = def.p;
       c.append(nm, lv, ps);
       if (def.recipeOnly) { const rc = document.createElement('div'); rc.className = 'rc'; rc.textContent = '조합: ' + def.recipe.map(([n, k]) => `${n}×${k}`).join(' + '); c.appendChild(rc); }
@@ -1279,8 +1264,10 @@
     const cur = M.chars[def.n] || 0;
     let tag;
     if (cur === 0) { M.chars[def.n] = 1; tag = 'NEW'; }
-    else if (cur < CFG.CHAR_LV_MAX) { M.chars[def.n] = cur + 1; tag = `Lv.${cur + 1}`; }
-    else { M.gems += CFG.DUP_REFUND; tag = `MAX · +${CFG.DUP_REFUND}보석`; }
+    else if (def.grade === TOP_GRADE) {
+      if (cur < STAR_MAX) { M.chars[def.n] = cur + 1; tag = `★${cur + 1} (+${Math.round(STAR_PCT * 100)}%)`; }
+      else { M.gems += CFG.PULL_COST; tag = `★MAX · +${CFG.PULL_COST}보석`; }
+    } else { const r = DUP_REFUND_BY_GRADE[def.grade]; M.gems += r; tag = `중복 · +${r}보석`; }
     return { def, tag, isNew: cur === 0 };
   }
   function pullGear() {
@@ -1288,7 +1275,11 @@
     const slot = pick(Object.keys(SLOT_NAMES));
     const st = pick(GEAR_STATS[slot]);
     const val = Math.max(1, Math.round(st.b[rarity] * (0.8 + Math.random() * 0.4)));
-    const it = { id: ++M.seq, slot, rarity, stat: st.k, val, name: GEAR_NAMES[slot][rarity] };
+    if (rarity === 3) { // 전설 장비는 같은 종류(슬롯·옵션) 중복 시 별이 오릅니다
+      const ex = M.items.find(i => i.rarity === 3 && i.slot === slot && i.stat === st.k);
+      if (ex) { if ((ex.star || 1) < STAR_MAX) { ex.star = (ex.star || 1) + 1; ex.dup = true; } else { M.gems += CFG.PULL_COST; ex.dup = 'max'; } return ex; }
+    }
+    const it = { id: ++M.seq, slot, rarity, stat: st.k, val, name: GEAR_NAMES[slot][rarity], star: 1 };
     M.items.push(it);
     return it;
   }
@@ -1307,7 +1298,9 @@
       } else {
         const it = pullGear();
         if (it.rarity >= 2) card.classList.add('new');
-        card.innerHTML = `<div class="r${it.rarity}"><b>${it.name}</b></div><div class="note">${SLOT_NAMES[it.slot]} · ${RARITY_NAMES[it.rarity]}</div><div class="tag">${itemLabel(it)}</div>`;
+        const dupTag = it.dup === 'max' ? ` · ★MAX +${CFG.PULL_COST}보석` : it.dup ? ' · 중복 → 별 상승' : '';
+        delete it.dup;
+        card.innerHTML = `<div class="r${it.rarity}"><b>${it.name}</b></div><div class="note">${SLOT_NAMES[it.slot]} · ${RARITY_NAMES[it.rarity]}${dupTag}</div><div class="tag">${itemLabel(it)}</div>`;
       }
       box.appendChild(card);
     }
