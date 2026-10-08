@@ -133,6 +133,17 @@
   .summary b { font-size: 18px; }
   .rules { margin: 0; padding: 0; list-style: none; color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
   .rules li::before { content: "▸ "; color: var(--accent); }
+  .modes { display: grid; gap: 8px; }
+  .mode { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  .mode.inf { border-color: var(--accent); }
+  .mode .t { font-weight: 700; }
+  .mode .d { font-size: 12px; color: var(--muted); }
+  .mode .done { color: var(--ok); font-size: 12px; }
+  .mode button { min-height: 32px; padding: 4px 12px; white-space: nowrap; }
+  .debuffs { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; font-size: 12px; }
+  .debuffs li { color: var(--danger); }
+  .debuffs li::before { content: "▼ "; }
+  .lockb { font-size: 12px; }
   @media (max-width: 760px) {
     .layout, .lobby-grid { grid-template-columns: 1fr; }
     .board { max-width: 100%; }
@@ -148,6 +159,7 @@
     <h1>랜타디<small>RANDOM TOWER DEFENSE</small></h1>
     <div class="hud">
       <div class="stat gems"><span class="k">보석</span><b id="hGems">0</b></div>
+      <div class="stat" id="hModeWrap"><span class="k">모드</span><b id="hMode">-</b></div>
       <div class="stat" id="hRoundWrap"><span class="k">라운드</span><b id="hRound">-</b></div>
       <div class="stat" id="hTimeWrap"><span class="k">남은 시간</span><b id="hTime">-</b></div>
       <div class="stat gold" id="hGoldWrap"><span class="k">골드</span><b id="hGold">0</b></div>
@@ -175,11 +187,13 @@
         <div class="summary">
           <div><span class="k">최고 라운드</span><br><b id="lbBest">0</b></div>
           <div><span class="k">플레이 횟수</span><br><b id="lbRuns">0</b></div>
-          <div><span class="k">보유 캐릭터</span><br><b id="lbOwned">0 / 30</b></div>
+          <div><span class="k">보유 캐릭터</span><br><b id="lbOwned">0 / 42</b></div>
           <div><span class="k">보유 장비</span><br><b id="lbItems">0</b></div>
         </div>
-        <p class="note" style="margin:10px 0 0">보석 보상: 게임 종료 시 <b>50 + 라운드 × 15</b> (클리어 시 +300). 기본 캐릭터 6종(등급별 1종)은 항상 보유하며, 뽑기 캐릭터는 같은 등급이라도 능력치가 20% 높고 더 강한 패시브를 가집니다. 게임 안에서는 <b>보유한 캐릭터만</b> 소환·합성됩니다.</p>
-        <div style="margin-top:12px"><button class="primary" id="bStart" style="min-height:48px;width:100%;font-size:16px">게임 시작</button></div>
+        <p class="note" style="margin:10px 0 0">기본 캐릭터 6종(등급별 1종)은 항상 보유하며, 뽑기 캐릭터는 같은 등급이라도 능력치가 20% 높고 더 강한 패시브를 가집니다. 게임 안에서는 <b>보유한 캐릭터만</b> 소환·합성됩니다.</p>
+        <h3 style="margin-top:12px">모드 선택</h3>
+        <div class="modes" id="modes"></div>
+        <p class="note" style="margin:8px 0 0">스테이지는 40라운드 클리어 시 <b>최초 1회</b> 보석 보상(이후 재도전은 라운드 보상의 1/3). 무한 모드는 보석 <b>50 + 라운드 × 15</b>, 10라운드마다 디버프가 하나씩 추가되어 중첩됩니다.</p>
       </div>
       <div class="card">
         <h3>출격 정보</h3>
@@ -188,9 +202,11 @@
         <h3 style="margin-top:12px">규칙</h3>
         <ul class="rules">
           <li>소환 20G · 같은 유닛 2개를 합쳐 상위 등급</li>
-          <li>라운드마다 몬스터 20마리 · 10·20·30 보스, 40 최종 보스(45초 제한, 건너뛰기 불가)</li>
+          <li>라운드마다 몬스터 20마리 · 10라운드마다 보스(45초 제한, 건너뛰기 불가)</li>
+          <li>무한 모드: 10라운드마다 디버프 추가(중첩), 라운드 무제한</li>
           <li>살아있는 몬스터 80마리 이상이면 패배</li>
-          <li>모든 캐릭터는 고유 패시브, 영웅 이상은 자동 발동 스킬 보유</li>
+          <li>모든 캐릭터는 고유 패시브, 신화 등급만 자동 발동 스킬 보유</li>
+          <li>🔒 표시 캐릭터는 전체 합성(C)에서 제외 · 선택 패널에서 유닛별 변경 가능</li>
           <li>가장자리 칸일수록 길에 가깝습니다 (사거리 확인)</li>
         </ul>
       </div>
@@ -252,6 +268,11 @@
         <div class="rates" id="rates"></div>
       </div>
 
+      <div class="card" id="debuffCard" hidden>
+        <h3>무한 모드 디버프 (10라운드마다 추가)</h3>
+        <ul class="debuffs" id="debuffList"></ul>
+      </div>
+
       <div class="card">
         <h3>등급별 공격력 강화 (+12% / Lv)</h3>
         <div class="upg" id="upg"></div>
@@ -260,7 +281,7 @@
       <div class="card">
         <h3>선택한 유닛</h3>
         <div class="sel" id="sel"></div>
-        <p class="note" style="margin:8px 0 0">단축키: S 소환 · C 전체 합성 · L 행운 · N 다음 라운드 · Space 일시정지 · Esc 선택 해제</p>
+        <p class="note" style="margin:8px 0 0">단축키: S 소환 · C 전체 합성 · K 잠금 전환 · L 행운 · N 다음 라운드 · Space 일시정지 · Esc 선택 해제</p>
       </div>
 
       <div class="card">
@@ -281,7 +302,7 @@
   const CFG = {
     START_GOLD: 100, SUMMON_COST: 20, ROUND_TIME: 25, BOSS_TIME: 45, MONSTER_CAP: 80, MAX_ROUND: 40,
     COMBINE_NEED: 2, SPAWN_INTERVAL: 0.6, PER_ROUND: 20,
-    hp: n => Math.round(12 * Math.pow(1.17, n) + 8 * n),
+    hp: n => Math.round(12 * Math.pow(1.15, n) + 8 * n),
     speed: n => 55 + Math.min(n, 30) * 1.0,
     bounty: n => 1 + Math.floor(n / 8),
     roundBonus: n => 15 + n * 2,
@@ -289,7 +310,25 @@
     gemsForRun: (round, cleared) => 50 + round * 15 + (cleared ? 300 : 0),
     PULL_COST: 100, PULL10_COST: 900, CHAR_LV_MAX: 10, CHAR_LV_PCT: 0.08, DUP_REFUND: 30,
     START_GEMS: 300, GACHA_STAT_MUL: 1.2,
+    STAGE_HP_MUL: [1, 1.7, 2.8, 4.5], STAGE_REWARD: [500, 1000, 2000, 4000], STAGE_RETRY_DIV: 3,
   };
+  const DEBUFFS = [
+    { id: 'hp', n: '몬스터 체력 +25%', f: d => { d.hp *= 1.25; } },
+    { id: 'spd', n: '몬스터 이동 속도 +10%', f: d => { d.speed *= 1.1; } },
+    { id: 'atk', n: '유닛 공격력 -8%', f: d => { d.atk *= 0.92; } },
+    { id: 'gold', n: '골드 획득 -10%', f: d => { d.gold *= 0.9; } },
+    { id: 'time', n: '라운드 시간 -2초', f: d => { d.roundTime -= 2; } },
+    { id: 'mon', n: '라운드당 몬스터 +4', f: d => { d.extraMon += 4; } },
+    { id: 'boss', n: '보스 체력 +50%', f: d => { d.bossHp *= 1.5; } },
+    { id: 'cost', n: '소환 비용 +5G', f: d => { d.summonCost += 5; } },
+    { id: 'range', n: '유닛 사거리 -10', f: d => { d.range -= 10; } },
+    { id: 'cap', n: '몬스터 한계 -5', f: d => { d.cap -= 5; } },
+  ];
+  function computeDmul(list) {
+    const d = { hp: 1, speed: 1, atk: 1, gold: 1, roundTime: 0, extraMon: 0, bossHp: 1, summonCost: 0, range: 0, cap: 0 };
+    for (const id of list) { const db = DEBUFFS.find(x => x.id === id); if (db) db.f(d); }
+    return d;
+  }
   const GRADE_NAMES = ['일반', '고급', '희귀', '영웅', '전설', '신화'];
   const GRADE_COLORS = ['#aab2bf', '#4cd27a', '#4aa3ff', '#b16cff', '#ff9f1c', '#ff4d6d'];
   const BASE_DMG = [6, 15, 38, 95, 240, 600];
@@ -310,6 +349,7 @@
     atk: 0, aspd: 0, range: 0, splashR: 45, splashPct: 0.5, slowPct: 0.4, slowDur: 1.5, chain: 3, chainPct: 0.7,
     critChance: 0.25, critMult: 3, bossDmg: 0, killGold: 0, goldPct: 0, roundGold: 0, pierce: 0, nth: 0, burn: 0,
     vsSlowed: 0, vsLowHp: 0, auraAtk: 0, auraAspd: 0, upgMult: 1, farBonus: 0, focus: 0, execute: 0, harvest: 0,
+    burnDur: 3, rapid: 0, bossRoundAtk: 0, auraRange: 0, roundGoldPct: 0, critSplash: 0, frenzy: 0, globalAtk: 0, summonDisc: 0, chaos: 0, countAtk: 0,
   };
   // n: name, t: attack type, d: dmg mult, i: interval, r: range, base: starter (always owned, not in gacha),
   // sp: sprite spec, mod: passive numbers, p: passive text, skill: {id, name, cd, desc} (auto-cast)
@@ -323,8 +363,12 @@
         mod: { pierce: 0.5 }, p: '관통: 대상 바로 뒤 몬스터에게 50% 추가 피해' },
       { n: '견습술사', t: 'slow', d: 0.8, i: 1.0, r: 130, sp: { hat: 'cap', wep: 'staff', c: '#74c0fc', d: '#4dabf7', H: '#4dabf7', x: '#d0ebff' },
         mod: { slowDur: 2.5 }, p: '끈질긴 서리: 둔화 지속 1.5초 → 2.5초' },
-      { n: '도적', t: 'crit', d: 1.0, i: 0.8, r: 120, sp: { hat: 'mask', wep: 'dagger', c: '#495057', d: '#343a40', G: '#868e96', w: '#ced4da' },
+      { n: '도적', t: 'crit', d: 1.0, i: 0.8, r: 120, noAuto: true, sp: { hat: 'mask', wep: 'dagger', c: '#495057', d: '#343a40', G: '#868e96', w: '#ced4da' },
         mod: { killGold: 1 }, p: '소매치기: 처치할 때마다 골드 +1' },
+      { n: '민병대', t: 'single', d: 0.9, i: 0.9, r: 130, sp: { hat: 'cap', wep: 'spear', c: '#b08968', d: '#7f5539', H: '#7f5539', h: '#4a3222' },
+        mod: { countAtk: 0.03 }, p: '수적 우세: 보드 위 일반 등급 유닛 1마리당 공격력 +3%' },
+      { n: '횃불병', t: 'splash', d: 0.7, i: 1.1, r: 130, sp: { hat: 'none', wep: 'torch', c: '#c0392b', d: '#922b21', h: '#2c2c2c', x: '#ffb347' },
+        mod: { burn: 0.1, burnDur: 1.5 }, p: '불씨: 피격 몬스터에게 1.5초간 초당 공격력 10% 화상' },
     ],
     [ // 고급
       { n: '사냥꾼', t: 'crit', d: 1.0, i: 0.9, r: 150, base: true, sp: { hat: 'hood', wep: 'bow', c: '#7a5230', d: '#5b3c22', H: '#9c6b3c', h: '#3a2a1a' },
@@ -335,8 +379,12 @@
         mod: { slowPct: 0.55 }, p: '혹한: 둔화율 40% → 55%' },
       { n: '쌍검사', t: 'multi', d: 0.8, i: 0.9, r: 130, sp: { hat: 'bandana', wep: 'sword', c: '#e8590c', d: '#c2410c', H: '#fd7e14', w: '#f1f3f5' },
         mod: { chain: 4 }, p: '쌍검: 연쇄 대상 3 → 4마리' },
-      { n: '상인', t: 'single', d: 1.1, i: 1.0, r: 140, sp: { hat: 'cap', wep: 'book', c: '#a9e34b', d: '#74b816', H: '#5c940d', x: '#ffd43b', o: '#8b5a2b' },
+      { n: '상인', t: 'single', d: 1.1, i: 1.0, r: 140, noAuto: true, sp: { hat: 'cap', wep: 'book', c: '#a9e34b', d: '#74b816', H: '#5c940d', x: '#ffd43b', o: '#8b5a2b' },
         mod: { roundGold: 10 }, p: '장부 정리: 라운드 종료마다 골드 +10' },
+      { n: '궁기병', t: 'single', d: 1.0, i: 1.0, r: 150, sp: { hat: 'feather', wep: 'bow', c: '#5c7cfa', d: '#4263eb', G: '#ff6b6b', h: '#3a2a1a' },
+        mod: { rapid: 0.3 }, p: '속사: 공격 후 30% 확률로 다음 공격 간격 절반' },
+      { n: '점술사', t: 'slow', d: 0.9, i: 1.0, r: 140, sp: { hat: 'hood', wep: 'orb', c: '#7950f2', d: '#5f3dc4', H: '#9775fa', x: '#ffe066' },
+        mod: { bossRoundAtk: 0.5 }, p: '예지: 보스 라운드 동안 공격력 +50%' },
     ],
     [ // 희귀
       { n: '저격수', t: 'single', d: 1.6, i: 1.4, r: 220, base: true, sp: { hat: 'hood', wep: 'bow', c: '#2f3e46', d: '#1f2a30', H: '#4a5f6a', h: '#1a1a1a' },
@@ -349,40 +397,42 @@
         mod: { bossDmg: 0.4 }, p: '보스 사냥: 보스에게 피해 +40%' },
       { n: '수도승', t: 'crit', d: 1.0, i: 0.8, r: 130, sp: { hat: 'none', wep: 'none', c: '#f59f00', d: '#e67700', h: '#f1c27d' },
         mod: { aspd: 0.2, critChance: 0.35 }, p: '연타: 공격 속도 +20%, 치명타 확률 25% → 35%' },
+      { n: '기계공', t: 'multi', d: 0.9, i: 1.0, r: 150, sp: { hat: 'cap', wep: 'hammer', c: '#868e96', d: '#495057', H: '#f59f00', w: '#adb5bd' },
+        mod: { auraRange: 20 }, p: '포탑 정비: 인접 8칸 유닛 사거리 +20' },
+      { n: '성직자', t: 'single', d: 1.0, i: 1.0, r: 150, noAuto: true, sp: { hat: 'mitre', wep: 'wand', c: '#f8f9fa', d: '#dee2e6', G: '#f2b134', x: '#fff3bf' },
+        mod: { roundGoldPct: 0.25 }, p: '축복: 라운드 종료 골드 보너스 +25%' },
     ],
     [ // 영웅
       { n: '성기사', t: 'crit', d: 1.2, i: 0.9, r: 150, base: true, sp: { hat: 'helmet', wep: 'sword', c: '#e9ecef', d: '#adb5bd', W: '#dee2e6', G: '#f2b134', w: '#ffffff' },
-        mod: { auraAtk: 0.1 }, p: '성스러운 빛: 인접 8칸 유닛 공격력 +10%',
-        skill: { id: 'smite', name: '심판', cd: 18, desc: '18초마다 사거리 안 모든 몬스터에게 공격력 ×6 피해' } },
+        mod: { auraAtk: 0.15 }, p: '성스러운 빛: 인접 8칸 유닛 공격력 +15%' },
       { n: '대마법사', t: 'splash', d: 1.1, i: 1.0, r: 160, sp: { hat: 'wizard', wep: 'staff', c: '#5f3dc4', d: '#3b1f8f', H: '#7048e8', x: '#ffe066' },
-        mod: { upgMult: 1.5 }, p: '지혜: 등급 강화 효과를 1.5배로 받음',
-        skill: { id: 'meteor', name: '메테오', cd: 20, desc: '20초마다 사거리 안 모든 몬스터에게 공격력 ×8 피해' } },
+        mod: { upgMult: 1.5 }, p: '지혜: 등급 강화 효과를 1.5배로 받음' },
       { n: '서리여왕', t: 'slow', d: 1.0, i: 0.8, r: 160, sp: { hat: 'crown', wep: 'orb', c: '#a5d8ff', d: '#74c0fc', h: '#e7f5ff', G: '#f2b134', x: '#ffffff' },
-        mod: { vsSlowed: 0.3 }, p: '서리: 둔화된 몬스터에게 피해 +30%',
-        skill: { id: 'freeze', name: '빙결', cd: 25, desc: '25초마다 사거리 안 몬스터 2초 정지' } },
+        mod: { vsSlowed: 0.3 }, p: '서리: 둔화된 몬스터에게 피해 +30%' },
       { n: '음유시인', t: 'single', d: 0.9, i: 1.0, r: 150, sp: { hat: 'cap', wep: 'lute', c: '#20c997', d: '#099268', H: '#c92a2a', x: '#8b5a2b', h: '#e8590c' },
-        mod: { auraAspd: 0.1 }, p: '노래: 인접 8칸 유닛 공격 속도 +10%',
-        skill: { id: 'warsong', name: '전투 찬가', cd: 20, desc: '20초마다 모든 유닛 공격력 +30% (5초)' } },
+        mod: { auraAspd: 0.15 }, p: '노래: 인접 8칸 유닛 공격 속도 +15%' },
       { n: '현상금사냥꾼', t: 'crit', d: 1.3, i: 1.0, r: 170, sp: { hat: 'cap', wep: 'gun', c: '#8d6e4f', d: '#5c4330', H: '#3a2a1a', w: '#ced4da' },
-        mod: { goldPct: 0.5 }, p: '현상금: 처치 골드 +50%',
-        skill: { id: 'snipe', name: '저격', cd: 15, desc: '15초마다 체력이 가장 높은 몬스터에게 공격력 ×10 피해' } },
+        mod: { goldPct: 0.5 }, p: '현상금: 처치 골드 +50%' },
+      { n: '검성', t: 'crit', d: 1.4, i: 0.9, r: 150, noAuto: true, sp: { hat: 'bandana', wep: 'sword', c: '#343a40', d: '#212529', H: '#e03131', w: '#e9ecef' },
+        mod: { critSplash: 0.5 }, p: '일섬: 치명타 시 대상 주변 40px에 치명타 피해의 50% 광역' },
+      { n: '정령사', t: 'multi', d: 1.0, i: 0.9, r: 160, sp: { hat: 'halo', wep: 'orb', c: '#63e6be', d: '#20c997', G: '#c3fae8', x: '#e6fcf5', h: '#96f2d7' },
+        mod: { chain: 4, chainPct: 0.8 }, p: '정령: 연쇄 대상 4마리, 연쇄 피해 80%' },
     ],
     [ // 전설
       { n: '용기사', t: 'splash', d: 1.3, i: 1.0, r: 170, base: true, sp: { hat: 'helmet', wep: 'spear', c: '#c92a2a', d: '#8a1c1c', W: '#e03131', G: '#f2b134', w: '#ffd43b' },
-        mod: { splashR: 65, splashPct: 0.75 }, p: '용의 숨결: 광역 반경 65, 광역 피해 75%',
-        skill: { id: 'breath', name: '화염 숨결', cd: 20, desc: '20초마다 사거리 안 모든 몬스터에게 공격력 ×5 피해 + 화상' } },
+        mod: { splashR: 65, splashPct: 0.75 }, p: '용의 숨결: 광역 반경 65, 광역 피해 75%' },
       { n: '암살자', t: 'crit', d: 1.5, i: 0.7, r: 150, sp: { hat: 'hood', wep: 'dagger', c: '#212529', d: '#000000', H: '#343a40', w: '#ff6b6b' },
-        mod: { critMult: 5 }, p: '그림자: 치명타 배율 3배 → 5배',
-        skill: { id: 'assassinate', name: '암살', cd: 18, desc: '18초마다 체력이 가장 높은 일반 몬스터 즉사' } },
+        mod: { critMult: 5 }, p: '그림자: 치명타 배율 3배 → 5배' },
       { n: '뇌신', t: 'multi', d: 1.0, i: 0.8, r: 180, sp: { hat: 'horns', wep: 'orb', c: '#fcc419', d: '#e67700', G: '#ffffff', x: '#fff3bf', h: '#ffe066' },
-        mod: { chain: 5 }, p: '전기: 연쇄 대상 3 → 5마리',
-        skill: { id: 'lightning', name: '낙뢰', cd: 15, desc: '15초마다 무작위 6마리에게 공격력 ×6 피해' } },
+        mod: { chain: 5 }, p: '전기: 연쇄 대상 3 → 5마리' },
       { n: '드루이드', t: 'slow', d: 1.1, i: 0.9, r: 160, sp: { hat: 'halo', wep: 'staff', c: '#2f9e44', d: '#2b8a3e', G: '#8ce99a', x: '#b2f2bb', h: '#5c940d' },
-        mod: { slowPct: 0.6 }, p: '뿌리: 둔화율 40% → 60%',
-        skill: { id: 'vines', name: '덩굴', cd: 25, desc: '25초마다 모든 몬스터 3초 둔화' } },
-      { n: '연금술사', t: 'splash', d: 1.0, i: 1.1, r: 150, sp: { hat: 'cap', wep: 'flask', c: '#e8590c', d: '#d9480f', H: '#f8f9fa', x: '#69db7c' },
-        mod: { goldPct: 0.15 }, p: '황금 변환: 모든 골드 획득 +15%',
-        skill: { id: 'transmute', name: '변환', cd: 30, desc: '30초마다 골드 +(라운드 × 5)' } },
+        mod: { slowPct: 0.6 }, p: '뿌리: 둔화율 40% → 60%' },
+      { n: '연금술사', t: 'splash', d: 1.0, i: 1.1, r: 150, noAuto: true, sp: { hat: 'cap', wep: 'flask', c: '#e8590c', d: '#d9480f', H: '#f8f9fa', x: '#69db7c' },
+        mod: { goldPct: 0.15 }, p: '황금 변환: 모든 골드 획득 +15%' },
+      { n: '광전사', t: 'crit', d: 1.6, i: 1.0, r: 150, noAuto: true, sp: { hat: 'horns', wep: 'axe', c: '#e03131', d: '#a61e1e', G: '#868e96', w: '#ced4da', h: '#f08c00' },
+        mod: { frenzy: 0.02 }, p: '광기: 같은 대상을 공격할수록 공격 속도 +2% (최대 +40%, 대상 변경 시 초기화)' },
+      { n: '대주교', t: 'single', d: 1.2, i: 1.0, r: 170, sp: { hat: 'mitre', wep: 'staff', c: '#ffd43b', d: '#f08c00', G: '#f8f9fa', x: '#fff9db' },
+        mod: { globalAtk: 0.05 }, p: '성역: 보드 위 모든 유닛 공격력 +5% (최대 +25% 중첩)' },
     ],
     [ // 신화
       { n: '파멸자', t: 'single', d: 2.5, i: 1.0, r: 240, base: true, sp: { hat: 'horns', wep: 'scythe', c: '#495057', d: '#212529', G: '#ff4d6d', h: '#1a1a2e', w: '#ff4d6d', o: '#343a40' },
@@ -400,6 +450,12 @@
       { n: '사신', t: 'single', d: 1.8, i: 0.8, r: 200, sp: { hat: 'hood', wep: 'scythe', c: '#0b0c10', d: '#000', H: '#1a1a2e', w: '#c3fae8', o: '#495057', s: '#dee2e6' },
         mod: { harvest: 0.005 }, p: '수확: 처치할 때마다 자신의 공격력 영구 +0.5% (최대 +50%)',
         skill: { id: 'deathtouch', name: '죽음의 손길', cd: 20, desc: '20초마다 체력 30% 이하 모든 일반 몬스터 즉사' } },
+      { n: '창조신', t: 'splash', d: 1.4, i: 0.9, r: 190, sp: { hat: 'halo', wep: 'wand', c: '#f8f9fa', d: '#ced4da', G: '#ffd43b', x: '#ffffff', h: '#fff9db' },
+        mod: { summonDisc: 5 }, p: '창조: 소환 비용 -5G (최대 -15G 중첩)',
+        skill: { id: 'create', name: '천지창조', cd: 40, desc: '40초마다 무작위 유닛 1개 무료 소환' } },
+      { n: '혼돈', t: 'multi', d: 1.6, i: 0.9, r: 180, noAuto: true, sp: { hat: 'horns', wep: 'scythe', c: '#5f3dc4', d: '#3b1f8f', G: '#ff4d6d', w: '#e599f7', o: '#212529', h: '#1a1a2e' },
+        mod: { chaos: 1 }, p: '혼돈: 모든 피해가 50%~200% 사이 무작위 (평균 125%)',
+        skill: { id: 'chaos', name: '대혼돈', cd: 25, desc: '25초마다 모든 몬스터를 경로의 25% 뒤로 되돌림' } },
     ],
   ];
   const ALL_UNITS = UNITS.flat();
@@ -438,6 +494,8 @@
     mask: ['....kkkk....', '...kGGGGk...', '', '', '', '..kGGGGGGk..'],
     halo: ['..GGGGGGGG..'],
     bandana: ['....kkkk....', '...kHHHHk...', '..kHHHHHHkH.'],
+    feather: ['........G...', '....kkkkG...', '...kGGGGk...'],
+    mitre: ['.....GG.....', '....kGGk....', '...kGGGGk...', '...kGGGGk...'],
   };
   const WEAPONS = {
     none: [],
@@ -453,6 +511,9 @@
     book: ['', '', '', '', '', '.........xxx', '.........xxx', '.........ooo'],
     lute: ['', '', '', '', '..........o.', '..........o.', '.........xxx', '.........xxx', '..........x.'],
     flask: ['', '', '', '', '', '..........x.', '.........xxx', '.........xxx'],
+    torch: ['', '.........xxx', '..........x.', '.........kxk', '..........o.', '..........o.', '..........o.', '..........o.'],
+    hammer: ['', '........kwww', '........kwww', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.', '..........o.'],
+    wand: ['', '', '..........x.', '..........o.', '..........o.', '..........o.', '..........o.'],
   };
   const MONSTERS = [
     ['........', '...kk...', '..kcck..', '.kcccck.', '.kecccek', '.kcccck.', 'kcccccck', 'kkkkkkkk'],
@@ -504,7 +565,7 @@
   // ---------- Persistent meta (localStorage; per browser) ----------
   let M = null, S = null, uid = 0;
   function defaultMeta() {
-    return { gems: CFG.START_GEMS, chars: {}, items: [], equip: { weapon: null, boots: null, trinket: null }, best: 0, runs: 0, seq: 0 };
+    return { gems: CFG.START_GEMS, chars: {}, items: [], equip: { weapon: null, boots: null, trinket: null }, best: 0, runs: 0, seq: 0, stages: [false, false, false, false], bestInf: 0 };
   }
   function loadMeta() {
     try { const raw = localStorage.getItem('rtd_meta'); if (raw) return Object.assign(defaultMeta(), JSON.parse(raw)); } catch (e) { /* unavailable */ }
@@ -524,15 +585,22 @@
   }
 
   // ---------- Game state ----------
-  function newState() {
+  function newState(mode) {
     const mods = equipMods();
     return {
       phase: 'play', gold: CFG.START_GOLD + mods.startGold, round: 0, timer: 0,
       units: [], monsters: [], shots: [], spawnQ: 0, spawnT: 0,
       upg: [0, 0, 0, 0, 0, 0], luck: mods.luck, kills: 0, speed: 1, paused: false,
       sel: null, log: [], mods, time: 0, buff: { atk: 0, t: 0 },
+      mode, maxRound: mode.type === 'stage' ? CFG.MAX_ROUND : Infinity,
+      stageMul: mode.type === 'stage' ? CFG.STAGE_HP_MUL[mode.stage - 1] : 1,
+      debuffs: [], dmul: computeDmul([]),
     };
   }
+  const summonCost = () => { let disc = 0; for (const u of S.units) disc += u.def.m.summonDisc; return Math.max(5, CFG.SUMMON_COST - Math.min(15, disc) + S.dmul.summonCost); };
+  const monsterCap = () => Math.max(40, CFG.MONSTER_CAP + S.dmul.cap);
+  const roundTime = () => Math.max(15, CFG.ROUND_TIME + S.dmul.roundTime);
+  const modeLabel = m => m.type === 'stage' ? `스테이지 ${m.stage}` : '무한';
   const $ = id => document.getElementById(id);
   function log(msg, cls) { S.log.unshift({ msg, cls }); if (S.log.length > 8) S.log.length = 8; renderLog(); }
   function unitAt(c, r) { return S.units.find(u => u.col === c && u.row === r) || null; }
@@ -555,7 +623,7 @@
   }
   function weightedIndex(w) { let r = Math.random() * w.reduce((a, b) => a + b, 0); for (let i = 0; i < w.length; i++) { r -= w[i]; if (r < 0) return i; } return w.length - 1; }
   const pick = arr => arr[Math.floor(Math.random() * arr.length)];
-  function makeUnit(def, c, r) { return { id: ++uid, grade: def.grade, def, col: c, row: r, cd: Math.random() * 0.3, scd: def.skill ? def.skill.cd * 0.5 : 0, shots: 0, focusN: 0, lastT: null, harvest: 0 }; }
+  function makeUnit(def, c, r) { return { id: ++uid, grade: def.grade, def, col: c, row: r, cd: Math.random() * 0.3, scd: def.skill ? def.skill.cd * 0.5 : 0, shots: 0, focusN: 0, frenzyN: 0, lastT: null, harvest: 0, lock: !!def.noAuto }; }
   const C0 = T / 2, L = (N - 1) * T, P = 4 * L;
   function pathPos(d) {
     d = ((d % P) + P) % P;
@@ -570,15 +638,20 @@
     for (const o of S.units) { if (o !== u && o.def.m[key] && Math.abs(o.col - u.col) <= 1 && Math.abs(o.row - u.row) <= 1) s += o.def.m[key]; }
     return s;
   }
+  function globalAtk() { let g = 0; for (const o of S.units) g += o.def.m.globalAtk; return Math.min(0.25, g); }
   function dmgOf(u) {
     const m = u.def.m;
+    let extra = 0;
+    if (m.countAtk) extra += m.countAtk * S.units.filter(o => o.grade === u.grade).length;
+    if (m.bossRoundAtk && isBossRound()) extra += m.bossRoundAtk;
     return BASE_DMG[u.grade] * u.def.d * u.def.statMul
       * (1 + CFG.UPG_PCT * S.upg[u.grade] * m.upgMult)
       * (1 + CFG.CHAR_LV_PCT * (charLv(u.def) - 1))
-      * (1 + S.mods.atk / 100 + m.atk + aura(u, 'auraAtk') + (S.buff.t > 0 ? S.buff.atk : 0) + Math.min(0.5, u.harvest * m.harvest));
+      * (1 + S.mods.atk / 100 + m.atk + aura(u, 'auraAtk') + globalAtk() + (S.buff.t > 0 ? S.buff.atk : 0) + Math.min(0.5, u.harvest * m.harvest) + extra)
+      * S.dmul.atk;
   }
-  const intervalOf = u => u.def.i * Math.max(0.3, 1 - S.mods.aspd / 100 - u.def.m.aspd - aura(u, 'auraAspd'));
-  const rangeOf = u => u.def.r + S.mods.range + u.def.m.range;
+  const intervalOf = u => u.def.i * Math.max(0.3, 1 - S.mods.aspd / 100 - u.def.m.aspd - aura(u, 'auraAspd') - Math.min(0.4, u.frenzyN * u.def.m.frenzy));
+  const rangeOf = u => Math.max(60, u.def.r + S.mods.range + u.def.m.range + aura(u, 'auraRange') + S.dmul.range);
   function dpsOf(u) {
     const m = u.def.m, base = dmgOf(u) / intervalOf(u);
     if (u.def.t === 'crit') return base * (1 + m.critChance * (m.critMult - 1));
@@ -587,22 +660,26 @@
   }
   const fmt = n => n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e4 ? (n / 1e3).toFixed(1) + 'k' : Math.round(n).toLocaleString('ko-KR');
   function goldPctTotal() { let p = S.mods.gold / 100; for (const u of S.units) p += u.def.m.goldPct; return p; }
-  const goldGain = n => Math.round(n * (1 + goldPctTotal()));
+  const goldGain = n => Math.round(n * (1 + goldPctTotal()) * S.dmul.gold);
 
   // ---------- In-game actions ----------
-  function summon() {
-    if (!S || S.phase !== 'play') return;
-    if (S.gold < CFG.SUMMON_COST) { log('골드가 부족합니다.'); return; }
+  function summon(free) {
+    if (!S || S.phase !== 'play') return false;
+    const cost = free ? 0 : summonCost();
+    if (S.gold < cost) { log('골드가 부족합니다.'); return false; }
     const tile = bestFreeTile();
-    if (!tile) { log('빈 칸이 없습니다. 합성하거나 판매하세요.'); return; }
-    S.gold -= CFG.SUMMON_COST;
+    if (!tile) { if (!free) log('빈 칸이 없습니다. 합성하거나 판매하세요.'); return false; }
+    S.gold -= cost;
     const g = weightedIndex(weights());
     const def = pick(ownedOf(g));
     const u = makeUnit(def, tile.c, tile.r);
     S.units.push(u);
-    log(`소환: [${GRADE_NAMES[g]}] ${def.n}${g >= 3 ? ' ✦' : ''}`, 'g' + g);
-    S.sel = u; renderPanel();
+    log(`${free ? '무료 ' : ''}소환: [${GRADE_NAMES[g]}] ${def.n}${g >= 3 ? ' ✦' : ''}`, 'g' + g);
+    if (!free) S.sel = u;
+    renderPanel();
+    return true;
   }
+  function toggleLock() { const u = S.sel; if (!u) return; u.lock = !u.lock; log(`${u.def.n}: 전체 합성 ${u.lock ? '제외' : '허용'}`); renderPanel(); }
   function combineGroup(group) {
     const grade = group[0].grade;
     if (grade >= UNITS.length - 1) return false;
@@ -622,7 +699,8 @@
     const u = S.sel; if (!u) return;
     const same = S.units.filter(x => x.def === u.def);
     if (same.length < CFG.COMBINE_NEED) { log(`${u.def.n}이(가) ${CFG.COMBINE_NEED}개 필요합니다. (현재 ${same.length}개)`); return; }
-    combineGroup([u, ...same.filter(x => x !== u).slice(0, CFG.COMBINE_NEED - 1)]);
+    const partners = same.filter(x => x !== u).sort((a, b) => a.lock - b.lock);
+    combineGroup([u, ...partners.slice(0, CFG.COMBINE_NEED - 1)]);
     renderPanel();
   }
   function combineAll() {
@@ -631,14 +709,14 @@
     while (changed) {
       changed = false;
       const byDef = new Map();
-      for (const u of S.units) { if (!byDef.has(u.def)) byDef.set(u.def, []); byDef.get(u.def).push(u); }
+      for (const u of S.units) { if (u.lock) continue; if (!byDef.has(u.def)) byDef.set(u.def, []); byDef.get(u.def).push(u); }
       for (const [def, arr] of byDef) {
         if (arr.length >= CFG.COMBINE_NEED && def.grade < UNITS.length - 1 && ownedOf(def.grade + 1).length) {
           if (combineGroup(arr.slice(0, CFG.COMBINE_NEED))) { n++; changed = true; break; }
         }
       }
     }
-    if (!n) log('합성할 조합이 없습니다.');
+    if (!n) log('합성할 조합이 없습니다. (🔒 잠긴 유닛은 제외)');
     renderPanel();
   }
   function sellSelected() {
@@ -673,9 +751,9 @@
 
   // ---------- Rounds / monsters ----------
   function spawnMonster(n, boss) {
-    const hp = CFG.hp(n) * (boss ? CFG.BOSS_HP_MUL : 1);
+    const hp = CFG.hp(n) * S.stageMul * S.dmul.hp * (boss ? CFG.BOSS_HP_MUL * S.dmul.bossHp : 1);
     S.monsters.push({
-      d: 0, x: C0, y: C0, hp, maxHp: hp, speed: boss ? 40 : CFG.speed(n), slowT: 0, slowPct: 0, freezeT: 0, burnT: 0, burnDps: 0,
+      d: 0, x: C0, y: C0, hp, maxHp: hp, speed: (boss ? 40 : CFG.speed(n)) * S.dmul.speed, slowT: 0, slowPct: 0, freezeT: 0, burnT: 0, burnDps: 0,
       bounty: CFG.bounty(n) * (boss ? CFG.BOSS_BOUNTY_MUL : 1), boss, round: n, dead: false,
       hue: (n * 41) % 360, kind: n % MONSTERS.length,
     });
@@ -683,45 +761,69 @@
   function startRound(n) {
     S.round = n;
     const boss = n % 10 === 0;
-    S.timer = boss ? CFG.BOSS_TIME : CFG.ROUND_TIME;
+    if (boss && S.mode.type === 'infinite') {
+      const db = pick(DEBUFFS); S.debuffs.push(db.id); S.dmul = computeDmul(S.debuffs);
+      log(`디버프 추가: ${db.n} (총 ${S.debuffs.length}개)`, 'g5');
+      renderDebuffs();
+    }
+    S.timer = boss ? CFG.BOSS_TIME : roundTime();
     if (boss) { S.spawnQ = 0; spawnMonster(n, true); log(`${n}라운드 보스 등장! ${CFG.BOSS_TIME}초 안에 처치하세요.`, 'g5'); }
-    else { S.spawnQ = CFG.PER_ROUND; S.spawnT = 0; }
+    else { S.spawnQ = CFG.PER_ROUND + S.dmul.extraMon; S.spawnT = 0; }
     renderPanel();
+  }
+  function renderDebuffs() {
+    const card = $('debuffCard'); card.hidden = !(S && S.mode.type === 'infinite');
+    const ul = $('debuffList'); ul.innerHTML = '';
+    if (!S || !S.debuffs.length) { ul.innerHTML = '<li class="note" style="color:var(--muted)">아직 없음 (10라운드부터)</li>'; return; }
+    const counts = {};
+    for (const id of S.debuffs) counts[id] = (counts[id] || 0) + 1;
+    for (const id of Object.keys(counts)) { const li = document.createElement('li'); li.textContent = `${DEBUFFS.find(d => d.id === id).n}${counts[id] > 1 ? ' ×' + counts[id] : ''}`; ul.appendChild(li); }
   }
   function endRound() {
     const r = S.round;
     if (r % 10 === 0 && S.monsters.some(m => m.boss && !m.dead && m.round === r)) { finishRun(false, `${r}라운드 보스를 시간 안에 처치하지 못했습니다.`); return; }
-    let extra = 0; for (const u of S.units) extra += u.def.m.roundGold;
-    const bonus = goldGain(CFG.roundBonus(r) + extra);
+    let extra = 0, pct = 0; for (const u of S.units) { extra += u.def.m.roundGold; pct += u.def.m.roundGoldPct; }
+    const bonus = Math.round(goldGain(CFG.roundBonus(r) + extra) * (1 + pct));
     S.gold += bonus;
     log(`${r}라운드 종료 +${bonus}G`);
-    if (r >= CFG.MAX_ROUND) { finishRun(true, `${CFG.MAX_ROUND}라운드를 모두 막아냈습니다.`); return; }
+    if (r >= S.maxRound) { finishRun(true, `${S.maxRound}라운드를 모두 막아냈습니다.`); return; }
     startRound(r + 1);
   }
   function finishRun(cleared, reason) {
     S.phase = 'over';
-    const roundReached = cleared ? CFG.MAX_ROUND : S.round;
-    const gems = CFG.gemsForRun(roundReached, cleared);
+    const roundReached = cleared ? S.maxRound : S.round;
+    let gems, gemNote = '';
+    if (S.mode.type === 'stage') {
+      const idx = S.mode.stage - 1;
+      if (cleared && !M.stages[idx]) { M.stages[idx] = true; gems = CFG.STAGE_REWARD[idx]; gemNote = ' (최초 클리어 보상)'; }
+      else { gems = Math.round(CFG.gemsForRun(roundReached, false) / CFG.STAGE_RETRY_DIV); gemNote = cleared ? ' (재클리어: 1/3)' : ' (스테이지: 1/3)'; }
+    } else {
+      gems = CFG.gemsForRun(roundReached, false);
+      M.bestInf = Math.max(M.bestInf || 0, roundReached);
+    }
     M.gems += gems; M.runs++; M.best = Math.max(M.best, roundReached); saveMeta();
     const ov = $('overlay'); ov.innerHTML = '';
-    const h = document.createElement('h2'); h.textContent = cleared ? '클리어!' : '패배';
+    const h = document.createElement('h2'); h.textContent = cleared ? `${modeLabel(S.mode)} 클리어!` : '패배';
     const a = document.createElement('p'); a.textContent = reason;
-    const b = document.createElement('p'); b.className = 'gemline'; b.textContent = `보석 +${gems}`;
-    const c = document.createElement('p'); c.className = 'note'; c.textContent = `도달 라운드 ${roundReached} · 처치 ${S.kills} · 최고 기록 ${M.best}라운드`;
+    const b = document.createElement('p'); b.className = 'gemline'; b.textContent = `보석 +${gems}${gemNote}`;
+    const c = document.createElement('p'); c.className = 'note';
+    c.textContent = `${modeLabel(S.mode)} · 도달 라운드 ${roundReached} · 처치 ${S.kills}` + (S.mode.type === 'infinite' ? ` · 디버프 ${S.debuffs.length}개 · 무한 최고 ${M.bestInf}라운드` : '');
     const bt = document.createElement('button'); bt.className = 'primary'; bt.textContent = '로비로 (뽑기)';
     bt.addEventListener('click', () => showLobby('chars'));
     const bt2 = document.createElement('button'); bt2.textContent = '바로 다시 시작';
-    bt2.addEventListener('click', startGame);
+    const mode = S.mode; bt2.addEventListener('click', () => startGame(mode));
     ov.append(h, a, b, c, bt, bt2); ov.hidden = false;
     renderHud();
   }
-  function startGame() {
-    S = newState();
+  function startGame(mode) {
+    S = newState(mode || { type: 'infinite' });
+    $('hMode').textContent = modeLabel(S.mode);
+    renderDebuffs();
     $('overlay').hidden = true;
     $('lobby').hidden = true; $('game').hidden = false; $('gameCtl').hidden = false;
-    ['hRoundWrap', 'hTimeWrap', 'hGoldWrap', 'hMonWrap', 'hUnitsWrap'].forEach(id => { $(id).hidden = false; });
+    ['hModeWrap', 'hRoundWrap', 'hTimeWrap', 'hGoldWrap', 'hMonWrap', 'hUnitsWrap'].forEach(id => { $(id).hidden = false; });
     $('bSpeed').textContent = 'x1'; $('bPause').textContent = '일시정지';
-    log('게임 시작. 소환(S)으로 유닛을 뽑으세요.');
+    log(`${modeLabel(S.mode)} 시작. 소환(S)으로 유닛을 뽑으세요.` + (S.mode.type === 'stage' ? ` (몬스터 체력 ×${S.stageMul})` : ''));
     const eq = Object.values(M.equip).filter(Boolean).length;
     if (eq) log(`장비 ${eq}개 적용: 공격 +${S.mods.atk}% · 공속 +${S.mods.aspd}% · 사거리 +${S.mods.range} · 골드 +${S.mods.gold}%`);
     startRound(1); renderPanel();
@@ -740,6 +842,7 @@
     if (m.slowT > 0 || m.freezeT > 0) mult += mm.vsSlowed;
     if (mm.vsLowHp && m.hp < m.maxHp * 0.5) mult += mm.vsLowHp;
     if (mm.farBonus && u) { const uc = tileCenter(u.col, u.row); mult += mm.farBonus * Math.min(1, Math.hypot(m.x - uc.x, m.y - uc.y) / rangeOf(u)); }
+    if (mm.chaos) mult *= 0.5 + Math.random() * 1.5;
     m.hp -= amt * mult;
     if (!m.dead && !m.boss && mm.execute && m.hp > 0 && m.hp <= m.maxHp * mm.execute) m.hp = 0;
     if (m.hp <= 0) {
@@ -756,8 +859,10 @@
     u.shots++;
     let base = base0;
     if (m.nth && u.shots % m.nth === 0) base *= 2;
-    if (m.focus) { if (u.lastT === target) u.focusN = Math.min(10, u.focusN + 1); else u.focusN = 0; u.lastT = target; base *= 1 + m.focus * u.focusN; }
-    const applyBurn = mon => { if (m.burn) { mon.burnT = 3; mon.burnDps = Math.max(mon.burnDps, base * m.burn); } };
+    if (u.lastT === target) { u.focusN = Math.min(10, u.focusN + 1); u.frenzyN = Math.min(20, u.frenzyN + 1); } else { u.focusN = 0; u.frenzyN = 0; }
+    u.lastT = target;
+    if (m.focus) base *= 1 + m.focus * u.focusN;
+    const applyBurn = mon => { if (m.burn) { mon.burnT = m.burnDur; mon.burnDps = Math.max(mon.burnDps, base * m.burn); } };
     const pierce = () => {
       if (!m.pierce) return;
       let best = null, bd = 1e9;
@@ -766,7 +871,14 @@
     };
     switch (u.def.t) {
       case 'single': hit(target, base, u); applyBurn(target); shot(target, 1.5); pierce(); break;
-      case 'crit': { const c = Math.random() < m.critChance; hit(target, c ? base * m.critMult : base, u); shot(target, c ? 3 : 1.5); pierce(); break; }
+      case 'crit': {
+        const c = Math.random() < m.critChance; hit(target, c ? base * m.critMult : base, u); shot(target, c ? 3 : 1.5); pierce();
+        if (c && m.critSplash) {
+          for (const o of S.monsters) { if (o !== target && !o.dead && Math.hypot(o.x - target.x, o.y - target.y) <= 40) hit(o, base * m.critMult * m.critSplash, u); }
+          S.shots.push({ ring: true, x: target.x, y: target.y, r: 40, t: 0.2, col });
+        }
+        break;
+      }
       case 'splash':
         hit(target, base, u); applyBurn(target); shot(target, 2);
         for (const o of S.monsters) { if (o !== target && !o.dead && Math.hypot(o.x - target.x, o.y - target.y) <= m.splashR) { hit(o, base * m.splashPct, u); applyBurn(o); } }
@@ -783,7 +895,7 @@
   function castSkill(u) {
     const sk = u.def.skill, base = dmgOf(u), uc = tileCenter(u.col, u.row), rg = rangeOf(u), col = GRADE_COLORS[u.grade];
     const alive = S.monsters.filter(m => !m.dead);
-    if (!alive.length && sk.id !== 'transmute') return false;
+    if (!alive.length && sk.id !== 'create') return false;
     const inRange = alive.filter(m => Math.hypot(m.x - uc.x, m.y - uc.y) <= rg);
     const ring = (x, y, r) => S.shots.push({ ring: true, x, y, r, t: 0.5, col, w: 3 });
     switch (sk.id) {
@@ -802,6 +914,8 @@
       case 'timestop': alive.forEach(m => { m.freezeT = Math.max(m.freezeT, 3); }); S.timer += 5; ring(SIZE / 2, SIZE / 2, SIZE / 2); break;
       case 'dragonrage': { const t = alive.find(m => m.boss) || strongest(alive); hit(t, base * 20, u); S.shots.push({ x1: uc.x, y1: uc.y, x2: t.x, y2: t.y, t: 0.4, col, w: 5 }); break; }
       case 'deathtouch': { const ts = alive.filter(m => !m.boss && m.hp <= m.maxHp * 0.3); if (!ts.length) return false; ts.forEach(m => hit(m, m.hp * 100, u)); ring(SIZE / 2, SIZE / 2, SIZE / 2); break; }
+      case 'create': { if (!summon(true)) return false; ring(uc.x, uc.y, 50); break; }
+      case 'chaos': alive.forEach(m => { m.d = Math.max(0, m.d - 0.25 * P); }); ring(SIZE / 2, SIZE / 2, SIZE / 2); break;
       default: return false;
     }
     log(`${u.def.n}: ${sk.name} 발동`, 'g' + u.grade);
@@ -835,11 +949,12 @@
       cands.sort((a, b) => (b.m.boss - a.m.boss) || (a.d2 - b.d2));
       fire(u, cands[0].m, cands.map(c => c.m));
       u.cd = intervalOf(u);
+      if (u.def.m.rapid && Math.random() < u.def.m.rapid) u.cd *= 0.5;
     }
     S.monsters = S.monsters.filter(m => !m.dead);
     for (const s of S.shots) s.t -= dt;
     S.shots = S.shots.filter(s => s.t > 0);
-    if (S.monsters.length >= CFG.MONSTER_CAP) { finishRun(false, `살아있는 몬스터가 ${CFG.MONSTER_CAP}마리에 도달했습니다.`); return; }
+    if (S.monsters.length >= monsterCap()) { finishRun(false, `살아있는 몬스터가 ${monsterCap()}마리에 도달했습니다.`); return; }
     if (S.timer <= 0) endRound();
   }
 
@@ -883,6 +998,7 @@
       const sp = unitSprite(u.def, 3);
       ctx.drawImage(sp, x + (w - sp.width) / 2, y + (w - sp.height) / 2);
       if (S.upg[u.grade] > 0) { ctx.fillStyle = '#f2b134'; ctx.beginPath(); ctx.arc(x + w - 5, y + 5, 3, 0, Math.PI * 2); ctx.fill(); }
+      if (u.lock) { ctx.fillStyle = '#ff5a5f'; ctx.fillRect(x + 3, y + 4, 6, 5); ctx.strokeStyle = '#ff5a5f'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x + 6, y + 4, 2, Math.PI, 0); ctx.stroke(); }
       if (u.def.skill) { // skill cooldown bar
         const f = 1 - Math.max(0, u.scd) / u.def.skill.cd;
         ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(x + 4, y + w - 5, w - 8, 3);
@@ -922,10 +1038,11 @@
     $('hRound').textContent = S.round ? (isBossRound() ? `${S.round} 보스` : String(S.round)) : '-';
     $('hTime').textContent = S.phase === 'play' ? Math.max(0, Math.ceil(S.timer)) + 's' : '-';
     $('hGold').textContent = fmt(S.gold);
-    $('hMon').textContent = `${S.monsters.length} / ${CFG.MONSTER_CAP}`;
-    $('hMonWrap').classList.toggle('warn', S.monsters.length >= CFG.MONSTER_CAP * 0.7);
+    $('hMon').textContent = `${S.monsters.length} / ${monsterCap()}`;
+    $('hMonWrap').classList.toggle('warn', S.monsters.length >= monsterCap() * 0.7);
     $('hUnits').textContent = `${S.units.length} / ${(INNER_MAX - INNER_MIN + 1) ** 2}`;
-    $('bSummon').disabled = S.phase !== 'play' || S.gold < CFG.SUMMON_COST || S.units.length >= 49;
+    $('bSummon').disabled = S.phase !== 'play' || S.gold < summonCost() || S.units.length >= 49;
+    $('summonCost').textContent = summonCost() + 'G';
     $('bSkip').disabled = S.phase !== 'play' || S.spawnQ > 0 || isBossRound();
     $('bSkip').textContent = isBossRound() ? '보스 라운드 (건너뛰기 불가)' : '다음 라운드 바로 시작';
     $('bLuck').disabled = S.phase !== 'play' || S.luck >= LUCK_MAX || S.gold < LUCK_COST(S.luck);
@@ -977,7 +1094,9 @@
       bc.addEventListener('click', combineSelected);
       const bs = document.createElement('button'); bs.className = 'danger'; bs.textContent = `판매 +${SELL[u.grade]}G`;
       bs.addEventListener('click', sellSelected);
-      btns.append(bc, bs);
+      const bl = document.createElement('button'); bl.className = 'lockb'; bl.textContent = u.lock ? '🔒 전체 합성 제외 중' : '🔓 전체 합성 허용 중';
+      bl.title = '클릭하여 전환'; bl.addEventListener('click', toggleLock);
+      btns.append(bc, bs, bl);
       sel.append(head, meta, pv);
       if (u.def.skill) { const sk = document.createElement('div'); sk.className = 'pv'; sk.innerHTML = `<b>스킬 · ${u.def.skill.name}</b> ${u.def.skill.desc} <span class="cd" id="selCd"></span>`; sel.appendChild(sk); }
       sel.append(dl, btns);
@@ -989,7 +1108,7 @@
   function showLobby(tab) {
     S = null;
     $('game').hidden = true; $('gameCtl').hidden = true; $('lobby').hidden = false; $('overlay').hidden = true;
-    ['hRoundWrap', 'hTimeWrap', 'hGoldWrap', 'hMonWrap', 'hUnitsWrap'].forEach(id => { $(id).hidden = true; });
+    ['hModeWrap', 'hRoundWrap', 'hTimeWrap', 'hGoldWrap', 'hMonWrap', 'hUnitsWrap'].forEach(id => { $(id).hidden = true; });
     selectTab(tab || 'deploy');
     renderLobby();
   }
@@ -1003,7 +1122,19 @@
   }
   function renderLobby() {
     renderHud();
-    $('lbBest').textContent = M.best; $('lbRuns').textContent = M.runs;
+    $('lbBest').textContent = `${M.best} (무한 ${M.bestInf || 0})`; $('lbRuns').textContent = M.runs;
+    const modes = $('modes'); modes.innerHTML = '';
+    for (let k = 1; k <= 4; k++) {
+      const cleared = M.stages[k - 1], unlocked = k === 1 || M.stages[k - 2];
+      const d = document.createElement('div'); d.className = 'mode';
+      d.innerHTML = `<div><div class="t">스테이지 ${k} <span class="note">몬스터 체력 ×${CFG.STAGE_HP_MUL[k - 1]} · 40라운드</span></div><div class="d">${cleared ? '<span class="done">클리어 ✓ 보상 수령 완료</span>' : unlocked ? `최초 클리어 보상 <b class="g5">${CFG.STAGE_REWARD[k - 1]} 보석</b>` : `스테이지 ${k - 1} 클리어 시 해금`}</div></div>`;
+      const b = document.createElement('button'); b.textContent = cleared ? '재도전' : '시작'; b.disabled = !unlocked;
+      b.addEventListener('click', () => startGame({ type: 'stage', stage: k })); d.appendChild(b); modes.appendChild(d);
+    }
+    const inf = document.createElement('div'); inf.className = 'mode inf';
+    inf.innerHTML = `<div><div class="t">무한 모드 <span class="note">주 콘텐츠</span></div><div class="d">라운드 무제한 · 10라운드마다 디버프 중첩 · 최고 ${M.bestInf || 0}라운드</div></div>`;
+    const ib = document.createElement('button'); ib.className = 'primary'; ib.textContent = '시작'; ib.addEventListener('click', () => startGame({ type: 'infinite' }));
+    inf.appendChild(ib); modes.appendChild(inf);
     $('lbOwned').textContent = `${ALL_UNITS.filter(owned).length} / ${ALL_UNITS.length}`;
     $('lbItems').textContent = M.items.length;
     $('deployPool').textContent = '등급별 보유: ' + GRADE_NAMES.map((g, i) => `${g} ${ownedOf(i).length}/${UNITS[i].length}`).join(' · ');
@@ -1028,6 +1159,7 @@
       c.append(nm, lv, ps);
       if (def.skill) { const sk = document.createElement('div'); sk.className = 'sk'; sk.textContent = `스킬 ${def.skill.name}: ${def.skill.desc}`; c.appendChild(sk); }
       if (!def.base) { const tg = document.createElement('div'); tg.className = 'tagb'; tg.textContent = `능력치 ×${CFG.GACHA_STAT_MUL}`; c.appendChild(tg); }
+      if (def.noAuto) { const tg = document.createElement('div'); tg.className = 'tagb'; tg.style.color = '#ff5a5f'; tg.textContent = '🔒 전체 합성 제외'; c.appendChild(tg); }
       ro.appendChild(c);
     }
     const inv = $('inv'); inv.innerHTML = '';
@@ -1097,7 +1229,6 @@
     if (u) S.sel = u; else if (S.sel) { S.sel.col = c; S.sel.row = r; }
     renderPanel();
   });
-  $('bStart').addEventListener('click', startGame);
   $('bSummon').addEventListener('click', summon);
   $('bCombineAll').addEventListener('click', combineAll);
   $('bLuck').addEventListener('click', upgradeLuck);
@@ -1120,6 +1251,7 @@
     else if (k === 'l') upgradeLuck();
     else if (k === 'n') skipRound();
     else if (k === ' ') { ev.preventDefault(); togglePause(); }
+    else if (k === 'k') toggleLock();
     else if (k === 'escape') { S.sel = null; renderPanel(); }
   });
 
