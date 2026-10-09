@@ -992,6 +992,13 @@
     if (r >= S.maxRound) { finishRun(true, `${S.maxRound}라운드를 모두 막아냈습니다.`); return; }
     startRound(r + 1);
   }
+  // Pays every 10-round infinite milestone not yet paid (also retroactively for records set before the system existed).
+  function payMilestones() {
+    const reached = Math.floor((M.bestInf || 0) / 10), paid = M.milestones || 0;
+    let bonus = 0; for (let k = paid + 1; k <= reached; k++) bonus += 500 * k;
+    if (bonus) M.milestones = reached;
+    return bonus;
+  }
   function showBossChoice() {
     S.paused = true; $('bPause').textContent = '계속';
     const ov = $('overlay'); ov.innerHTML = '';
@@ -1021,10 +1028,9 @@
       else { gems = Math.round(CFG.gemsForRun(roundReached, false) / CFG.STAGE_RETRY_DIV); gemNote = cleared ? ' (재클리어: 1/3)' : ' (스테이지: 1/3)'; }
     } else {
       gems = CFG.gemsForRun(roundReached, false);
-      const prevM = Math.floor((M.bestInf || 0) / 10), newM = Math.floor(roundReached / 10);
-      let bonus = 0; for (let k = prevM + 1; k <= newM; k++) bonus += 500 * k;
-      if (bonus) { gems += bonus; gemNote = ` (무한 마일스톤 ${newM * 10}라운드 달성 +${bonus} 포함)`; }
       M.bestInf = Math.max(M.bestInf || 0, roundReached);
+      const bonus = payMilestones();
+      if (bonus) { gems += bonus; gemNote = ` (무한 마일스톤 ${Math.floor(M.bestInf / 10) * 10}라운드 달성 +${bonus} 포함)`; }
     }
     M.gems += gems; M.runs++; M.best = Math.max(M.best, roundReached); saveMeta();
     const ov = $('overlay'); ov.innerHTML = '';
@@ -1617,6 +1623,8 @@
   }
   function boot() {
     M = loadMeta();
+    const retro = payMilestones();
+    if (retro) { M.gems += retro; saveMeta(); setTimeout(() => { const n = document.createElement('p'); n.className = 'note'; n.style.color = 'var(--gem)'; n.textContent = `💎 무한 모드 최고 기록 ${M.bestInf}라운드에 대한 마일스톤 보석 +${retro}이 소급 지급되었습니다.`; const card = document.querySelector('#tab-deploy .card'); if (card) card.insertBefore(n, card.children[1]); }, 0); }
     showLobby('deploy');
     requestAnimationFrame(frame);
   }
