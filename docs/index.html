@@ -235,6 +235,7 @@
         <h3>전적</h3>
         <div class="io" style="margin-bottom:10px">
           <div style="display:flex;gap:6px;flex-wrap:wrap"><button id="bExport">💾 저장 코드 내보내기</button><button id="bImport">📥 저장 코드 가져오기</button></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><input id="coupon" placeholder="쿠폰 코드" autocapitalize="characters" style="flex:1;min-width:120px;min-height:40px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel-2);color:var(--fg);font-size:14px"><button id="bCoupon">🎁 쿠폰 사용</button></div><div id="couponMsg" class="note"></div>
           <textarea id="ioBox" hidden placeholder="여기에 저장 코드를 붙여넣고 '적용'을 누르세요"></textarea>
           <div id="ioBtns" hidden style="display:flex;gap:6px"><button id="bCopy">복사</button><button id="bApply" class="danger">적용 (현재 데이터를 덮어씁니다)</button><button id="bIoClose">닫기</button></div>
         </div>
@@ -1770,6 +1771,16 @@
   const ioShow = (txt, applyMode) => { $('ioBox').hidden = false; $('ioBtns').hidden = false; $('ioBox').value = txt; $('bApply').hidden = !applyMode; $('bCopy').hidden = applyMode; };
   $('bExport').addEventListener('click', () => { try { ioShow('RTD1.' + btoa(unescape(encodeURIComponent(JSON.stringify(M)))), false); $('ioBox').select(); } catch (e) { ioShow('내보내기 실패: ' + e.message, false); } });
   $('bImport').addEventListener('click', () => ioShow('', true));
+  // 쿠폰: 코드 1개당 계정에 1회만 사용 가능
+  const COUPONS = { 'DRUID': { chars: { '드루이드': 1 }, msg: '드루이드 1기 지급' } };
+  $('bCoupon').addEventListener('click', () => {
+    const code = $('coupon').value.trim().toUpperCase(), cp = COUPONS[code], used = M.coupons || (M.coupons = []);
+    if (!cp) { $('couponMsg').textContent = '없는 코드입니다.'; return; }
+    if (used.includes(code)) { $('couponMsg').textContent = '이미 사용한 코드입니다.'; return; }
+    for (const [n, k] of Object.entries(cp.chars || {})) M.chars[n] = (M.chars[n] || 0) + k;
+    if (cp.gems) M.gems += cp.gems;
+    used.push(code); saveMeta(); renderLobby(); $('coupon').value = ''; $('couponMsg').textContent = '✅ ' + cp.msg; sfx('summon');
+  });
   $('bIoClose').addEventListener('click', () => { $('ioBox').hidden = true; $('ioBtns').hidden = true; });
   $('bCopy').addEventListener('click', () => { const t = $('ioBox').value; $('ioBox').select(); if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(() => { $('bCopy').textContent = '복사됨'; }).catch(() => { $('bCopy').textContent = '선택 후 Ctrl+C'; }); else $('bCopy').textContent = '선택 후 Ctrl+C'; });
   $('bApply').addEventListener('click', () => {
