@@ -61,7 +61,7 @@
   .ctl button { min-width: 44px; padding: 6px 10px; }
   .layout { display: grid; grid-template-columns: minmax(0, 504px) minmax(0, 1fr); gap: 14px; align-items: start; }
   .board { position: relative; width: 100%; max-width: 504px; }
-  #cv { display: block; width: 100%; aspect-ratio: 1; max-width: 100%; background: var(--panel); border-radius: 10px; touch-action: manipulation; }
+  #cv { display: block; width: 100%; aspect-ratio: 1; max-width: 100%; background: var(--panel); border-radius: 10px; touch-action: none; }
   .overlay {
     position: absolute; inset: 0; border-radius: 10px; background: rgba(13, 17, 23, .9);
     display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; gap: 10px;
@@ -70,6 +70,12 @@
   .overlay p { margin: 0; max-width: 40ch; }
   .overlay .gemline { color: var(--gem); font-size: 20px; font-weight: 700; }
   .choices { display: grid; gap: 8px; width: 100%; max-width: 360px; }
+  .runstats { font-size: 12px; color: var(--fg); background: var(--panel-2); border-radius: 8px; padding: 8px 10px; max-width: 420px; font-variant-numeric: tabular-nums; }
+  .runstats .k { color: var(--muted); font-size: 11px; letter-spacing: .06em; margin-top: 4px; }
+  .io { display: grid; gap: 6px; }
+  .io textarea { width: 100%; min-height: 64px; font: 12px/1.3 monospace; background: var(--panel-2); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 6px; }
+  .tree { font-size: 12px; line-height: 1.5; white-space: pre; overflow-x: auto; background: var(--panel-2); border-radius: 8px; padding: 8px 10px; }
+  .ccard { cursor: pointer; }
   .choice { display: grid; gap: 2px; text-align: left; border-color: var(--accent); padding: 10px 12px; }
   .choice b { color: var(--accent); }
   .growth { display: grid; gap: 6px; }
@@ -193,6 +199,7 @@
       <div class="stat" id="hMonWrap"><span class="k">몬스터</span><b id="hMon">0 / 80</b></div>
     </div>
     <div class="ctl" id="gameCtl" hidden>
+      <button id="bSfx" title="효과음 켜기/끄기">🔊</button>
       <button id="bSpeed" title="게임 속도">x1</button>
       <button id="bPause" title="일시정지 (Space)">일시정지</button>
       <button id="bQuit" class="danger" title="포기하고 로비로">포기</button>
@@ -211,10 +218,15 @@
     <div class="lobby-grid" id="tab-deploy" role="tabpanel">
       <div class="card">
         <h3>전적</h3>
+        <div class="io" style="margin-bottom:10px">
+          <div style="display:flex;gap:6px;flex-wrap:wrap"><button id="bExport">💾 저장 코드 내보내기</button><button id="bImport">📥 저장 코드 가져오기</button></div>
+          <textarea id="ioBox" hidden placeholder="여기에 저장 코드를 붙여넣고 '적용'을 누르세요"></textarea>
+          <div id="ioBtns" hidden style="display:flex;gap:6px"><button id="bCopy">복사</button><button id="bApply" class="danger">적용 (현재 데이터를 덮어씁니다)</button><button id="bIoClose">닫기</button></div>
+        </div>
         <div class="summary">
           <div><span class="k">최고 라운드</span><br><b id="lbBest">0</b></div>
           <div><span class="k">플레이 횟수</span><br><b id="lbRuns">0</b></div>
-          <div><span class="k">보유 캐릭터</span><br><b id="lbOwned">0 / 68</b></div>
+          <div><span class="k">보유 캐릭터</span><br><b id="lbOwned">0 / 74</b></div>
           <div><span class="k">보유 장비</span><br><b id="lbItems">0</b></div>
         </div>
         <p class="note" style="margin:10px 0 0">일반 8종과 등급별 기본 1종은 항상 보유합니다. 뽑기 캐릭터는 같은 등급이라도 능력치가 20% 높고 더 강한 패시브를 가지며, 뽑으면 그 캐릭터의 <b>조합식이 해금</b>됩니다(재료 캐릭터도 보유해야 실제 제작 가능). 성장은 뽑기 중복으로만 이루어집니다(신화 ★, 전설 장비 ★).</p>
@@ -255,6 +267,10 @@
         <p class="note" style="margin:8px 0 0">확률: 고급 45% · 희귀 25% · 영웅 15% · 전설 9% · <b>신화 6%</b> (일반은 전부 기본 보유 · 기본·특수 캐릭터 제외). <b>천장</b>: 30회 연속 신화 미출현 시 다음 뽑기 신화 확정. <b>10연차</b>: 영웅 이상 1개 보장. <b>신화</b> 중복: ★+1 (공격력 +15%/★, 최대 ★10, 초과 시 100보석). 그 외 등급 중복: 신화 조각(일반 1 · 고급 2 · 희귀 4 · 영웅 8 · 전설 15) → 60조각으로 원하는 신화 선택.</p>
         <div class="results" id="ticketBox" hidden></div>
         <div class="results" id="charResults"></div>
+      </div>
+      <div class="card full">
+        <h3>조합 트리 (도감 카드를 클릭하면 전체 재료 트리가 표시됩니다)</h3>
+        <div class="tree" id="treeBox">카드를 클릭하세요.</div>
       </div>
       <div class="card full">
         <h3>도감</h3>
@@ -307,6 +323,7 @@
         <div class="actions">
           <button class="primary" id="bSummon">소환 <span id="summonCost">20G</span><kbd>S</kbd></button>
           <button id="bGoal" title="🎯 핀한 목표를 향해 보드 재료로 만들 수 있는 조합을 필요 수량만큼 실행 (누를 때만)">🎯 목표 조합 실행<kbd>G</kbd></button>
+          <button id="bChallenge" class="wide danger" title="체력 ×3 보스를 소환합니다. 60초 안에 처치하면 보석·조각 보상, 실패하면 패배. 10라운드 구간마다 1회">⚔️ 도전 보스 소환 (5라운드부터 · 구간당 1회)</button>
           <div class="wide" id="craftBadge" hidden></div>
           <button id="bLuck" class="wide">행운 강화 (고급 직접 소환 확률) <span id="luckCost"></span><kbd>L</kbd></button>
           <button id="bSkip" class="wide">다음 라운드 바로 시작<kbd>N</kbd></button>
@@ -358,6 +375,7 @@
     START_GEMS: 300, GACHA_STAT_MUL: 1.2,
     STAGE_HP_MUL: [1, 1.7, 2.8, 4.5], STAGE_REWARD: [500, 1000, 2000, 4000], STAGE_RETRY_DIV: 3,
   };
+  const DIFFS = [{ n: '보통', hp: 1, reward: 1 }, { n: '어려움', hp: 2, reward: 1.5 }, { n: '지옥', hp: 4, reward: 2.5 }];
   const DEBUFFS = [
     { id: 'hp', n: '몬스터 체력 +25%', f: d => { d.hp *= 1.25; } },
     { id: 'spd', n: '몬스터 이동 속도 +10%', f: d => { d.speed *= 1.1; } },
@@ -447,6 +465,8 @@
         mod: { range: 50 }, p: '투척: 사거리 +50' },
       { n: '매복병', t: 'single', d: 1.1, i: 1.0, r: 130, sp: { hat: 'hood', wep: 'dagger', c: '#2b8a3e', d: '#1b4332', H: '#2d6a4f', w: '#ced4da' },
         mod: { firstHit: 1 }, p: '기습: 아직 공격받지 않은 몬스터에게 피해 2배' },
+      { n: '성가대원', t: 'single', d: 0.9, i: 1.0, r: 140, sp: { hat: 'mitre', wep: 'book', c: '#f8f9fa', d: '#dee2e6', G: '#4aa3ff', x: '#a5d8ff', o: '#8b5a2b' },
+        mod: { roundGold: 5, auraAspd: 0.05 }, p: '축복의 노래: 라운드 종료 골드 +5, 인접 8칸 공격 속도 +5%' },
     ],
     [ // 희귀
       { n: '저격수', t: 'single', d: 1.6, i: 1.4, r: 220, base: true, sp: { hat: 'hood', wep: 'bow', c: '#2f3e46', d: '#1f2a30', H: '#4a5f6a', h: '#1a1a1a' },
@@ -469,6 +489,8 @@
         mod: { burn: 0.25, burnDur: 4 }, p: '맹독: 피격 몬스터에게 4초간 초당 공격력 25% 추가 피해' },
       { n: '폭탄병', t: 'splash', d: 1.0, i: 1.2, r: 150, sp: { hat: 'cap', wep: 'orb', c: '#495057', d: '#343a40', H: '#e03131', x: '#ff922b' },
         mod: { splashR: 80, splashPct: 0.6 }, p: '폭발: 광역 반경 80, 광역 피해 60%' },
+      { n: '결투가', t: 'crit', d: 1.2, i: 0.9, r: 140, sp: { hat: 'feather', wep: 'sword', c: '#862e2e', d: '#5c1f1f', G: '#ffffff', w: '#e9ecef', h: '#2c2c2c' },
+        mod: { critChance: 0.4, bossRoundAtk: 0.3 }, p: '결투: 치명타 확률 40%, 보스 라운드 동안 공격력 +30%' },
     ],
     [ // 영웅
       { n: '성기사', t: 'crit', d: 1.2, i: 0.9, r: 150, base: true, sp: { hat: 'helmet', wep: 'sword', c: '#e9ecef', d: '#adb5bd', W: '#dee2e6', G: '#f2b134', w: '#ffffff' },
@@ -491,6 +513,8 @@
         mod: { critChance: 0.5 }, p: '마탄: 치명타 확률 25% → 50%' },
       { n: '검투사', t: 'crit', d: 1.3, i: 0.9, r: 140, sp: { hat: 'helmet', wep: 'sword', c: '#b08968', d: '#7f5539', W: '#adb5bd', G: '#c92a2a', w: '#e9ecef' },
         mod: { killAspd: 0.03 }, p: '투기장: 처치할 때마다 공격 속도 +3% (최대 +45%)' },
+      { n: '검무희', t: 'multi', d: 1.1, i: 0.9, r: 150, sp: { hat: 'feather', wep: 'dagger', c: '#e64980', d: '#c2255c', G: '#ffe3ec', w: '#f8f9fa', h: '#1a1a2e' },
+        mod: { chain: 4, chainPct: 0.85, aspd: 0.1 }, p: '검무: 연쇄 4마리 85%, 공격 속도 +10%' },
     ],
     [ // 전설
       { n: '용기사', t: 'splash', d: 1.3, i: 1.0, r: 170, base: true, sp: { hat: 'helmet', wep: 'spear', c: '#c92a2a', d: '#8a1c1c', W: '#e03131', G: '#f2b134', w: '#ffd43b' },
@@ -513,6 +537,8 @@
         mod: { auraAtk: 0.1, auraAspd: 0.15 }, p: '통솔: 인접 8칸 유닛 공격력 +10%, 공격 속도 +15%' },
       { n: '검제', t: 'crit', d: 1.5, i: 0.9, r: 160, sp: { hat: 'crown', wep: 'sword', c: '#343a40', d: '#212529', G: '#ffd43b', w: '#a5d8ff', h: '#e9ecef' },
         mod: { pierce: 1.0 }, p: '검기: 대상 바로 뒤 몬스터에게 100% 관통 피해' },
+      { n: '천마', t: 'single', d: 1.5, i: 0.9, r: 170, sp: { hat: 'halo', wep: 'spear', c: '#e7f5ff', d: '#a5d8ff', G: '#ffffff', w: '#ffd43b', h: '#f8f9fa' },
+        mod: { range: 60, rapid: 0.4 }, p: '천마: 사거리 +60, 공격 후 40% 확률로 다음 공격 간격 절반' },
     ],
     [ // 신화
       { n: '파멸자', t: 'single', d: 2.5, i: 1.0, r: 240, base: true, sp: { hat: 'horns', wep: 'scythe', c: '#495057', d: '#212529', G: '#ff4d6d', h: '#1a1a2e', w: '#ff4d6d', o: '#343a40' },
@@ -545,6 +571,9 @@
       { n: '무신', t: 'crit', d: 1.5, i: 0.7, r: 180, sp: { hat: 'horns', wep: 'sword', c: '#c92a2a', d: '#862e2e', G: '#ffd43b', w: '#ffffff', h: '#1a1a2e' },
         mod: { aspd: 0.3, critMult: 5 }, p: '무극: 공격 속도 +30%, 치명타 배율 5배',
         skill: { id: 'bladestorm', name: '천참만검', cd: 20, desc: '20초마다 사거리 안 모든 몬스터에게 공격력 ×15 피해' } },
+      { n: '성검사', t: 'crit', d: 1.6, i: 0.8, r: 180, sp: { hat: 'halo', wep: 'sword', c: '#fff3bf', d: '#ffd43b', G: '#ffffff', w: '#ffffff', h: '#fff9db' },
+        mod: { critMult: 6, vsLowHp: 0.5 }, p: '성검: 치명타 6배, 체력 50% 이하 몬스터에게 피해 +50%',
+        skill: { id: 'holyblade', name: '성검 강림', cd: 20, desc: '20초마다 체력이 가장 높은 몬스터에게 공격력 ×20, 주변 45px에 ×5 피해' } },
     ],
     [ // 특수 (조합 전용: 뽑기·소환·합성 결과로 나오지 않으며 상위 등급으로 합성 불가)
       { n: '마검사', t: 'crit', d: 1.6, i: 0.9, r: 150, recipeOnly: true, bd: 38, sell: 40, recipe: [['검사', 2], ['마법사', 1]], sp: { hat: 'hood', wep: 'sword', c: '#7048e8', d: '#5f3dc4', H: '#3b5bdb', w: '#d0bfff' },
@@ -569,12 +598,15 @@
         skill: { id: 'ruin', name: '멸망', cd: 30, desc: '30초마다 모든 몬스터에게 공격력 ×6 피해 + 3초 둔화 60%' } },
       { n: '전쟁군주', t: 'single', d: 2.8, i: 0.9, r: 180, recipeOnly: true, bd: 600, sell: 320, recipe: [['대장군', 1], ['용사', 1], ['광전사', 1]], sp: { hat: 'helmet', wep: 'axe', c: '#862e2e', d: '#5c1f1f', W: '#f2b134', G: '#ffd43b', w: '#ffd43b' },
         mod: { globalAtk: 0.08, auraAspd: 0.2 }, p: '군주의 위엄: 보드 위 모든 유닛 공격력 +8%, 인접 8칸 공격 속도 +20%' },
+      { n: '검신', t: 'crit', d: 4.5, i: 0.8, r: 200, recipeOnly: true, bd: 600, sell: 320, recipe: [['성검사', 1], ['검무희', 1], ['천마', 1]], sp: { hat: 'crown', wep: 'sword', c: '#1a1a2e', d: '#000000', G: '#ffd43b', w: '#ffffff', h: '#e9ecef', s: '#f1c27d' },
+        mod: { critChance: 0.6, critMult: 5, pierce: 1.0 }, p: '검신: 치명타 60% · 5배, 관통 100%',
+        skill: { id: 'swordgod', name: '검신강림', cd: 25, desc: '25초마다 모든 몬스터에게 공격력 ×8 피해' } },
     ],
   ];
   const ALL_UNITS = UNITS.flat();
   ALL_UNITS.forEach(def => { def.grade = UNITS.findIndex(g => g.includes(def)); def.m = Object.assign({}, MOD, def.mod || {}); def.statMul = def.base ? 1 : CFG.GACHA_STAT_MUL; });
   // Recipe tree: every character above 일반 is made from a fixed recipe (원랜디 style). 특수 recipes are on the defs themselves.
-  const RECIPES = {"사냥꾼": [["궁수", 1], ["도적", 1]], "마법사": [["견습술사", 1], ["투석병", 1]], "냉기술사": [["견습술사", 1], ["창병", 1]], "쌍검사": [["검사", 1], ["도적", 1]], "상인": [["용병", 1], ["민병대", 1]], "궁기병": [["궁수", 1], ["창병", 1]], "점술사": [["견습술사", 1], ["용병", 1]], "방패병": [["창병", 1], ["민병대", 1]], "투창병": [["창병", 1], ["투석병", 1]], "매복병": [["도적", 1], ["용병", 1]], "저격수": [["사냥꾼", 1], ["궁수", 1]], "화염술사": [["마법사", 1], ["용병", 1]], "폭풍술사": [["냉기술사", 1], ["견습술사", 1]], "암흑궁수": [["궁기병", 1], ["도적", 1]], "수도승": [["쌍검사", 1], ["민병대", 1]], "기계공": [["방패병", 1], ["투석병", 1]], "성직자": [["점술사", 1], ["검사", 1]], "암흑기사": [["매복병", 1], ["검사", 1]], "독술사": [["상인", 1], ["견습술사", 1]], "폭탄병": [["투창병", 1], ["용병", 1]], "성기사": [["저격수", 1], ["사냥꾼", 1]], "대마법사": [["화염술사", 1], ["마법사", 1]], "서리여왕": [["폭풍술사", 1], ["냉기술사", 1]], "음유시인": [["성직자", 1], ["상인", 1]], "현상금사냥꾼": [["암흑궁수", 1], ["궁기병", 1]], "검성": [["암흑기사", 1], ["쌍검사", 1]], "정령사": [["독술사", 1], ["매복병", 1]], "현자": [["수도승", 1], ["점술사", 1]], "마탄사수": [["기계공", 1], ["투창병", 1]], "검투사": [["폭탄병", 1], ["방패병", 1]], "용기사": [["성기사", 2], ["창병", 1]], "검제": [["검성", 1], ["마탄사수", 1], ["검사", 1]], "암살자": [["검투사", 1], ["마탄사수", 1], ["도적", 1]], "광전사": [["검투사", 1], ["검성", 1], ["검사", 1]], "용사": [["현상금사냥꾼", 1], ["음유시인", 1], ["궁수", 1]], "뇌신": [["서리여왕", 1], ["정령사", 1], ["투석병", 1]], "드루이드": [["정령사", 1], ["현자", 1], ["민병대", 1]], "연금술사": [["현자", 1], ["대마법사", 1], ["투석병", 1]], "대주교": [["음유시인", 1], ["대마법사", 1], ["민병대", 1]], "대장군": [["서리여왕", 1], ["현상금사냥꾼", 1], ["궁수", 1]], "파멸자": [["용기사", 2], ["저격수", 1]], "태양신": [["연금술사", 1], ["대주교", 1], ["화염술사", 1]], "시간술사": [["뇌신", 1], ["드루이드", 1], ["폭풍술사", 1]], "용왕": [["용사", 1], ["대장군", 1], ["기계공", 1]], "사신": [["암살자", 1], ["검제", 1], ["암흑궁수", 1]], "창조신": [["대주교", 1], ["연금술사", 1], ["성직자", 1]], "혼돈": [["광전사", 1], ["뇌신", 1], ["폭탄병", 1]], "명왕": [["드루이드", 1], ["암살자", 1], ["독술사", 1]], "심판자": [["대장군", 1], ["검제", 1], ["수도승", 1]], "무신": [["광전사", 1], ["용사", 1], ["암흑기사", 1]]};
+  const RECIPES = {"사냥꾼": [["궁수", 1], ["도적", 1]], "마법사": [["견습술사", 1], ["투석병", 1]], "냉기술사": [["견습술사", 1], ["창병", 1]], "쌍검사": [["검사", 1], ["도적", 1]], "상인": [["용병", 1], ["민병대", 1]], "궁기병": [["궁수", 1], ["창병", 1]], "점술사": [["견습술사", 1], ["용병", 1]], "방패병": [["창병", 1], ["민병대", 1]], "투창병": [["창병", 1], ["투석병", 1]], "매복병": [["도적", 1], ["용병", 1]], "저격수": [["사냥꾼", 1], ["궁수", 1]], "화염술사": [["마법사", 1], ["용병", 1]], "폭풍술사": [["냉기술사", 1], ["견습술사", 1]], "암흑궁수": [["궁기병", 1], ["도적", 1]], "수도승": [["쌍검사", 1], ["민병대", 1]], "기계공": [["방패병", 1], ["투석병", 1]], "성직자": [["점술사", 1], ["검사", 1]], "암흑기사": [["매복병", 1], ["검사", 1]], "독술사": [["상인", 1], ["견습술사", 1]], "폭탄병": [["투창병", 1], ["용병", 1]], "성기사": [["저격수", 1], ["사냥꾼", 1]], "대마법사": [["화염술사", 1], ["마법사", 1]], "서리여왕": [["폭풍술사", 1], ["냉기술사", 1]], "음유시인": [["성직자", 1], ["상인", 1]], "현상금사냥꾼": [["암흑궁수", 1], ["궁기병", 1]], "검성": [["암흑기사", 1], ["쌍검사", 1]], "정령사": [["독술사", 1], ["매복병", 1]], "현자": [["수도승", 1], ["점술사", 1]], "마탄사수": [["기계공", 1], ["투창병", 1]], "검투사": [["폭탄병", 1], ["방패병", 1]], "용기사": [["성기사", 2], ["창병", 1]], "검제": [["검성", 1], ["마탄사수", 1], ["검사", 1]], "암살자": [["검투사", 1], ["마탄사수", 1], ["도적", 1]], "광전사": [["검투사", 1], ["검성", 1], ["검사", 1]], "용사": [["현상금사냥꾼", 1], ["음유시인", 1], ["궁수", 1]], "뇌신": [["서리여왕", 1], ["정령사", 1], ["투석병", 1]], "드루이드": [["정령사", 1], ["현자", 1], ["민병대", 1]], "연금술사": [["현자", 1], ["대마법사", 1], ["투석병", 1]], "대주교": [["음유시인", 1], ["대마법사", 1], ["민병대", 1]], "대장군": [["서리여왕", 1], ["현상금사냥꾼", 1], ["궁수", 1]], "파멸자": [["용기사", 2], ["저격수", 1]], "태양신": [["연금술사", 1], ["대주교", 1], ["화염술사", 1]], "시간술사": [["뇌신", 1], ["드루이드", 1], ["폭풍술사", 1]], "용왕": [["용사", 1], ["대장군", 1], ["기계공", 1]], "사신": [["암살자", 1], ["검제", 1], ["암흑궁수", 1]], "창조신": [["대주교", 1], ["연금술사", 1], ["성직자", 1]], "혼돈": [["광전사", 1], ["뇌신", 1], ["폭탄병", 1]], "명왕": [["드루이드", 1], ["암살자", 1], ["독술사", 1]], "심판자": [["대장군", 1], ["검제", 1], ["수도승", 1]], "무신": [["광전사", 1], ["용사", 1], ["암흑기사", 1]], "성가대원": [["용병", 1], ["창병", 1]], "결투가": [["성가대원", 1], ["견습술사", 1]], "검무희": [["결투가", 1], ["성가대원", 1]], "천마": [["검무희", 1], ["마탄사수", 1], ["궁수", 1]], "성검사": [["천마", 1], ["검제", 1], ["결투가", 1]]};
   ALL_UNITS.forEach(def => { if (RECIPES[def.n]) def.recipe = RECIPES[def.n]; });
   const GACHA_UNITS = UNITS.map(g => g.filter(d => !d.base && !d.recipeOnly));
   const RECIPE_UNITS = ALL_UNITS.filter(d => d.recipe);
@@ -735,9 +767,11 @@
       phase: 'play', gold: CFG.START_GOLD + mods.startGold + gVal('startGold'), round: 0, timer: 0,
       units: [], monsters: [], shots: [], spawnQ: 0, spawnT: 0,
       luck: mods.luck + gVal('luck'), kills: 0, speed: 1, paused: false, runAtk: 0, bossChoice: null,
+      stats: [], peakDps: 0, maxMon: 0, challengeBlock: -1, challengeT: 0, spiritKills: 0, craftAlerted: [], drag: null,
+      diff: mode.diff || 0,
       sel: null, log: [], mods, time: 0, buff: { atk: 0, t: 0 },
       mode, maxRound: mode.type === 'stage' ? CFG.MAX_ROUND : Infinity, fx: [], bossSpawned: false, timeStopT: 0, pinRoots: [], hl: null, hintShown: false,
-      stageMul: mode.type === 'stage' ? CFG.STAGE_HP_MUL[mode.stage - 1] : 1,
+      stageMul: mode.type === 'stage' ? CFG.STAGE_HP_MUL[mode.stage - 1] : DIFFS[mode.diff || 0].hp,
       debuffs: [], dmul: computeDmul([]),
     };
   }
@@ -745,7 +779,7 @@
   const monsterCap = () => Math.max(40, CFG.MONSTER_CAP + S.dmul.cap + gVal('cap'));
   const bossTime = () => CFG.BOSS_TIME + gVal('bossTime');
   const roundTime = () => Math.max(15, CFG.ROUND_TIME + S.dmul.roundTime);
-  const modeLabel = m => m.type === 'stage' ? `스테이지 ${m.stage}` : '무한';
+  const modeLabel = m => m.type === 'stage' ? `스테이지 ${m.stage}` : `무한(${DIFFS[m.diff || 0].n})`;
   const $ = id => document.getElementById(id);
   function log(msg, cls) { S.log.unshift({ msg, cls }); if (S.log.length > 8) S.log.length = 8; renderLog(); }
   function unitAt(c, r) { return S.units.find(u => u.col === c && u.row === r) || null; }
@@ -816,7 +850,7 @@
     const def = pick(ownedOf(g));
     const u = makeUnit(def, tile.c, tile.r);
     S.units.push(u);
-    log(`${free ? '무료 ' : ''}소환: [${GRADE_NAMES[g]}] ${def.n}${g >= 3 ? ' ✦' : ''}`, 'g' + g);
+    log(`${free ? '무료 ' : ''}소환: [${GRADE_NAMES[g]}] ${def.n}${g >= 3 ? ' ✦' : ''}`, 'g' + g); if (!free) sfx('summon');
     if (!free) S.sel = u;
     renderPanel();
     return true;
@@ -841,6 +875,7 @@
     S.units.push(nu); S.sel = nu;
     log(`조합: ${def.recipe.map(([n, k]) => `${n}×${k}`).join(' + ')} → [${GRADE_NAMES[def.grade]}] ${def.n}`, 'g' + def.grade);
     S.fx.push({ type: 'flash', col: spot.c, row: spot.r, t: 0.5, d: 0.5, c: GRADE_COLORS[def.grade] });
+    sfx('craft');
     renderPanel();
     return true;
   }
@@ -952,6 +987,30 @@
   }
 
   // ---------- Rounds / monsters ----------
+  function spawnSpirit(n) {
+    const hits = 8 + Math.floor(n / 2); // 정령: 피해 1 고정, 타격 수로만 처치. 한 바퀴 돌면 사라짐. 한계에 포함되지 않음.
+    S.monsters.push({ d: 0, x: C0, y: C0, hp: hits, maxHp: hits, speed: CFG.speed(n) * 1.5 * S.dmul.speed, slowT: 0, slowPct: 0, freezeT: 0, burnT: 0, burnDps: 0,
+      bounty: n * 5, boss: false, round: n, dead: false, hue: 180, kind: 2, spirit: true, lap: 0 });
+    log(`정령 등장! ${hits}회 타격하면 골드 +${n * 5}, 조각 +2. 한 바퀴 안에 잡으세요.`, 'g2');
+  }
+  const challengeHp = n => CFG.hp(n) * S.stageMul * S.dmul.hp * CFG.BOSS_HP_MUL * S.dmul.bossHp * 3;
+  const boardDps = () => { let d = 0; for (const u of S.units) d += dpsOf(u); return d; };
+  function startChallenge() {
+    if (!S || S.phase !== 'play' || S.round < 5 || isBossRound()) return;
+    const block = Math.floor(S.round / 10);
+    if (S.challengeBlock === block) { log('도전 보스는 10라운드 구간마다 1회만 소환할 수 있습니다.'); return; }
+    if (S.monsters.some(m => m.challenge)) return;
+    S.challengeBlock = block;
+    const n = S.round, hp = challengeHp(n);
+    S.monsters.push({ d: 0, x: C0, y: C0, hp, maxHp: hp, speed: 40 * S.dmul.speed, slowT: 0, slowPct: 0, freezeT: 0, burnT: 0, burnDps: 0,
+      bounty: CFG.bounty(n) * CFG.BOSS_BOUNTY_MUL * 2, boss: true, round: n, dead: false, hue: 300, challenge: true });
+    S.challengeT = 60;
+    const dps = boardDps(); // 실측: 보스는 길을 돌므로 실제 피해는 보드 DPS의 10~35% 수준
+    log(`도전 보스 소환! 체력 ${fmt(hp)} · 60초 안에 처치 시 보석 +${n * 3}, 조각 +5. 실패하면 패배합니다.`, 'g5');
+    log(`권장 보드 DPS 약 ${fmt(hp / 15)} · 현재 ${fmt(dps)}` + (dps < hp / 15 ? ' ⚠ 부족할 수 있습니다' : ''), dps < hp / 15 ? 'g4' : 'g2');
+    S.fx.push({ type: 'text', x: SIZE / 2, y: SIZE / 2, text: '도전 보스', t: 1.2, d: 1.2, col: '#ff4d6d', big: true });
+    renderHud();
+  }
   function spawnMonster(n, boss) {
     const hp = CFG.hp(n) * S.stageMul * S.dmul.hp * (boss ? CFG.BOSS_HP_MUL * S.dmul.bossHp : 1);
     S.monsters.push({
@@ -970,8 +1029,8 @@
     }
     S.timer = boss ? bossTime() : roundTime();
     S.bossSpawned = false;
-    if (boss) { S.spawnQ = 0; spawnMonster(n, true); S.bossSpawned = true; log(`${n}라운드 보스 등장! ${bossTime()}초 안에 처치하세요. 처치 시 보상을 고르고 다음 라운드로 넘어갑니다.`, 'g5'); if (!S.hintShown) { S.hintShown = true; log('팁: Space로 일시정지해도 조합·소환·이동은 그대로 할 수 있습니다.'); } }
-    else { S.spawnQ = CFG.PER_ROUND + S.dmul.extraMon; S.spawnT = 0; }
+    if (boss) { S.spawnQ = 0; spawnMonster(n, true); S.bossSpawned = true; sfx('boss'); log(`${n}라운드 보스 등장! ${bossTime()}초 안에 처치하세요. 처치 시 보상을 고르고 다음 라운드로 넘어갑니다.`, 'g5'); if (!S.hintShown) { S.hintShown = true; log('팁: Space로 일시정지해도 조합·소환·이동은 그대로 할 수 있습니다.'); } }
+    else { S.spawnQ = CFG.PER_ROUND + S.dmul.extraMon; S.spawnT = 0; if (n % 5 === 0) spawnSpirit(n); }
     renderPanel();
   }
   function renderDebuffs() {
@@ -982,9 +1041,15 @@
     for (const id of S.debuffs) counts[id] = (counts[id] || 0) + 1;
     for (const id of Object.keys(counts)) { const li = document.createElement('li'); li.textContent = `${DEBUFFS.find(d => d.id === id).n}${counts[id] > 1 ? ' ×' + counts[id] : ''}`; ul.appendChild(li); }
   }
+  function recordRound() {
+    let dps = 0; for (const u of S.units) dps += dpsOf(u);
+    S.stats.push({ r: S.round, dps: Math.round(dps), gold: S.gold, units: S.units.length, mon: S.monsters.length });
+    S.peakDps = Math.max(S.peakDps, dps);
+  }
   function endRound() {
     const r = S.round;
-    if (r % 10 === 0 && S.monsters.some(m => m.boss && !m.dead && m.round === r)) { finishRun(false, `${r}라운드 보스를 시간 안에 처치하지 못했습니다.`); return; }
+    recordRound();
+    if (r % 10 === 0 && S.monsters.some(m => m.boss && !m.challenge && !m.dead && m.round === r)) { finishRun(false, `${r}라운드 보스를 시간 안에 처치하지 못했습니다.`); return; }
     let extra = 0, pct = 0; for (const u of S.units) { extra += u.def.m.roundGold; pct += u.def.m.roundGoldPct; }
     const bonus = Math.round(goldGain(CFG.roundBonus(r) + extra) * (1 + pct));
     S.gold += bonus;
@@ -1019,7 +1084,7 @@
     ov.append(h, p, row); ov.hidden = false;
   }
   function finishRun(cleared, reason) {
-    S.phase = 'over';
+    S.phase = 'over'; sfx(cleared ? 'bosskill' : 'over');
     const roundReached = cleared ? S.maxRound : S.round;
     let gems, gemNote = '';
     if (S.mode.type === 'stage') {
@@ -1027,8 +1092,9 @@
       if (cleared && !M.stages[idx]) { M.stages[idx] = true; gems = CFG.STAGE_REWARD[idx]; gemNote = ' (최초 클리어 보상)'; }
       else { gems = Math.round(CFG.gemsForRun(roundReached, false) / CFG.STAGE_RETRY_DIV); gemNote = cleared ? ' (재클리어: 1/3)' : ' (스테이지: 1/3)'; }
     } else {
-      gems = CFG.gemsForRun(roundReached, false);
+      gems = Math.round(CFG.gemsForRun(roundReached, false) * DIFFS[S.diff].reward);
       M.bestInf = Math.max(M.bestInf || 0, roundReached);
+      M.bestInfD = M.bestInfD || {}; M.bestInfD[S.diff] = Math.max(M.bestInfD[S.diff] || 0, roundReached);
       const bonus = payMilestones();
       if (bonus) { gems += bonus; gemNote = ` (무한 마일스톤 ${Math.floor(M.bestInf / 10) * 10}라운드 달성 +${bonus} 포함)`; }
     }
@@ -1043,7 +1109,11 @@
     bt.addEventListener('click', () => showLobby('chars'));
     const bt2 = document.createElement('button'); bt2.textContent = '바로 다시 시작';
     const mode = S.mode; bt2.addEventListener('click', () => startGame(mode));
-    ov.append(h, a, b, c, bt, bt2); ov.hidden = false;
+    // 계측 요약: 최근 5라운드 보드 DPS · 최고 DPS · 몬스터 최대치
+    const st = document.createElement('div'); st.className = 'runstats';
+    const last = S.stats.slice(-5).map(x => `${x.r}R ${fmt(x.dps)}`).join(' · ');
+    st.innerHTML = `<div class="k">보드 DPS 추이(최근 5라운드)</div><div>${last || '-'}</div><div class="k">최고 DPS ${fmt(S.peakDps)} · 몬스터 최대 ${S.maxMon}/${monsterCap()} · 정령 처치 ${S.spiritKills} · 보스 보상 공격력 +${Math.round(S.runAtk * 100)}%</div>`;
+    ov.append(h, a, b, c, st, bt, bt2); ov.hidden = false;
     renderHud();
   }
   function startGame(mode) {
@@ -1067,6 +1137,7 @@
   // ---------- Combat ----------
   function hit(m, amt, u) {
     if (m.dead) return;
+    if (m.spirit) { if (!u) return; m.hp -= 1; if (m.hp <= 0) { m.dead = true; S.kills++; S.spiritKills++; S.gold += goldGain(m.bounty); M.shards += 2; saveMeta(); log(`정령 처치! 골드 +${goldGain(m.bounty)}, 조각 +2`, 'g2'); } return; }
     const mm = u ? u.def.m : MOD;
     let mult = 1;
     if (m.boss) mult += mm.bossDmg;
@@ -1082,7 +1153,8 @@
       const g = goldGain(m.bounty) + (u ? u.def.m.killGold : 0);
       S.gold += g;
       if (u) { u.harvest++; u.kills = (u.kills || 0) + 1; }
-      if (m.boss) log(`보스 처치! +${g}G`, 'g4');
+      if (m.challenge) { const n = m.round; M.gems += n * 3; M.shards += 5; saveMeta(); S.challengeT = 0; log(`도전 보스 처치! 보석 +${n * 3}, 조각 +5, 골드 +${g}`, 'g4'); S.fx.push({ type: 'text', x: SIZE / 2, y: SIZE / 2, text: '도전 성공!', t: 1.5, d: 1.5, col: '#ffd43b', big: true }); }
+      else if (m.boss) { log(`보스 처치! +${g}G`, 'g4'); sfx('bosskill'); }
     }
   }
   function fire(u, target, cands) {
@@ -1128,7 +1200,7 @@
     return crit;
   }
   const strongest = (list) => list.reduce((a, b) => (!a || b.hp > a.hp) ? b : a, null);
-  const GLOBAL_SKILLS = ['vines', 'sunburst', 'timestop', 'deathtouch', 'chaos', 'genesis', 'judgment', 'ruin'];
+  const GLOBAL_SKILLS = ['vines', 'sunburst', 'timestop', 'deathtouch', 'chaos', 'genesis', 'judgment', 'ruin', 'swordgod'];
   function castSkill(u) {
     const sk = u.def.skill, base = dmgOf(u), uc = tileCenter(u.col, u.row), rg = rangeOf(u), col = GRADE_COLORS[u.grade];
     const alive = S.monsters.filter(m => !m.dead);
@@ -1159,9 +1231,11 @@
       case 'judgment': { const t = alive.find(m => m.boss) || strongest(alive); alive.forEach(m => hit(m, base * (m === t ? 25 : 3), u)); bolt(t, 5); ring(SIZE / 2, SIZE / 2, SIZE / 2); break; }
       case 'ruin': alive.forEach(m => { hit(m, base * 6, u); m.slowT = Math.max(m.slowT, 3); m.slowPct = Math.max(m.slowPct, 0.6); }); ring(SIZE / 2, SIZE / 2, SIZE / 2); break;
       case 'bladestorm': if (!inRange.length) return false; inRange.forEach(m => hit(m, base * 15, u)); ring(uc.x, uc.y, rg); break;
+      case 'holyblade': { const t = strongest(alive); alive.forEach(m => { if (m === t) hit(m, base * 20, u); else if (Math.hypot(m.x - t.x, m.y - t.y) <= 45) hit(m, base * 5, u); }); bolt(t, 5); break; }
+      case 'swordgod': alive.forEach(m => hit(m, base * 8, u)); ring(SIZE / 2, SIZE / 2, SIZE / 2); break;
       default: return false;
     }
-    log(`${u.def.n}: ${sk.name} 발동`, 'g' + u.grade);
+    log(`${u.def.n}: ${sk.name} 발동`, 'g' + u.grade); sfx('skill');
     S.fx.push({ type: 'flash', col: u.col, row: u.row, t: 0.5, d: 0.5, c: col });
     const gl = GLOBAL_SKILLS.includes(sk.id);
     S.fx.push({ type: 'text', x: gl ? SIZE / 2 : uc.x, y: gl ? SIZE / 2 : uc.y - 24, text: sk.name, t: 1.2, d: 1.2, col, big: gl });
@@ -1183,8 +1257,10 @@
       else { m.d += m.speed * (m.slowT > 0 ? 1 - m.slowPct : 1) * dt; }
       if (!stopped) { m.slowT -= dt; if (m.slowT <= 0) m.slowPct = 0; }
       if (m.burnT > 0) { m.burnT -= dt; hit(m, m.burnDps * dt, null); }
+      if (m.spirit && m.d >= P) { m.dead = true; m.hp = 1; log('정령이 떠났습니다.'); }
       const p = pathPos(m.d); m.x = p.x; m.y = p.y;
     }
+    if (S.challengeT > 0 && !stopped) { S.challengeT -= dt; if (S.challengeT <= 0 && S.monsters.some(m => m.challenge && !m.dead)) { finishRun(false, '도전 보스를 60초 안에 처치하지 못했습니다.'); return; } }
     for (const u of S.units) {
       if (u.def.skill) { u.scd -= dt; if (u.scd <= 0 && castSkill(u)) u.scd = u.def.skill.cd; }
       u.cd -= dt; if (u.cd > 0) continue;
@@ -1195,7 +1271,7 @@
         if (d2 <= r2) cands.push({ m, d2 });
       }
       if (!cands.length) continue;
-      cands.sort((a, b) => (b.m.boss - a.m.boss) || (a.d2 - b.d2));
+      cands.sort((a, b) => (b.m.boss - a.m.boss) || ((b.m.spirit ? 1 : 0) - (a.m.spirit ? 1 : 0)) || (a.d2 - b.d2)); // 보스 > 정령 > 가까운 순
       const crit = fire(u, cands[0].m, cands.map(c => c.m));
       u.cd = intervalOf(u);
       if (u.def.m.rapid && Math.random() < u.def.m.rapid) u.cd *= 0.5;
@@ -1206,8 +1282,9 @@
     S.shots = S.shots.filter(s => s.t > 0);
     for (const f of S.fx) f.t -= dt;
     S.fx = S.fx.filter(f => f.t > 0);
-    if (isBossRound() && S.bossSpawned && !S.monsters.some(m => m.boss && m.round === S.round)) { S.bossSpawned = false; log(`${S.round}라운드 보스 처치 완료. 보상을 선택하세요.`, 'g4'); showBossChoice(); return; }
-    if (S.monsters.length >= monsterCap()) { finishRun(false, `살아있는 몬스터가 ${monsterCap()}마리에 도달했습니다.`); return; }
+    if (isBossRound() && S.bossSpawned && !S.monsters.some(m => m.boss && !m.challenge && m.round === S.round)) { S.bossSpawned = false; log(`${S.round}라운드 보스 처치 완료. 보상을 선택하세요.`, 'g4'); showBossChoice(); return; }
+    S.maxMon = Math.max(S.maxMon, S.monsters.filter(m => !m.spirit && !m.challenge).length);
+    if (S.monsters.filter(m => !m.spirit && !m.challenge).length >= monsterCap()) { finishRun(false, `살아있는 몬스터가 ${monsterCap()}마리에 도달했습니다.`); return; }
     if (S.timer <= 0) endRound();
   }
 
@@ -1283,14 +1360,21 @@
     ctx.globalAlpha = 1;
     for (const m of S.monsters) {
       const sp = m.boss ? bossSprite(m.hue, 3) : monsterSprite(m.kind, m.hue, m.slowT > 0 || m.freezeT > 0, 2);
+      if (m.spirit) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(S.time * 8); ctx.shadowColor = '#7ee8fa'; ctx.shadowBlur = 12; }
       ctx.drawImage(sp, Math.round(m.x - sp.width / 2), Math.round(m.y - sp.height / 2));
+      ctx.shadowBlur = 0; ctx.globalAlpha = 1;
       const r = sp.height / 2;
+      if (m.challenge) { ctx.strokeStyle = '#ff4d6d'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(m.x, m.y, r + 6, 0, Math.PI * 2); ctx.stroke(); }
       if (m.freezeT > 0) { ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(m.x, m.y, r + 2, 0, Math.PI * 2); ctx.stroke(); }
       else if (m.slowT > 0) { ctx.strokeStyle = '#4aa3ff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(m.x, m.y, r + 2, 0, Math.PI * 2); ctx.stroke(); }
       if (m.burnT > 0) { ctx.fillStyle = '#ff6b35'; ctx.fillRect(m.x - 2, m.y - r - 9, 4, 4); }
       const bw = m.boss ? 40 : 18, bh = m.boss ? 5 : 3, frac = Math.max(0, m.hp / m.maxHp);
       ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(m.x - bw / 2, m.y - r - bh - 3, bw, bh);
       ctx.fillStyle = frac > 0.5 ? '#4cd27a' : frac > 0.25 ? '#f2b134' : '#ff5a5f'; ctx.fillRect(m.x - bw / 2, m.y - r - bh - 3, bw * frac, bh);
+    }
+    if (S.challengeT > 0 && S.monsters.some(m => m.challenge)) {
+      ctx.font = '400 22px "Black Han Sans", "Noto Sans KR", sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+      ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.8)'; ctx.strokeText(`도전 ${Math.ceil(S.challengeT)}s`, SIZE - 8, 6); ctx.fillStyle = '#ff4d6d'; ctx.fillText(`도전 ${Math.ceil(S.challengeT)}s`, SIZE - 8, 6);
     }
     if (S.timeStopT > 0) {
       ctx.fillStyle = 'rgba(32,201,151,.14)'; ctx.fillRect(0, 0, SIZE, SIZE);
@@ -1299,6 +1383,11 @@
       ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.8)'; ctx.strokeText(`시간 정지 ${S.timeStopT.toFixed(1)}s`, SIZE / 2, T / 2 + 4); ctx.fillStyle = '#20c997'; ctx.fillText(`시간 정지 ${S.timeStopT.toFixed(1)}s`, SIZE / 2, T / 2 + 4);
     }
     if (S.buff.t > 0) { ctx.strokeStyle = 'rgba(242,177,52,.6)'; ctx.lineWidth = 3; ctx.strokeRect(T + 2, T + 2, SIZE - 2 * T - 4, SIZE - 2 * T - 4); }
+    if (S.drag && S.drag.moved) {
+      const c = Math.floor(S.drag.x / T), r = Math.floor(S.drag.y / T);
+      if (inGrid(c, r)) { ctx.strokeStyle = unitAt(c, r) ? '#f2b134' : '#4cd27a'; ctx.lineWidth = 3; roundRect(c * T + 3, r * T + 3, T - 6, T - 6, 8); ctx.stroke(); }
+      const sp = unitSprite(S.drag.u.def, 3); ctx.globalAlpha = 0.8; ctx.drawImage(sp, S.drag.x - sp.width / 2, S.drag.y - sp.height / 2); ctx.globalAlpha = 1;
+    }
     if (globalAtk() > 0) { ctx.globalAlpha = 0.25 + 0.1 * Math.sin(S.time * 2); ctx.strokeStyle = '#ffd43b'; ctx.lineWidth = 2; ctx.strokeRect(T + 5, T + 5, SIZE - 2 * T - 10, SIZE - 2 * T - 10); ctx.globalAlpha = 1; }
     // skill effects
     for (const f of S.fx) {
@@ -1327,13 +1416,18 @@
     $('hRound').textContent = S.round ? (isBossRound() ? `${S.round} 보스` : String(S.round)) : '-';
     $('hTime').textContent = S.phase === 'play' ? Math.max(0, Math.ceil(S.timer)) + 's' + (S.timeStopT > 0 ? ' ⏸' : '') : '-';
     $('hGold').textContent = fmt(S.gold);
-    $('hMon').textContent = `${S.monsters.length} / ${monsterCap()}`;
-    $('hMonWrap').classList.toggle('warn', S.monsters.length >= monsterCap() * 0.7);
+    const alive = S.monsters.filter(m => !m.spirit && !m.challenge).length;
+    $('hMon').textContent = `${alive} / ${monsterCap()}`;
+    $('hMonWrap').classList.toggle('warn', alive >= monsterCap() * 0.7);
     $('bSummon').disabled = S.phase !== 'play' || S.gold < summonCost() || S.units.length >= 49;
     $('summonCost').textContent = summonCost() + 'G';
     $('bSkip').disabled = S.phase !== 'play' || S.spawnQ > 0 || isBossRound();
     $('bGoal').disabled = S.phase !== 'play' || !S.pinRoots.length;
-    const nNow = RECIPE_UNITS.filter(d => visible(d) && canCraftNow(d)).length;
+    $('bChallenge').disabled = S.phase !== 'play' || S.round < 5 || isBossRound() || S.challengeBlock === Math.floor(S.round / 10) || S.monsters.some(m => m.challenge);
+    if (!$('bChallenge').disabled) $('bChallenge').title = `체력 ${fmt(challengeHp(S.round))} 보스를 소환합니다. 60초 안에 처치하면 보석 +${S.round * 3}·조각 +5, 실패하면 패배. 권장 보드 DPS 약 ${fmt(challengeHp(S.round) / 15)} (현재 ${fmt(boardDps())})`;
+    const nowList = RECIPE_UNITS.filter(d => visible(d) && canCraftNow(d));
+    for (const d of nowList) { if (d.grade >= TOP_GRADE && !S.craftAlerted.includes(d.n)) { S.craftAlerted.push(d.n); S.fx.push({ type: 'text', x: SIZE / 2, y: SIZE / 2 - 40, text: `✦ ${d.n} 조합 가능!`, t: 2.2, d: 2.2, col: GRADE_COLORS[d.grade], big: true }); sfx('alert'); } }
+    const nNow = nowList.length;
     const badge = $('craftBadge'); badge.hidden = !nNow;
     if (nNow) badge.innerHTML = `<b>${nNow}</b>지금 조합 가능 (조합식 패널 "지금 가능" 탭 · 또는 유닛 클릭)`;
     $('bSkip').textContent = isBossRound() ? '보스 라운드 (건너뛰기 불가)' : '다음 라운드 바로 시작';
@@ -1411,6 +1505,19 @@
     const st = GEAR_STATS[it.slot].find(s => s.k === it.stat);
     return `${st.l} +${gearVal(it)}${st.u}${it.rarity === 3 ? ' ★' + (it.star || 1) : ''}`;
   }
+  function showTree(def) {
+    const lines = [], tot = {};
+    const walk = (d, k, depth) => {
+      const mark = owned(d) ? '' : ' (미보유)';
+      lines.push('  '.repeat(depth) + (depth ? '└ ' : '') + `${d.n}${k > 1 ? ' ×' + k : ''} [${GRADE_NAMES[d.grade]}]${mark}`);
+      if (!d.recipe) { tot[d.n] = (tot[d.n] || 0) + k; return; }
+      for (const [n, c] of d.recipe) walk(defByName(n), k * c, depth + 1);
+    };
+    walk(def, 1, 0);
+    lines.push('', '필요한 일반 유닛 합계: ' + Object.entries(tot).map(([n, v]) => `${n}×${v}`).join(', '));
+    $('treeBox').textContent = lines.join('\n');
+    $('treeBox').scrollIntoView({ block: 'nearest' });
+  }
   function renderLobby() {
     renderHud();
     $('lbBest').textContent = `${M.best} (무한 ${M.bestInf || 0})`; $('lbRuns').textContent = M.runs;
@@ -1422,10 +1529,12 @@
       const b = document.createElement('button'); b.textContent = cleared ? '재도전' : '시작'; b.disabled = !unlocked;
       b.addEventListener('click', () => startGame({ type: 'stage', stage: k })); d.appendChild(b); modes.appendChild(d);
     }
-    const inf = document.createElement('div'); inf.className = 'mode inf';
-    inf.innerHTML = `<div><div class="t">무한 모드 <span class="note">주 콘텐츠</span></div><div class="d">라운드 무제한 · 10라운드마다 디버프 중첩 · 최고 ${M.bestInf || 0}라운드</div></div>`;
-    const ib = document.createElement('button'); ib.className = 'primary'; ib.textContent = '시작'; ib.addEventListener('click', () => startGame({ type: 'infinite' }));
-    inf.appendChild(ib); modes.appendChild(inf);
+    DIFFS.forEach((df, i) => {
+      const inf = document.createElement('div'); inf.className = 'mode inf';
+      inf.innerHTML = `<div><div class="t">무한 모드 · ${df.n} <span class="note">${i === 0 ? '주 콘텐츠' : `몬스터 체력 ×${df.hp} · 보석 ×${df.reward}`}</span></div><div class="d">라운드 무제한 · 10라운드마다 디버프 중첩 · 최고 ${(M.bestInfD || {})[i] || 0}라운드</div></div>`;
+      const ib = document.createElement('button'); ib.className = i === 0 ? 'primary' : ''; ib.textContent = '시작'; ib.addEventListener('click', () => startGame({ type: 'infinite', diff: i }));
+      inf.appendChild(ib); modes.appendChild(inf);
+    });
     $('lbOwned').textContent = `${ALL_UNITS.filter(owned).length} / ${ALL_UNITS.length}`;
     $('lbItems').textContent = M.items.length;
     $('deployPool').textContent = '등급별 보유(제작 가능): ' + GRADE_NAMES.map((g, i) => `${g} ${UNITS[i].filter(owned).length}(${UNITS[i].filter(unlocked).length})/${UNITS[i].length}`).join(' · ');
@@ -1448,6 +1557,7 @@
         ro.appendChild(h); continue;
       }
       const c = document.createElement('div'); c.className = 'ccard' + (owned(def) ? '' : ' locked') + (def.base ? ' base' : '');
+      c.addEventListener('click', () => showTree(def));
       c.appendChild(spriteCanvas(unitSprite(def, 4), 48));
       const nm = document.createElement('div'); nm.className = 'nm g' + def.grade; nm.textContent = def.n;
       const lv = document.createElement('div'); lv.className = 'lv';
@@ -1576,21 +1686,56 @@
   }
 
   // ---------- Input ----------
+  // Board input: tap selects; drag a unit onto an empty tile to move, onto another unit to swap; drop outside the grid cancels.
+  const boardXY = ev => { const rect = cv.getBoundingClientRect(); return { x: (ev.clientX - rect.left) * (SIZE / rect.width), y: (ev.clientY - rect.top) * (SIZE / rect.height) }; };
+  const inGrid = (c, r) => c >= INNER_MIN && c <= INNER_MAX && r >= INNER_MIN && r <= INNER_MAX;
   cv.addEventListener('pointerdown', ev => {
     if (!S || S.phase !== 'play') return;
-    const rect = cv.getBoundingClientRect();
-    const x = (ev.clientX - rect.left) * (SIZE / rect.width), y = (ev.clientY - rect.top) * (SIZE / rect.height);
-    const c = Math.floor(x / T), r = Math.floor(y / T);
-    if (c < INNER_MIN || c > INNER_MAX || r < INNER_MIN || r > INNER_MAX) { S.sel = null; renderPanel(); return; }
+    const { x, y } = boardXY(ev), c = Math.floor(x / T), r = Math.floor(y / T);
+    if (!inGrid(c, r)) { S.sel = null; S.drag = null; renderPanel(); return; }
     const u = unitAt(c, r);
-    if (u) S.sel = u; else if (S.sel) { S.sel.col = c; S.sel.row = r; }
+    if (u) { S.sel = u; S.drag = { u, x, y, moved: false }; try { cv.setPointerCapture(ev.pointerId); } catch (e) { /* ignore */ } }
+    else if (S.sel) { S.sel.col = c; S.sel.row = r; } // tap-to-move still works
     renderPanel();
   });
+  cv.addEventListener('pointermove', ev => {
+    if (!S || !S.drag) return;
+    const { x, y } = boardXY(ev); S.drag.x = x; S.drag.y = y;
+    if (Math.hypot(x - tileCenter(S.drag.u.col, S.drag.u.row).x, y - tileCenter(S.drag.u.col, S.drag.u.row).y) > 10) S.drag.moved = true;
+  });
+  const endDrag = ev => {
+    if (!S || !S.drag) return;
+    const d = S.drag; S.drag = null;
+    if (!d.moved) return;
+    const { x, y } = boardXY(ev), c = Math.floor(x / T), r = Math.floor(y / T);
+    if (!inGrid(c, r) || !S.units.includes(d.u)) { log('이동 취소'); return; }
+    const o = unitAt(c, r);
+    if (o && o !== d.u) { const oc = o.col, orr = o.row; o.col = d.u.col; o.row = d.u.row; d.u.col = oc; d.u.row = orr; log(`${d.u.def.n} ↔ ${o.def.n} 자리 교체`); }
+    else if (!o) { d.u.col = c; d.u.row = r; }
+    renderPanel();
+  };
+  cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', () => { if (S) S.drag = null; });
   $('bSummon').addEventListener('click', () => summon(false));
   $('bLuck').addEventListener('click', upgradeLuck);
   $('bSkip').addEventListener('click', skipRound);
   $('bQuit').addEventListener('click', quitGame);
   $('bGoal').addEventListener('click', runGoal);
+  $('bChallenge').addEventListener('click', startChallenge);
+  const ioShow = (txt, applyMode) => { $('ioBox').hidden = false; $('ioBtns').hidden = false; $('ioBox').value = txt; $('bApply').hidden = !applyMode; $('bCopy').hidden = applyMode; };
+  $('bExport').addEventListener('click', () => { try { ioShow('RTD1.' + btoa(unescape(encodeURIComponent(JSON.stringify(M)))), false); $('ioBox').select(); } catch (e) { ioShow('내보내기 실패: ' + e.message, false); } });
+  $('bImport').addEventListener('click', () => ioShow('', true));
+  $('bIoClose').addEventListener('click', () => { $('ioBox').hidden = true; $('ioBtns').hidden = true; });
+  $('bCopy').addEventListener('click', () => { const t = $('ioBox').value; $('ioBox').select(); if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(() => { $('bCopy').textContent = '복사됨'; }).catch(() => { $('bCopy').textContent = '선택 후 Ctrl+C'; }); else $('bCopy').textContent = '선택 후 Ctrl+C'; });
+  $('bApply').addEventListener('click', () => {
+    const raw = $('ioBox').value.trim();
+    try {
+      if (!raw.startsWith('RTD1.')) throw new Error('형식이 맞지 않습니다 (RTD1. 으로 시작해야 함)');
+      const obj = JSON.parse(decodeURIComponent(escape(atob(raw.slice(5)))));
+      if (typeof obj.gems !== 'number' || typeof obj.chars !== 'object') throw new Error('저장 데이터가 아닙니다');
+      M = Object.assign(defaultMeta(), obj); saveMeta(); $('ioBox').hidden = true; $('ioBtns').hidden = true; renderLobby();
+      $('bImport').textContent = '📥 가져오기 완료'; setTimeout(() => { $('bImport').textContent = '📥 저장 코드 가져오기'; }, 2000);
+    } catch (e) { $('ioBox').value = '가져오기 실패: ' + e.message; }
+  });
   $('bSpeed').addEventListener('click', () => { if (!S) return; S.speed = S.speed >= 3 ? 1 : S.speed + 1; $('bSpeed').textContent = 'x' + S.speed; });
   $('bPause').addEventListener('click', togglePause);
   $('bPullChar1').addEventListener('click', () => doPull('char', 1));
@@ -1613,6 +1758,32 @@
     else if (k === 'escape') { S.sel = null; renderPanel(); }
   });
 
+  // ---------- Sound (synthesized, no assets; starts after the first click) ----------
+  let AC = null, sfxOn = true;
+  try { sfxOn = localStorage.getItem('rtd_sfx') !== '0'; } catch (e) { /* ignore */ }
+  function sfx(kind) {
+    if (!sfxOn) return;
+    try {
+      if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+      if (AC.state === 'suspended') AC.resume();
+      const t0 = AC.currentTime, g = AC.createGain(); g.connect(AC.destination);
+      const tone = (f, t, dur, type, vol) => { const o = AC.createOscillator(); o.type = type || 'square'; o.frequency.setValueAtTime(f, t0 + t); o.connect(g); o.start(t0 + t); o.stop(t0 + t + dur); };
+      g.gain.setValueAtTime(0.0001, t0);
+      const env = (vol, dur) => { g.gain.exponentialRampToValueAtTime(vol, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); };
+      switch (kind) {
+        case 'summon': env(0.08, 0.15); tone(660, 0, 0.08); tone(880, 0.07, 0.08); break;
+        case 'craft': env(0.1, 0.35); tone(523, 0, 0.1); tone(659, 0.1, 0.1); tone(784, 0.2, 0.15); break;
+        case 'boss': env(0.12, 0.6); tone(110, 0, 0.3, 'sawtooth'); tone(98, 0.3, 0.3, 'sawtooth'); break;
+        case 'skill': env(0.08, 0.25); tone(1200, 0, 0.05, 'triangle'); tone(900, 0.05, 0.08, 'triangle'); tone(1500, 0.13, 0.1, 'triangle'); break;
+        case 'bosskill': env(0.12, 0.7); tone(523, 0, 0.15); tone(659, 0.15, 0.15); tone(784, 0.3, 0.15); tone(1046, 0.45, 0.25); break;
+        case 'over': env(0.12, 0.9); tone(392, 0, 0.3, 'sawtooth'); tone(311, 0.3, 0.3, 'sawtooth'); tone(233, 0.6, 0.3, 'sawtooth'); break;
+        case 'alert': env(0.1, 0.4); tone(1046, 0, 0.1, 'triangle'); tone(1318, 0.12, 0.1, 'triangle'); tone(1568, 0.24, 0.15, 'triangle'); break;
+      }
+    } catch (e) { /* audio unavailable */ }
+  }
+  $('bSfx').addEventListener('click', () => { sfxOn = !sfxOn; $('bSfx').textContent = sfxOn ? '🔊' : '🔇'; try { localStorage.setItem('rtd_sfx', sfxOn ? '1' : '0'); } catch (e) { /* ignore */ } if (sfxOn) sfx('summon'); });
+  $('bSfx').textContent = sfxOn ? '🔊' : '🔇';
+
   // ---------- Loop ----------
   let last = performance.now();
   function frame(now) {
@@ -1629,7 +1800,7 @@
     requestAnimationFrame(frame);
   }
   if (location.hash === '#debug') { // local testing hook only
-    window.__rtd = { state: () => S, give: name => { const d = defByName(name), t = bestFreeTile(); if (d && t) { S.units.push(makeUnit(d, t.c, t.r)); renderPanel(); } } };
+    window.__rtd = { state: () => S, defs: () => ALL_UNITS, challengeHp: () => challengeHp(S.round), boardDps, give: name => { const d = defByName(name), t = bestFreeTile(); if (d && t) { S.units.push(makeUnit(d, t.c, t.r)); renderPanel(); } } };
   }
   if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(boot); else boot();
 })();
