@@ -753,7 +753,8 @@
     const im = artImg[def.n];
     if (im) {
       const ck = 'a:' + def.n + ':' + scale; if (spriteCache.has(ck)) return spriteCache.get(ck);
-      const sz = 12 * scale + 4, c = document.createElement('canvas'); c.width = c.height = sz; c.dataset.art = '1';
+      const big = def.grade >= TOP_GRADE; // 신화·특수는 120% 크기로 표시
+      const sz = Math.round((12 * scale + 4) * (big ? 1.2 : 1)), c = document.createElement('canvas'); c.width = c.height = sz; c.dataset.art = '1'; if (big) c.dataset.big = '1';
       const g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(im, 0, 0, sz, sz);
       spriteCache.set(ck, c); return c;
     }
@@ -769,6 +770,7 @@
   }
   function spriteCanvas(src, px) {
     const c = document.createElement('canvas'); c.className = src.dataset && src.dataset.art ? '' : 'px'; c.width = src.width; c.height = src.height;
+    if (src.dataset && src.dataset.big) px = Math.round(px * 1.2);
     c.style.width = px + 'px'; c.style.height = px + 'px';
     c.getContext('2d').drawImage(src, 0, 0);
     return c;
@@ -933,6 +935,7 @@
   // Plan toward a goal: allocate units already on the board (unlocked), then list what must be crafted and which base units are missing.
   function planGoal(root) {
     const avail = {}; for (const u of S.units) if (!u.lock) avail[u.def.n] = (avail[u.def.n] || 0) + 1;
+    avail[root.n] = 0; // 목표는 보드에 이미 있어도 항상 '새로 1기 더' 만드는 기준으로 계산 (반복 실행 가능)
     const toMake = {}, missing = {};
     const plan = (def, k) => {
       const have = Math.min(k, avail[def.n] || 0); avail[def.n] = (avail[def.n] || 0) - have; k -= have;
