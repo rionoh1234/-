@@ -74,7 +74,7 @@ button { font: inherit; color: inherit; }
 
 /* 하단 탭 */
 .tabs { position: fixed; bottom: 0; left: 0; right: 0; z-index: 10; background: var(--card); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); }
-.tabs-in { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); }
+.tabs-in { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: repeat(6, 1fr); }
 .tabs button { border: 0; background: none; padding: 9px 0 12px; font-size: 11px; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; }
 .tabs button span { font-size: 19px; line-height: 1.1; }
 .tabs button.on { color: var(--accent); font-weight: 700; }
@@ -198,6 +198,9 @@ button:focus-visible, .opt:focus-visible, .chip:focus-visible { outline: 2px sol
 .sheet-x { border: 0; background: var(--card2); border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 14px; }
 @keyframes up { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }
+
+.opt .chip { margin: 0; white-space: nowrap; }
+.opt .chip:disabled { opacity: .45; cursor: not-allowed; }
 
 </style>
 </head>
@@ -494,12 +497,71 @@ const INTENSITY = [
 const ACTIVITIES = {
   rest:      { name: '휴식', icon: '☕', desc: '피로 -10, 사기 +3' },
   video:     { name: '영상 분석', icon: '📺', desc: '감독 신뢰 +3, 이번 달 경기 판단 성공률 +4%p' },
-  trainer:   { name: '개인 트레이너', icon: '🏋️', desc: '능력치 성장 ×1.15, 스킬 수련 ×1.25 (비용 발생)' },
-  nutrition: { name: '영양 관리', icon: '🥗', desc: '부상 위험 40% 감소, 피로 -6 (비용 발생)' },
   extra:     { name: '야간 개인훈련', icon: '🌙', desc: '능력치 성장 ×1.1, 피로 +8' },
   media:     { name: 'SNS · 미디어', icon: '📱', desc: '명성 +2, 소액 수입, 감독 신뢰 -1' },
   mental:    { name: '멘탈 코칭', icon: '🧘', desc: '사기 +8, 이번 달 빅매치 판단 +3%p' },
 };
+
+/* ---------- 투자: 장비(일시 구매) · 스태프/주거(월 비용) ----------
+ * 금액 단위: 만 원.  효과 키: growth(능력치 성장 배율) skill(스킬 수련 배율) injury(부상 확률 배율)
+ *                             recovery(월 피로 회복량) dec(경기 판단 %p) morale(사기 기준값)
+ */
+const EQUIPMENT = {
+  boots: { name: '축구화 · 장갑', icon: '👟', tiers: [
+    { name: '구단 지급품', cost: 0, fx: {} },
+    { name: '프로 모델', cost: 50, fx: { dec: 1 } },
+    { name: '맞춤 제작', cost: 500, fx: { dec: 2, injury: 0.95 } },
+    { name: '시그니처 에디션', cost: 3000, fx: { dec: 3, injury: 0.92 } },
+  ] },
+  recovery: { name: '회복 장비', icon: '🧊', tiers: [
+    { name: '없음', cost: 0, fx: {} },
+    { name: '폼롤러 · 마사지건', cost: 30, fx: { recovery: 2 } },
+    { name: '냉온 치료기', cost: 800, fx: { recovery: 4, injury: 0.95 } },
+    { name: '고압산소 챔버', cost: 10000, fx: { recovery: 7, injury: 0.88 } },
+  ] },
+  gym: { name: '개인 훈련 시설', icon: '🏋️', tiers: [
+    { name: '없음', cost: 0, fx: {} },
+    { name: '홈 트레이닝 세트', cost: 200, fx: { growth: 1.03 } },
+    { name: '개인 체육관', cost: 5000, fx: { growth: 1.06, skill: 1.05 } },
+    { name: '개인 훈련 센터', cost: 50000, fx: { growth: 1.10, skill: 1.12 } },
+  ] },
+  analysis: { name: '분석 장비', icon: '💻', tiers: [
+    { name: '없음', cost: 0, fx: {} },
+    { name: '분석 태블릿', cost: 100, fx: { dec: 1 } },
+    { name: '개인 분석 장비', cost: 2000, fx: { dec: 2 } },
+    { name: '전담 분석 시스템', cost: 20000, fx: { dec: 3, skill: 1.05 } },
+  ] },
+};
+const STAFF = {
+  trainer: { name: '개인 트레이너', icon: '🧑‍🏫', tiers: [
+    { name: '없음', cost: 0, fx: {} },
+    { name: '동네 PT 선생님', cost: 60, fx: { growth: 1.05, skill: 1.1 } },
+    { name: '프로 트레이너', cost: 500, fx: { growth: 1.10, skill: 1.2 } },
+    { name: '국가대표 출신 코치', cost: 2500, fx: { growth: 1.15, skill: 1.3 } },
+    { name: '월드클래스 퍼포먼스 코치', cost: 12000, fx: { growth: 1.20, skill: 1.4, injury: 0.9 } },
+  ] },
+  nutri: { name: '영양 · 메디컬', icon: '🥗', tiers: [
+    { name: '없음', cost: 0, fx: {} },
+    { name: '식단 관리 앱 · 도시락', cost: 20, fx: { injury: 0.9, recovery: 1 } },
+    { name: '전문 영양사', cost: 300, fx: { injury: 0.8, recovery: 3 } },
+    { name: '전담 메디컬 팀', cost: 2000, fx: { injury: 0.65, recovery: 5 } },
+  ] },
+  house: { name: '주거', icon: '🏠', tiers: [
+    { name: '구단 숙소', cost: 0, fx: {} },
+    { name: '아파트', cost: 150, fx: { morale: 3 } },
+    { name: '고급 아파트', cost: 1000, fx: { morale: 6, recovery: 1 } },
+    { name: '저택', cost: 8000, fx: { morale: 10, recovery: 2 } },
+  ] },
+};
+// 구단 시설 등급 (구단 기본 전력 기준)
+const FACILITY = [
+  null,
+  { name: '★1 열악', max: 55, growth: 0.92, skill: 0.9, injury: 1.15, recovery: 0 },
+  { name: '★2 보통', max: 64, growth: 0.98, skill: 1.0, injury: 1.05, recovery: 1 },
+  { name: '★3 양호', max: 73, growth: 1.04, skill: 1.08, injury: 1.0, recovery: 2 },
+  { name: '★4 우수', max: 81, growth: 1.10, skill: 1.15, injury: 0.9, recovery: 4 },
+  { name: '★5 최고급', max: 999, growth: 1.16, skill: 1.22, injury: 0.8, recovery: 6 },
+];
 
 
 
@@ -1162,7 +1224,7 @@ function applyResult(fx, res) {
     }
     // 경기 중 부상
     const inj = 0.007 * (1 + Math.max(0, p.fatigue - 40) / 25) * p.traits.injury * (1 - 0.2 * lv('iron'))
-      * (mc && mc.nutrition ? 0.6 : 1) * Math.sqrt(mc ? INTENSITY[mc.intensity].injury : 1);
+      * (mc && mc.B ? mc.B.injury : bonuses().injury) * Math.sqrt(mc ? INTENSITY[mc.intensity].injury : 1);
     if (rnd() < inj) injure('경기 중');
   } else if (mc && part.status === 'out') {
     mc.reserveMins += 45; // 2군 경기 출전으로 간주 (성장 계산용)
@@ -1629,7 +1691,7 @@ function optChance(o, oppStr, big) {
   if (o.wf) val *= 0.6 + 0.08 * S.p.weakFoot;
   let bonus = 0;
   for (const k in (o.sk || {})) bonus += lv(k) * o.sk[k];
-  bonus += (mc.decision || 0) + (S.p.buff.decision || 0) + (M.dec || 0);
+  bonus += (mc.decision || 0) + (S.p.buff.decision || 0) + (M.dec || 0) + (mc.B ? mc.B.dec : bonuses().dec);
   if (big) bonus += (mc.big || 0) + 3 * lv('biggame') + S.p.traits.temper * 2;
   bonus += 3 + (cond() - 70) * 0.06 + (S.p.morale - 60) * 0.03;
   return clamp(sigmoid((val + bonus - (oppStr + o.d)) / 7), 0.05, 0.93);
@@ -1924,11 +1986,71 @@ function finishFeatured() {
 
 /* ===================== 월간 계획 · 성장 ===================== */
 const monthlySalary = () => Math.round((S.p.contract.salary || 0) / 12);
+
+/* ---------- 구단 시설 · 투자(장비/스태프/주거) ---------- */
+function facLevel(id) {
+  const c = CLUBS[id || S.p.club];
+  const base = c.youth ? CLUBS[c.parent].str : c.str;
+  let l = FACILITY.findIndex(f => f && base <= f.max);
+  if (c.youth) l = Math.max(1, l - 1);
+  return l;
+}
+const fac = id => FACILITY[facLevel(id)];
+function ensureInv() { const p = S.p; if (!p.equip) p.equip = {}; if (!p.staff) p.staff = {}; }
+const staffTier = k => { const t = S.p.staff[k] || 0; return k === 'trainer' && S.p.trainerMonths > 0 ? Math.max(t, 2) : t; };
+function bonuses(withFacility) {
+  ensureInv();
+  const p = S.p, b = { growth: 1, skill: 1, injury: 1, recovery: 0, dec: 0, morale: 0 };
+  const add = fx => { for (const k in fx) { if (k === 'growth' || k === 'skill' || k === 'injury') b[k] *= fx[k]; else b[k] += fx[k]; } };
+  for (const k in EQUIPMENT) add(EQUIPMENT[k].tiers[p.equip[k] || 0].fx);
+  for (const k in STAFF) add(STAFF[k].tiers[staffTier(k)].fx);
+  if (withFacility !== false) { const f = fac(); b.growth *= f.growth; b.skill *= f.skill; b.injury *= f.injury; b.recovery += f.recovery; }
+  return b;
+}
+function staffCost() {
+  ensureInv();
+  return Object.keys(STAFF).reduce((sum, k) => {
+    const t = S.p.staff[k] || 0;
+    if (k === 'trainer' && S.p.trainerMonths > 0 && t <= 2) return sum;
+    return sum + STAFF[k].tiers[t].cost;
+  }, 0);
+}
+function buyEquip(slot, tier) {
+  ensureInv();
+  const p = S.p, E = EQUIPMENT[slot];
+  if (!E || !E.tiers[tier] || tier <= (p.equip[slot] || 0)) return '이미 보유한 장비보다 낮은 단계입니다.';
+  const c = E.tiers[tier].cost;
+  if (p.money < c) return '자금이 부족합니다.';
+  p.money -= c; p.equip[slot] = tier;
+  addNews(`${p.name}, ${E.tiers[tier].name} 구입`);
+  return '';
+}
+function setStaff(kind, tier) {
+  ensureInv();
+  const p = S.p, T = STAFF[kind];
+  if (!T || !T.tiers[tier]) return '잘못된 선택입니다.';
+  if (tier > 0 && p.money < T.tiers[tier].cost) return '첫 달 비용을 낼 자금이 부족합니다.';
+  p.staff[kind] = tier;
+  return '';
+}
+function payStaff(notes) {
+  const p = S.p, cost = staffCost();
+  p.money -= cost;
+  while (p.money < 0) {
+    const active = Object.keys(STAFF).filter(k => (p.staff[k] || 0) > 0);
+    if (!active.length) break;
+    const k = active.sort((a, b) => STAFF[b].tiers[p.staff[b]].cost - STAFF[a].tiers[p.staff[a]].cost)[0];
+    p.money += STAFF[k].tiers[p.staff[k]].cost;
+    notes.push(`💸 자금 부족으로 ${STAFF[k].name}(${STAFF[k].tiers[p.staff[k]].name}) 계약을 해지했습니다.`);
+    p.staff[k] = 0;
+  }
+  return cost;
+}
 const trainerCost = () => Math.max(100, Math.round(monthlySalary() * 0.08));
 const nutritionCost = () => Math.max(50, Math.round(monthlySalary() * 0.04));
 const rehabCost = () => Math.max(300, Math.round(monthlySalary() * 0.3));
-const actCost = act => (act === 'trainer' ? (S.p.trainerMonths > 0 ? 0 : trainerCost()) : act === 'nutrition' ? nutritionCost() : 0);
-const facility = () => { const c = curClub(); const base = c.youth ? cs(c.parent) : cs(c.id); return 0.9 + clamp((base - 50) / 40, 0, 1) * 0.25; };
+const actCost = () => 0; // 비용이 드는 활동은 투자(스태프)로 이동
+
 
 function defaultPlan() {
   const w = OVR_WEIGHTS[group()];
@@ -1969,7 +2091,7 @@ function ageGrowth(age) {
   return b;
 }
 
-function submitPlan(plan) {
+function submitPlan(plan, auto) {
   if (S.phase !== 'plan') return;
   const p = S.p;
   plan = Object.assign(defaultPlan(), plan || {});
@@ -1981,19 +2103,48 @@ function submitPlan(plan) {
   const cost = actCost(plan.act);
   if (cost > p.money) plan.act = 'rest';
   S.lastPlan = plan;
+  if (!auto) S.pending.autoLog = null;
   p.buff = p.buffNext || {};
   p.buffNext = {};
   S.mctx = {
     plan, intensity: plan.intensity, mins: 0, reserveMins: 0, possible: 0, ratings: [], g: 0, a: 0, lines: [],
     decision: plan.act === 'video' ? 4 : 0, big: plan.act === 'mental' ? 3 : 0, nutrition: plan.act === 'nutrition',
     ovrBefore: ovrF(), attrsBefore: Object.assign({}, p.attrs), moneyBefore: p.money, injuredNew: null, notes: [],
+    B: bonuses(), auto: !!auto,
   };
   if (cost) p.money -= cost;
-  if (plan.act === 'trainer' && p.trainerMonths > 0) p.trainerMonths--;
   const fx = S.monthFx || [];
-  fx.forEach((f, i) => { if (i !== S.featuredIdx) simFixture(f); });
-  if (S.featuredIdx >= 0 && fx[S.featuredIdx]) startFeatured(fx[S.featuredIdx], { kind: 'month' });
+  fx.forEach((f, i) => { if (auto || i !== S.featuredIdx) simFixture(f); });
+  if (!auto && S.featuredIdx >= 0 && fx[S.featuredIdx]) startFeatured(fx[S.featuredIdx], { kind: 'month' });
   else finalizeMonth();
+}
+
+/* ---------- 자동 진행 ---------- */
+// 이벤트 자동 선택 (무난한 선택지)
+const AUTO_PICK = { injury: 1, bench_talk: 1, praise: 1, interview: 0, mentor: 0, sponsor: 0, dinner: 0, sns: 0, rival: 0, poschange: 1,
+  youth_nt: 0, trainer_offer: 1, family: 0, agent: 2, scout: 1, pain: 1, captain: 0, sangmu: 1, school: 1, fan: 1 };
+function autoRun(plan, mode) {
+  // mode: 'month' (이번 달만) | 'window' (다음 이적시장·시즌 종료까지)
+  if (S.phase !== 'plan') return;
+  const log = [], startM = S.month;
+  for (let n = 0; n < 12 && S.phase === 'plan'; n++) {
+    if (n > 0 && startM < 6 && S.month >= 6) break; // 1월(겨울 이적시장 시점)에서 멈춤
+    const before = ovrF(), m = S.month, label = `${S.season.label} ${MONTHS[m]}`;
+    submitPlan(plan, true);
+    const r = S.pending.report;
+    const evs = [];
+    while (S.phase === 'event') {
+      const ev = S.pending.events[0];
+      let i = AUTO_PICK[ev.id] != null ? AUTO_PICK[ev.id] : 0;
+      if (!ev.opts[i] || ev.opts[i].dis) i = ev.opts.findIndex(o => !o.dis);
+      eventChoice(i);
+      evs.push(`${ev.title} → ${ev.opts[i].label}`);
+      eventAck();
+    }
+    log.push({ label, apps: r ? r.apps : 0, g: r ? r.g : 0, a: r ? r.a : 0, avg: r ? r.avg : null, d: Math.round((ovrF() - before) * 10) / 10, notes: r ? r.notes : [], evs });
+    if (mode === 'month') break;
+  }
+  if (S.phase === 'plan' || S.phase === 'window' || S.phase === 'seasonEnd') S.pending.autoLog = log;
 }
 
 function matchDone() {
@@ -2020,14 +2171,14 @@ function finalizeMonth() {
   // 능력치 성장
   const keys = attrKeys(), w = OVR_WEIGHTS[group()];
   const base = ageGrowth(p.age);
-  const trainer = plan.act === 'trainer' ? 1.15 : 1;
+  const B = mc.B || bonuses();
   const extra = plan.act === 'extra' ? 1.1 : 1;
   const skillSplit = plan.skill ? 0.75 : 1;
   const injF = 1 - 0.65 * Math.max(injuredFrac, mc.lines.filter(l => l.status === 'injured').length / Math.max(1, mc.lines.length));
   if (base > 0) {
     const gap = p.pot - ovrF();
     const gapF = gap > 0 ? clamp(gap / 12, 0.04, 1.15) : 0.02;
-    let T = GROWTH_K * base * I.growth * facility() * p.traits.prof * (0.8 + 0.4 * share) * trainer * extra * skillSplit * injF * gapF * (p.buff.growth || 1);
+    let T = GROWTH_K * base * I.growth * B.growth * p.traits.prof * (0.8 + 0.4 * share) * extra * skillSplit * injF * gapF * (p.buff.growth || 1);
     if (m === 0) T *= 1.4;
     const focus = plan.focus.length ? plan.focus : [];
     const rest = keys.filter(k => !focus.includes(k));
@@ -2050,7 +2201,7 @@ function finalizeMonth() {
   // 스킬 수련
   if (plan.skill) {
     const id = plan.skill;
-    const gain = 30 * I.skill * facility() * p.traits.prof * (plan.act === 'trainer' ? 1.25 : 1) * (p.age <= 23 ? 1.1 : 1) * (1 - 0.5 * injuredFrac) * (p.buff.skill || 1);
+    const gain = 30 * I.skill * B.skill * p.traits.prof * (p.age <= 23 ? 1.1 : 1) * (1 - 0.5 * injuredFrac) * (p.buff.skill || 1);
     p.skillProg[id] = (p.skillProg[id] || 0) + gain;
     while (lv(id) < SKILL_MAX_LV && p.skillProg[id] >= SKILL_COST[lv(id) + 1]) {
       if (id === 'weakfoot' && p.weakFoot >= 5) break;
@@ -2065,7 +2216,7 @@ function finalizeMonth() {
   // 피로 · 사기 · 활동
   let fat = I.fatigue - 22;
   if (plan.act === 'rest') { fat -= 10; p.morale += 3; }
-  if (plan.act === 'nutrition') fat -= 6;
+  fat -= B.recovery;
   if (plan.act === 'extra') fat += 8;
   if (plan.act === 'video') p.trust += 3;
   if (plan.act === 'mental') p.morale += 8;
@@ -2073,7 +2224,7 @@ function finalizeMonth() {
   p.fatigue = clamp(p.fatigue + fat * (fat > 0 ? 1 - 0.15 * lv('stamina') : 1), 0, 100);
   // 훈련 중 부상
   if (p.injury === 0) {
-    const tr = 0.012 * Math.pow(I.injury, 1.5) * p.traits.injury * (1 - 0.2 * lv('iron')) * (mc.nutrition ? 0.6 : 1) * (p.fatigue > 60 ? 1.6 : 1) * (p.buff.injRisk || 1);
+    const tr = 0.012 * Math.pow(I.injury, 1.5) * p.traits.injury * (1 - 0.2 * lv('iron')) * B.injury * (p.fatigue > 60 ? 1.6 : 1) * (p.buff.injRisk || 1);
     if (rnd() < tr) { injure('훈련 중'); p.injury = Math.min(p.injury, ri(1, 4)); mc.injuredNew.n = p.injury; }
   }
   // A매치
@@ -2086,11 +2237,13 @@ function finalizeMonth() {
     if (p.intl.caps === 2) addNews(`${p.name}, ${NATIONS[p.nat].name} 국가대표 첫 발탁`);
   }
   // 돈
-  const sal = monthlySalary() * (p.agent === 'big' ? 0.9 : 1) + (curClub().youth ? 30 : 0);
+  const sal = monthlySalary() * (p.agent === 'big' ? 0.9 : 1) + (curClub().youth ? 80 : 0);
   p.money += Math.round(sal);
+  const staffPaid = payStaff(mc.notes);
+  if (p.trainerMonths > 0) p.trainerMonths--;
   // 표류
   p.trust = clamp(p.trust + (50 - p.trust) * 0.03, 0, 100);
-  p.morale = clamp(p.morale + (60 - p.morale) * 0.1, 0, 100);
+  p.morale = clamp(p.morale + (60 + B.morale - p.morale) * 0.1, 0, 100);
   const o = ovr();
   if (o > p.peak) { p.peak = o; p.peakAge = p.age; }
   // 리포트
@@ -2276,9 +2429,9 @@ const EVENTS = {
     apply(i, par) { const p = S.p; if (i === 0) { p.rep += 3; p.intl.youthCaps += 2; p.buffNext.growth = 1.1; p.fatigue = clamp(p.fatigue + 8, 0, 100); addNews(`${p.name}, U-${par.u} 대표팀 발탁`); return '연령별 대표팀에서 좋은 경험을 쌓았다.'; } p.trust += 3; return '소속팀에 남아 훈련했다.'; },
   },
   trainer_offer: {
-    w: () => (S.p.money >= trainerCost() * 2.2 && S.p.trainerMonths === 0 ? 0.9 : 0),
-    make: () => { const c = Math.round(trainerCost() * 2.2); return { title: '🏋️ 유명 트레이너의 제안', text: `유명 피지컬 트레이너가 3개월 집중 패키지를 ${fmtMoney(c)}에 제안했습니다. (정상가의 약 73%)`, opts: [{ label: '계약한다', hint: '3개월간 개인 트레이너 무료' }, { label: '거절한다', hint: '' }], params: { c } }; },
-    apply(i, par) { if (i === 0 && S.p.money >= par.c) { S.p.money -= par.c; S.p.trainerMonths = 3; return '3개월 패키지 계약. 월간 계획에서 개인 트레이너를 무료로 선택할 수 있다.'; } return '제안을 거절했다.'; },
+    w: () => (S.p.money >= 1100 && S.p.trainerMonths === 0 && (S.p.staff ? S.p.staff.trainer || 0 : 0) < 2 ? 0.9 : 0),
+    make: () => { const c = 1100; return { title: '🏋️ 프로 트레이너의 제안', text: `프로 트레이너가 3개월 집중 패키지를 ${fmtMoney(c)}에 제안했습니다. (정상가 ${fmtMoney(1500)}의 약 73%)`, opts: [{ label: '계약한다', hint: '3개월간 프로 트레이너 효과 (성장 ×1.10, 스킬 ×1.2)' }, { label: '거절한다', hint: '' }], params: { c } }; },
+    apply(i, par) { if (i === 0 && S.p.money >= par.c) { S.p.money -= par.c; S.p.trainerMonths = 3; return '3개월 패키지 계약. 이번 달부터 프로 트레이너가 붙는다.'; } return '제안을 거절했다.'; },
   },
   family: {
     w: () => 0.8,
@@ -2848,7 +3001,7 @@ var Engine = {
   get S() { return S; }, load(s) { S = s; }, genCandidates, newCareer, submitPlan, resolveMoment, matchDone, eventChoice, eventAck,
   windowChoice, seasonAck, tourNext, tourAck, offAction, defaultPlan, skillList, skillStatus, ovr, ovrF, overallOf, marketValue, cs,
   clubName, CLUBS, leagueOf, sortedTable, trainerCost, nutritionCost, actCost, monthlySalary, careerSummary, fmtMoney, fmtFee, potLabel,
-  attrKeys, group, cond, josa, TOURS,
+  attrKeys, group, cond, josa, TOURS, autoRun, buyEquip, setStaff, bonuses, staffCost, facLevel, fac,
 };
 
 
@@ -3033,7 +3186,7 @@ function header() {
 }
 
 function tabs() {
-  const T = [['play', '⚽', '진행'], ['player', '👤', '선수'], ['record', '📊', '기록'], ['table', '🏆', '순위'], ['menu', '☰', '메뉴']];
+  const T = [['play', '⚽', '진행'], ['player', '👤', '선수'], ['shop', '💼', '투자'], ['record', '📊', '기록'], ['table', '🏆', '순위'], ['menu', '☰', '메뉴']];
   return `<nav class="tabs"><div class="tabs-in">${T.map(([id, ic, nm]) => `<button data-act="tab" data-arg="${id}" class="${ui.tab === id ? 'on' : ''}"><span>${ic}</span>${nm}</button>`).join('')}</div></nav>`;
 }
 
@@ -3131,6 +3284,12 @@ const INFO = {
     <ul><li>경기 평점이 6.6보다 높으면 오르고, 낮으면 내려갑니다.</li><li>결정적 순간의 성공·실패, 면담·기자회견 같은 이벤트 선택, 영상 분석 활동으로도 바뀝니다.</li><li>매달 50 쪽으로 조금씩 되돌아갑니다.</li></ul>`],
   morale: () => ['사기', '<p>선수의 기분과 자신감입니다. 경기 평점과 결정적 순간의 성공률에 조금 영향을 줍니다. 승리, 좋은 평점, 휴식, 멘탈 코칭, 가족 이벤트 등으로 오르고 매달 60 쪽으로 되돌아갑니다.</p>'],
   rep: () => ['명성', '<p>세상이 나를 얼마나 아는지입니다. 이적 제안의 수와 수준, 스폰서·광고 이벤트, 발롱도르 평가에 영향을 줍니다. 활약, 우승, 국가대표 경기로 오르고 매 시즌 8%씩 줄어듭니다.</p>'],
+  facility: () => {
+    const lvl = E.facLevel();
+    return ['구단 시설', `<p>소속 구단의 훈련장·의료 시설 수준입니다. 구단 전력이 높을수록 등급이 높고, 유스팀은 성인팀보다 한 단계 낮습니다.</p>
+      <div class="scroll-x"><table class="tb"><tr><th>등급</th><th>구단 전력</th><th>성장</th><th>스킬</th><th>부상</th><th>회복</th></tr>
+      ${FACILITY.slice(1).map((f, i) => `<tr class="${i + 1 === lvl ? 'me' : ''}"><td>${f.name}</td><td>${i === 0 ? '~55' : i === 4 ? '82~' : `${FACILITY[i].max + 1}~${f.max}`}</td><td>×${f.growth}</td><td>×${f.skill}</td><td>×${f.injury}</td><td>+${f.recovery}</td></tr>`).join('')}</table></div>`];
+  },
   role: () => { const r = st().p.contract.role; return ['계약 역할', `<p>계약할 때 구단이 약속한 역할입니다. 선발 경쟁 점수에 보정이 붙습니다.</p>
     <ul><li><b>주전</b>: +2.5</li><li><b>로테이션</b>: +1</li><li><b>유망주</b>: −1</li><li><b>유스</b>: 보정 없음</li></ul><p>현재 역할: <b>${esc(r)}</b>${st().p.captain ? ' · 주장 +3' : ''}</p>`]; },
 };
@@ -3156,6 +3315,51 @@ function openInfo(key) {
 function closeInfo() { const bg = $('#sheet'); if (bg) bg.hidden = true; }
 const ib = (key, label) => `<button class="ib" data-act="info" data-arg="${key}">${label}<i>ⓘ</i></button>`;
 
+/* ---------- 자동 진행 요약 ---------- */
+function autoCard() {
+  const L = st().pending.autoLog;
+  if (!L || !L.length) return '';
+  const tg = L.reduce((s, x) => s + x.g, 0), ta = L.reduce((s, x) => s + x.a, 0), td = Math.round(L.reduce((s, x) => s + x.d, 0) * 10) / 10;
+  return `<div class="card hl"><h2>⏩ 자동 진행 결과 (${L.length}개월)</h2>
+    <p class="small">골 ${tg} · 도움 ${ta} · 오버롤 ${sign(td, true)}</p>
+    <ul class="list">${L.map(x => `<li><b>${esc(x.label)}</b> <span class="small muted">${x.apps}경기 · ⚽${x.g} 🅰️${x.a}${x.avg != null ? ' · 평점 ' + x.avg.toFixed(1) : ''} · OVR ${sign(x.d, true)}</span>
+      ${x.notes.concat(x.evs).map(n => `<div class="small">${esc(n)}</div>`).join('')}</li>`).join('')}</ul></div>`;
+}
+
+/* ---------- 투자 탭 ---------- */
+function fxText(fx) {
+  const out = [];
+  if (fx.growth) out.push(`성장 ×${fx.growth}`);
+  if (fx.skill) out.push(`스킬 수련 ×${fx.skill}`);
+  if (fx.injury) out.push(`부상 위험 ${Math.round((1 - fx.injury) * 100)}%↓`);
+  if (fx.recovery) out.push(`월 피로 회복 +${fx.recovery}`);
+  if (fx.dec) out.push(`경기 판단 +${fx.dec}%p`);
+  if (fx.morale) out.push(`사기 기준 +${fx.morale}`);
+  return out.join(' · ') || '효과 없음';
+}
+function renderShop() {
+  const S = st(), p = S.p;
+  const eq = p.equip || {}, sf = p.staff || {};
+  const f = E.fac(), lvl = E.facLevel(), B = E.bonuses();
+  let h = `<div class="card hl"><h2>💼 투자</h2><div class="grid2"><div class="stat"><b>${money(p.money)}</b><span>보유 자금</span></div><div class="stat"><b>${money(E.staffCost())}</b><span>월 고정 지출 (스태프·주거)</span></div></div>
+    <p class="small muted" style="margin-top:8px">월 수입 ${money(E.monthlySalary() + (E.CLUBS[p.club].youth ? 80 : 0))} · 장비는 한 번 사면 계속 유지되고, 스태프·주거는 매달 비용이 나갑니다. 자금이 모자라면 비싼 계약부터 자동 해지됩니다.</p></div>`;
+  h += `<div class="card"><h2>${clubLogo(p.club, 22)} ${ib('facility', '구단 시설')} <span class="tag y">${'★'.repeat(lvl)}${'☆'.repeat(5 - lvl)}</span></h2>
+    <p class="small">${esc(E.clubName(p.club))}: 성장 ×${f.growth} · 스킬 수련 ×${f.skill} · 부상 위험 ×${f.injury} · 월 피로 회복 +${f.recovery}</p>
+    <p class="small muted">더 좋은 구단으로 이적하면 시설 등급이 올라갑니다.</p>
+    <h3>현재 총 효과 (시설 + 장비 + 스태프)</h3><p class="small"><b>성장 ×${B.growth.toFixed(2)} · 스킬 수련 ×${B.skill.toFixed(2)} · 부상 위험 ×${B.injury.toFixed(2)} · 피로 회복 +${B.recovery} · 판단 +${B.dec}%p · 사기 기준 +${B.morale}</b></p></div>`;
+  h += `<div class="card"><h2>🛒 장비 <span class="small muted">(일시 구매 · 영구 효과)</span></h2>`;
+  for (const k in EQUIPMENT) {
+    const Q = EQUIPMENT[k], cur = eq[k] || 0;
+    h += `<h3>${Q.icon} ${Q.name} — 현재: ${esc(Q.tiers[cur].name)}</h3>${Q.tiers.map((x, i) => i === 0 ? '' : `<div class="opt ${i <= cur ? 'on' : ''}"><div class="row between"><b>${esc(x.name)}</b>${i <= cur ? '<span class="tag g">보유</span>' : `<button class="chip" data-act="buy" data-arg="${k}:${i}" ${p.money < x.cost ? 'disabled' : ''}>${money(x.cost)} 구매</button>`}</div><span class="small">${fxText(x.fx)}</span></div>`).join('')}`;
+  }
+  h += `</div><div class="card"><h2>🧑‍💼 스태프 · 주거 <span class="small muted">(월 비용)</span></h2>`;
+  for (const k in STAFF) {
+    const Q = STAFF[k], cur = sf[k] || 0;
+    h += `<h3>${Q.icon} ${Q.name} — 현재: ${esc(Q.tiers[cur].name)}${k === 'trainer' && p.trainerMonths > 0 ? ` <span class="tag g">패키지 ${p.trainerMonths}개월</span>` : ''}</h3>${Q.tiers.map((x, i) => `<div class="opt ${i === cur ? 'on' : ''}"><div class="row between"><b>${esc(x.name)}</b>${i === cur ? '<span class="tag g">계약 중</span>' : `<button class="chip" data-act="hire" data-arg="${k}:${i}" ${i > 0 && p.money < x.cost ? 'disabled' : ''}>${i === 0 ? '해지' : `월 ${money(x.cost)} ${i > cur ? '계약' : '변경'}`}</button>`}</div><span class="small">${fxText(x.fx)}</span></div>`).join('')}`;
+  }
+  return h + '</div>';
+}
+
 /* ---------- 내 능력치 표 ---------- */
 function skillChips(p) {
   const ids = Object.keys(p.skills).filter(k => p.skills[k] > 0);
@@ -3174,7 +3378,8 @@ function statCard() {
   return `<div class="card statcard"><h2>📊 내 능력치</h2>
     <table class="st-tb"><tr><th>${ib('ovr', '오버롤')}</th><td><b class="up">${E.ovr()}</b> <span class="small muted">(최고 ${p.peak})</span></td><th>${ib('style', '포지션')}</th><td>${p.pos} · ${esc(p.style)}</td></tr>
       <tr><th>${ib('pot', '잠재력')}</th><td><span style="color:var(--gold)">${stars(p.stars)}</span> <span class="small muted">${p.stars}/5</span></td><th>${ib('weak', '약발')}</th><td>${p.weakFoot ? '★'.repeat(p.weakFoot) + '☆'.repeat(5 - p.weakFoot) : '-'}</td></tr>
-      <tr><th>${ib('value', '시장 가치')}</th><td>${E.fmtFee(E.marketValue())}</td><th>${ib('growth', '성장 유형')}</th><td>${p.revealed.growth ? G[p.traits.growth] : '???'}</td></tr></table>
+      <tr><th>${ib('value', '시장 가치')}</th><td>${E.fmtFee(E.marketValue())}</td><th>${ib('growth', '성장 유형')}</th><td>${p.revealed.growth ? G[p.traits.growth] : '???'}</td></tr>
+      <tr><th>${ib('facility', '구단 시설')}</th><td colspan="3"><span style="color:var(--gold)">${'★'.repeat(E.facLevel())}${'☆'.repeat(5 - E.facLevel())}</span> <span class="small muted">성장 ×${E.fac().growth} · 부상 ×${E.fac().injury}</span></td></tr></table>
     <table class="st-tb attrs">${rows.map(r => `<tr>${r.map(cell).join('')}</tr>`).join('')}</table>
     <p class="note" style="margin-top:4px">능력치 옆 숫자는 이번 시즌 시작 대비 변화 · ⓘ 항목을 누르면 설명이 나옵니다</p>
     <h3 style="margin-top:10px">🎓 보유 스킬 ${Object.keys(p.skills).filter(k => p.skills[k] > 0 && k !== 'weakfoot').length}/${SKILL_SLOTS}</h3>
@@ -3206,7 +3411,7 @@ function renderPlan() {
   const keys = E.attrKeys();
   d.focus = d.focus.filter(k => keys.includes(k));
   const fx = S.monthFx || [];
-  let h = statCard() + reportCard(S.pending.report);
+  let h = autoCard() + statCard() + reportCard(S.pending.report);
   // 일정
   h += `<div class="card hl"><h2>📅 ${MONTHS[S.month]} 일정</h2>`;
   if (S.month === 0) h += `<p class="small">☀️ 프리시즌 훈련 캠프 — 이번 달 성장 효과 ×1.4</p>`;
@@ -3241,8 +3446,11 @@ function renderPlan() {
     const A = ACTIVITIES[k], cost = E.actCost(k);
     const free = k === 'trainer' && p.trainerMonths > 0;
     return `<button class="opt ${d.act === k ? 'on' : ''}" data-act="act" data-arg="${k}" ${cost > p.money ? 'disabled' : ''}><div class="row between"><b>${A.icon} ${A.name}</b>${cost ? `<span class="tag y">${money(cost)}</span>` : free ? `<span class="tag g">패키지 ${p.trainerMonths}개월 남음</span>` : ''}</div><span class="small">${A.desc}</span></button>`;
-  }).join('')}<p class="small muted">보유 자금 ${money(p.money)}</p></div>`;
-  h += `<button class="btn" data-act="submit">▶ ${MONTHS[S.month]} 시작</button>`;
+  }).join('')}<p class="small muted">보유 자금 ${money(p.money)} · 장비·트레이너·영양사·주거는 💼 투자 탭에서 관리합니다.</p></div>`;
+  const toWin = S.month < 6 ? '1월' : '시즌 종료';
+  h += `<button class="btn" data-act="submit">▶ ${MONTHS[S.month]} 시작 (주요 경기 직접 플레이)</button>
+    <div class="btn-row"><button class="btn sec" data-act="auto" data-arg="month">⏩ ${MONTHS[S.month]} 자동 진행</button><button class="btn sec" data-act="auto" data-arg="window">⏭️ ${toWin}까지 자동</button></div>
+    <p class="note">자동 진행은 위 계획을 그대로 반복합니다. 주요 경기는 자동으로 치르고, 이벤트는 무난한 선택지를 고릅니다.</p>`;
   return h;
 }
 
@@ -3334,8 +3542,9 @@ function renderEvent() {
 /* ---------- 이적시장 ---------- */
 function renderWindow() {
   const S = st(), W = S.pending.window, p = S.p;
+  const pre = autoCard();
   const kindName = { transfer: '이적', pro: '프로 계약', loan: '임대', renew: '재계약', return: '원소속팀 복귀' };
-  let h = `<div class="card hl"><h2>${W.kind === 'summer' ? '☀️ 여름 이적시장' : '❄️ 겨울 이적시장'}</h2>
+  let h = pre + `<div class="card hl"><h2>${W.kind === 'summer' ? '☀️ 여름 이적시장' : '❄️ 겨울 이적시장'}</h2>
     ${W.note ? `<p>${esc(W.note)}</p>` : ''}
     <p class="small">현재: ${clubLogo(p.club, 16)} ${esc(E.clubName(p.club))} · ${roleTag(p.contract.role)} · 계약 ${Math.max(0, p.contract.years)}년 남음 · 연봉 ${money(p.contract.salary)}</p>
     <p class="small muted">시장 가치 약 ${E.fmtFee(E.marketValue())} · 오버롤 ${E.ovr()} · 소속팀 전력 ${Math.round(E.cs(p.club))}</p>
@@ -3344,7 +3553,7 @@ function renderWindow() {
   W.offers.forEach((o, i) => {
     const L = E.leagueOf(o.lg);
     h += `<div class="card"><div class="row between"><span class="row">${clubLogo(o.club, 40, true)}<b>${esc(E.clubName(o.club))}</b></span><span class="tag b">${kindName[o.kind]}</span></div>
-      <div class="small muted" style="margin-top:4px">${compLogo(L.name, 14)} ${esc(L.name)} · 팀 전력 ${Math.round(E.cs(o.club))}</div>
+      <div class="small muted" style="margin-top:4px">${compLogo(L.name, 14)} ${esc(L.name)} · 팀 전력 ${Math.round(E.cs(o.club))} · 시설 <span style="color:var(--gold)">${'★'.repeat(E.facLevel(o.club))}</span></div>
       <div class="small" style="margin-top:6px">${roleTag(o.role)} · ${o.kind === 'loan' ? '1시즌 임대' : `${o.years}년 계약`} · 연봉 ${money(o.salary)}${o.fee > 0 ? ` · 이적료 ${E.fmtFee(o.fee)}` : o.kind === 'transfer' ? ' · 자유 계약' : ''}</div>
       <button class="btn" data-act="win" data-arg="${i}">선택</button></div>`;
   });
@@ -3356,7 +3565,7 @@ function renderWindow() {
 function renderSeasonEnd() {
   const S = st(), s = S.pending.summary;
   const t = s.totals;
-  return `<div class="card gold"><h2>📜 ${s.label} 시즌 결산</h2>
+  return autoCard() + `<div class="card gold"><h2>📜 ${s.label} 시즌 결산</h2>
     <p>${clubLogo(s.club, 22)} ${esc(E.clubName(s.club))} · ${compLogo(s.lg, 16)} ${esc(s.lg)} <b>${s.pos}위</b> / ${s.teams}팀</p>
     <div class="grid3"><div class="stat"><b>${t.apps}</b><span>출전</span></div><div class="stat"><b>${t.g} / ${t.a}</b><span>골 / 도움</span></div><div class="stat"><b>${t.apps ? (t.rs / t.apps).toFixed(2) : '-'}</b><span>평균 평점</span></div></div>
     <p class="small">${esc(s.cupName)}: ${esc(s.cup)}${s.cont ? `<br>${esc(s.cont)}` : ''}</p>
@@ -3495,7 +3704,8 @@ function renderHof() {
 function renderGuide() {
   return `<div class="wrap"><div class="card"><h2>📖 게임 방법</h2>
     <h3>1. 한 시즌 = 12개월</h3><p class="small">7월 프리시즌 → 8월~5월 매달 진행 → 6월 시즌 결산. 1월과 시즌 종료 후에는 이적시장이 열립니다.</p>
-    <h3>2. 매달 정하는 것</h3><p class="small">🎯 집중 훈련(능력치 최대 2개) · 훈련 강도(4단계) · 🎓 스킬 수련 · 🗓️ 보조 활동(휴식·영상 분석·개인 트레이너 등)</p>
+    <h3>2. 매달 정하는 것</h3><p class="small">🎯 집중 훈련(능력치 최대 2개) · 훈련 강도(4단계) · 🎓 스킬 수련 · 🗓️ 보조 활동(휴식·영상 분석 등). 빠르게 넘기고 싶으면 ⏩ 자동 진행 버튼을 쓰세요.</p>
+    <h3>2-1. 💼 투자</h3><p class="small">번 돈으로 장비(영구)·트레이너·영양사·주거(월 비용)에 투자하면 성장 속도, 부상 위험, 피로 회복, 경기 판단이 좋아집니다. 좋은 구단일수록 시설 등급이 높아 같은 훈련도 효과가 큽니다.</p>
     <h3>3. 주요 경기</h3><p class="small">매달 가장 중요한 경기 하나를 직접 플레이합니다. 결정적 순간마다 선택지가 나오며, 성공률은 능력치·스킬·컨디션·상대 전력으로 정해집니다. 스킬을 배우면 새 선택지가 열립니다.</p>
     <h3>4. 출전 기회</h3><p class="small">오버롤, 감독 신뢰, 컨디션이 소속팀 전력과 비교되어 선발·교체·명단 제외가 정해집니다. 명단에서 제외되면 2군 경기에서 어필할 수 있습니다.</p>
     <h3>5. 성장</h3><p class="small">나이가 어릴수록, 출전 시간이 많을수록, 훈련 강도가 높을수록 빠르게 성장합니다. 잠재력에 가까워질수록 성장이 느려지고, 만 30세 무렵부터 능력치가 떨어집니다. 강훈련은 피로와 부상 위험을 키웁니다.</p>
@@ -3520,6 +3730,7 @@ function render() {
     body = ph === 'plan' ? renderPlan() : ph === 'match' ? renderMatch() : ph === 'event' ? renderEvent() : ph === 'window' ? renderWindow()
       : ph === 'seasonEnd' ? renderSeasonEnd() : ph === 'tournament' ? renderTour() : ph === 'offseason' ? renderOff() : ph === 'retired' ? renderRetired() : '';
   } else if (ui.tab === 'player') body = renderPlayer();
+  else if (ui.tab === 'shop') body = renderShop();
   else if (ui.tab === 'record') body = renderRecord();
   else if (ui.tab === 'table') body = renderTable();
   else body = renderMenu();
@@ -3570,6 +3781,9 @@ document.addEventListener('click', e => {
     case 'skill': ui.draft.skill = arg || null; render(); break;
     case 'act': ui.draft.act = arg; render(); break;
     case 'submit': act(() => { E.submitPlan(ui.draft); ui.draft = null; }); scrollTop(); break;
+    case 'auto': act(() => { const d = ui.draft; E.autoRun(d, arg); ui.draft = null; }); scrollTop(); break;
+    case 'buy': { const [k, i] = arg.split(':'); const err = E.buyEquip(k, +i); act(() => {}); toast(err || `${EQUIPMENT[k].tiers[+i].name} 구입 완료`); break; }
+    case 'hire': { const [k, i] = arg.split(':'); const err = E.setStaff(k, +i); act(() => {}); toast(err || (+i ? `${STAFF[k].tiers[+i].name} 계약 (이번 달 진행분부터 효과·비용 적용)` : `${STAFF[k].name} 계약 해지`)); break; }
     case 'mom': act(() => E.resolveMoment(+arg)); break;
     case 'mdone': act(() => E.matchDone()); scrollTop(); break;
     case 'ev': act(() => E.eventChoice(+arg)); break;

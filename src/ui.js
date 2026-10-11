@@ -180,7 +180,7 @@ function header() {
 }
 
 function tabs() {
-  const T = [['play', '⚽', '진행'], ['player', '👤', '선수'], ['record', '📊', '기록'], ['table', '🏆', '순위'], ['menu', '☰', '메뉴']];
+  const T = [['play', '⚽', '진행'], ['player', '👤', '선수'], ['shop', '💼', '투자'], ['record', '📊', '기록'], ['table', '🏆', '순위'], ['menu', '☰', '메뉴']];
   return `<nav class="tabs"><div class="tabs-in">${T.map(([id, ic, nm]) => `<button data-act="tab" data-arg="${id}" class="${ui.tab === id ? 'on' : ''}"><span>${ic}</span>${nm}</button>`).join('')}</div></nav>`;
 }
 
@@ -278,6 +278,12 @@ const INFO = {
     <ul><li>경기 평점이 6.6보다 높으면 오르고, 낮으면 내려갑니다.</li><li>결정적 순간의 성공·실패, 면담·기자회견 같은 이벤트 선택, 영상 분석 활동으로도 바뀝니다.</li><li>매달 50 쪽으로 조금씩 되돌아갑니다.</li></ul>`],
   morale: () => ['사기', '<p>선수의 기분과 자신감입니다. 경기 평점과 결정적 순간의 성공률에 조금 영향을 줍니다. 승리, 좋은 평점, 휴식, 멘탈 코칭, 가족 이벤트 등으로 오르고 매달 60 쪽으로 되돌아갑니다.</p>'],
   rep: () => ['명성', '<p>세상이 나를 얼마나 아는지입니다. 이적 제안의 수와 수준, 스폰서·광고 이벤트, 발롱도르 평가에 영향을 줍니다. 활약, 우승, 국가대표 경기로 오르고 매 시즌 8%씩 줄어듭니다.</p>'],
+  facility: () => {
+    const lvl = E.facLevel();
+    return ['구단 시설', `<p>소속 구단의 훈련장·의료 시설 수준입니다. 구단 전력이 높을수록 등급이 높고, 유스팀은 성인팀보다 한 단계 낮습니다.</p>
+      <div class="scroll-x"><table class="tb"><tr><th>등급</th><th>구단 전력</th><th>성장</th><th>스킬</th><th>부상</th><th>회복</th></tr>
+      ${FACILITY.slice(1).map((f, i) => `<tr class="${i + 1 === lvl ? 'me' : ''}"><td>${f.name}</td><td>${i === 0 ? '~55' : i === 4 ? '82~' : `${FACILITY[i].max + 1}~${f.max}`}</td><td>×${f.growth}</td><td>×${f.skill}</td><td>×${f.injury}</td><td>+${f.recovery}</td></tr>`).join('')}</table></div>`];
+  },
   role: () => { const r = st().p.contract.role; return ['계약 역할', `<p>계약할 때 구단이 약속한 역할입니다. 선발 경쟁 점수에 보정이 붙습니다.</p>
     <ul><li><b>주전</b>: +2.5</li><li><b>로테이션</b>: +1</li><li><b>유망주</b>: −1</li><li><b>유스</b>: 보정 없음</li></ul><p>현재 역할: <b>${esc(r)}</b>${st().p.captain ? ' · 주장 +3' : ''}</p>`]; },
 };
@@ -303,6 +309,51 @@ function openInfo(key) {
 function closeInfo() { const bg = $('#sheet'); if (bg) bg.hidden = true; }
 const ib = (key, label) => `<button class="ib" data-act="info" data-arg="${key}">${label}<i>ⓘ</i></button>`;
 
+/* ---------- 자동 진행 요약 ---------- */
+function autoCard() {
+  const L = st().pending.autoLog;
+  if (!L || !L.length) return '';
+  const tg = L.reduce((s, x) => s + x.g, 0), ta = L.reduce((s, x) => s + x.a, 0), td = Math.round(L.reduce((s, x) => s + x.d, 0) * 10) / 10;
+  return `<div class="card hl"><h2>⏩ 자동 진행 결과 (${L.length}개월)</h2>
+    <p class="small">골 ${tg} · 도움 ${ta} · 오버롤 ${sign(td, true)}</p>
+    <ul class="list">${L.map(x => `<li><b>${esc(x.label)}</b> <span class="small muted">${x.apps}경기 · ⚽${x.g} 🅰️${x.a}${x.avg != null ? ' · 평점 ' + x.avg.toFixed(1) : ''} · OVR ${sign(x.d, true)}</span>
+      ${x.notes.concat(x.evs).map(n => `<div class="small">${esc(n)}</div>`).join('')}</li>`).join('')}</ul></div>`;
+}
+
+/* ---------- 투자 탭 ---------- */
+function fxText(fx) {
+  const out = [];
+  if (fx.growth) out.push(`성장 ×${fx.growth}`);
+  if (fx.skill) out.push(`스킬 수련 ×${fx.skill}`);
+  if (fx.injury) out.push(`부상 위험 ${Math.round((1 - fx.injury) * 100)}%↓`);
+  if (fx.recovery) out.push(`월 피로 회복 +${fx.recovery}`);
+  if (fx.dec) out.push(`경기 판단 +${fx.dec}%p`);
+  if (fx.morale) out.push(`사기 기준 +${fx.morale}`);
+  return out.join(' · ') || '효과 없음';
+}
+function renderShop() {
+  const S = st(), p = S.p;
+  const eq = p.equip || {}, sf = p.staff || {};
+  const f = E.fac(), lvl = E.facLevel(), B = E.bonuses();
+  let h = `<div class="card hl"><h2>💼 투자</h2><div class="grid2"><div class="stat"><b>${money(p.money)}</b><span>보유 자금</span></div><div class="stat"><b>${money(E.staffCost())}</b><span>월 고정 지출 (스태프·주거)</span></div></div>
+    <p class="small muted" style="margin-top:8px">월 수입 ${money(E.monthlySalary() + (E.CLUBS[p.club].youth ? 80 : 0))} · 장비는 한 번 사면 계속 유지되고, 스태프·주거는 매달 비용이 나갑니다. 자금이 모자라면 비싼 계약부터 자동 해지됩니다.</p></div>`;
+  h += `<div class="card"><h2>${clubLogo(p.club, 22)} ${ib('facility', '구단 시설')} <span class="tag y">${'★'.repeat(lvl)}${'☆'.repeat(5 - lvl)}</span></h2>
+    <p class="small">${esc(E.clubName(p.club))}: 성장 ×${f.growth} · 스킬 수련 ×${f.skill} · 부상 위험 ×${f.injury} · 월 피로 회복 +${f.recovery}</p>
+    <p class="small muted">더 좋은 구단으로 이적하면 시설 등급이 올라갑니다.</p>
+    <h3>현재 총 효과 (시설 + 장비 + 스태프)</h3><p class="small"><b>성장 ×${B.growth.toFixed(2)} · 스킬 수련 ×${B.skill.toFixed(2)} · 부상 위험 ×${B.injury.toFixed(2)} · 피로 회복 +${B.recovery} · 판단 +${B.dec}%p · 사기 기준 +${B.morale}</b></p></div>`;
+  h += `<div class="card"><h2>🛒 장비 <span class="small muted">(일시 구매 · 영구 효과)</span></h2>`;
+  for (const k in EQUIPMENT) {
+    const Q = EQUIPMENT[k], cur = eq[k] || 0;
+    h += `<h3>${Q.icon} ${Q.name} — 현재: ${esc(Q.tiers[cur].name)}</h3>${Q.tiers.map((x, i) => i === 0 ? '' : `<div class="opt ${i <= cur ? 'on' : ''}"><div class="row between"><b>${esc(x.name)}</b>${i <= cur ? '<span class="tag g">보유</span>' : `<button class="chip" data-act="buy" data-arg="${k}:${i}" ${p.money < x.cost ? 'disabled' : ''}>${money(x.cost)} 구매</button>`}</div><span class="small">${fxText(x.fx)}</span></div>`).join('')}`;
+  }
+  h += `</div><div class="card"><h2>🧑‍💼 스태프 · 주거 <span class="small muted">(월 비용)</span></h2>`;
+  for (const k in STAFF) {
+    const Q = STAFF[k], cur = sf[k] || 0;
+    h += `<h3>${Q.icon} ${Q.name} — 현재: ${esc(Q.tiers[cur].name)}${k === 'trainer' && p.trainerMonths > 0 ? ` <span class="tag g">패키지 ${p.trainerMonths}개월</span>` : ''}</h3>${Q.tiers.map((x, i) => `<div class="opt ${i === cur ? 'on' : ''}"><div class="row between"><b>${esc(x.name)}</b>${i === cur ? '<span class="tag g">계약 중</span>' : `<button class="chip" data-act="hire" data-arg="${k}:${i}" ${i > 0 && p.money < x.cost ? 'disabled' : ''}>${i === 0 ? '해지' : `월 ${money(x.cost)} ${i > cur ? '계약' : '변경'}`}</button>`}</div><span class="small">${fxText(x.fx)}</span></div>`).join('')}`;
+  }
+  return h + '</div>';
+}
+
 /* ---------- 내 능력치 표 ---------- */
 function skillChips(p) {
   const ids = Object.keys(p.skills).filter(k => p.skills[k] > 0);
@@ -321,7 +372,8 @@ function statCard() {
   return `<div class="card statcard"><h2>📊 내 능력치</h2>
     <table class="st-tb"><tr><th>${ib('ovr', '오버롤')}</th><td><b class="up">${E.ovr()}</b> <span class="small muted">(최고 ${p.peak})</span></td><th>${ib('style', '포지션')}</th><td>${p.pos} · ${esc(p.style)}</td></tr>
       <tr><th>${ib('pot', '잠재력')}</th><td><span style="color:var(--gold)">${stars(p.stars)}</span> <span class="small muted">${p.stars}/5</span></td><th>${ib('weak', '약발')}</th><td>${p.weakFoot ? '★'.repeat(p.weakFoot) + '☆'.repeat(5 - p.weakFoot) : '-'}</td></tr>
-      <tr><th>${ib('value', '시장 가치')}</th><td>${E.fmtFee(E.marketValue())}</td><th>${ib('growth', '성장 유형')}</th><td>${p.revealed.growth ? G[p.traits.growth] : '???'}</td></tr></table>
+      <tr><th>${ib('value', '시장 가치')}</th><td>${E.fmtFee(E.marketValue())}</td><th>${ib('growth', '성장 유형')}</th><td>${p.revealed.growth ? G[p.traits.growth] : '???'}</td></tr>
+      <tr><th>${ib('facility', '구단 시설')}</th><td colspan="3"><span style="color:var(--gold)">${'★'.repeat(E.facLevel())}${'☆'.repeat(5 - E.facLevel())}</span> <span class="small muted">성장 ×${E.fac().growth} · 부상 ×${E.fac().injury}</span></td></tr></table>
     <table class="st-tb attrs">${rows.map(r => `<tr>${r.map(cell).join('')}</tr>`).join('')}</table>
     <p class="note" style="margin-top:4px">능력치 옆 숫자는 이번 시즌 시작 대비 변화 · ⓘ 항목을 누르면 설명이 나옵니다</p>
     <h3 style="margin-top:10px">🎓 보유 스킬 ${Object.keys(p.skills).filter(k => p.skills[k] > 0 && k !== 'weakfoot').length}/${SKILL_SLOTS}</h3>
@@ -353,7 +405,7 @@ function renderPlan() {
   const keys = E.attrKeys();
   d.focus = d.focus.filter(k => keys.includes(k));
   const fx = S.monthFx || [];
-  let h = statCard() + reportCard(S.pending.report);
+  let h = autoCard() + statCard() + reportCard(S.pending.report);
   // 일정
   h += `<div class="card hl"><h2>📅 ${MONTHS[S.month]} 일정</h2>`;
   if (S.month === 0) h += `<p class="small">☀️ 프리시즌 훈련 캠프 — 이번 달 성장 효과 ×1.4</p>`;
@@ -388,8 +440,11 @@ function renderPlan() {
     const A = ACTIVITIES[k], cost = E.actCost(k);
     const free = k === 'trainer' && p.trainerMonths > 0;
     return `<button class="opt ${d.act === k ? 'on' : ''}" data-act="act" data-arg="${k}" ${cost > p.money ? 'disabled' : ''}><div class="row between"><b>${A.icon} ${A.name}</b>${cost ? `<span class="tag y">${money(cost)}</span>` : free ? `<span class="tag g">패키지 ${p.trainerMonths}개월 남음</span>` : ''}</div><span class="small">${A.desc}</span></button>`;
-  }).join('')}<p class="small muted">보유 자금 ${money(p.money)}</p></div>`;
-  h += `<button class="btn" data-act="submit">▶ ${MONTHS[S.month]} 시작</button>`;
+  }).join('')}<p class="small muted">보유 자금 ${money(p.money)} · 장비·트레이너·영양사·주거는 💼 투자 탭에서 관리합니다.</p></div>`;
+  const toWin = S.month < 6 ? '1월' : '시즌 종료';
+  h += `<button class="btn" data-act="submit">▶ ${MONTHS[S.month]} 시작 (주요 경기 직접 플레이)</button>
+    <div class="btn-row"><button class="btn sec" data-act="auto" data-arg="month">⏩ ${MONTHS[S.month]} 자동 진행</button><button class="btn sec" data-act="auto" data-arg="window">⏭️ ${toWin}까지 자동</button></div>
+    <p class="note">자동 진행은 위 계획을 그대로 반복합니다. 주요 경기는 자동으로 치르고, 이벤트는 무난한 선택지를 고릅니다.</p>`;
   return h;
 }
 
@@ -481,8 +536,9 @@ function renderEvent() {
 /* ---------- 이적시장 ---------- */
 function renderWindow() {
   const S = st(), W = S.pending.window, p = S.p;
+  const pre = autoCard();
   const kindName = { transfer: '이적', pro: '프로 계약', loan: '임대', renew: '재계약', return: '원소속팀 복귀' };
-  let h = `<div class="card hl"><h2>${W.kind === 'summer' ? '☀️ 여름 이적시장' : '❄️ 겨울 이적시장'}</h2>
+  let h = pre + `<div class="card hl"><h2>${W.kind === 'summer' ? '☀️ 여름 이적시장' : '❄️ 겨울 이적시장'}</h2>
     ${W.note ? `<p>${esc(W.note)}</p>` : ''}
     <p class="small">현재: ${clubLogo(p.club, 16)} ${esc(E.clubName(p.club))} · ${roleTag(p.contract.role)} · 계약 ${Math.max(0, p.contract.years)}년 남음 · 연봉 ${money(p.contract.salary)}</p>
     <p class="small muted">시장 가치 약 ${E.fmtFee(E.marketValue())} · 오버롤 ${E.ovr()} · 소속팀 전력 ${Math.round(E.cs(p.club))}</p>
@@ -491,7 +547,7 @@ function renderWindow() {
   W.offers.forEach((o, i) => {
     const L = E.leagueOf(o.lg);
     h += `<div class="card"><div class="row between"><span class="row">${clubLogo(o.club, 40, true)}<b>${esc(E.clubName(o.club))}</b></span><span class="tag b">${kindName[o.kind]}</span></div>
-      <div class="small muted" style="margin-top:4px">${compLogo(L.name, 14)} ${esc(L.name)} · 팀 전력 ${Math.round(E.cs(o.club))}</div>
+      <div class="small muted" style="margin-top:4px">${compLogo(L.name, 14)} ${esc(L.name)} · 팀 전력 ${Math.round(E.cs(o.club))} · 시설 <span style="color:var(--gold)">${'★'.repeat(E.facLevel(o.club))}</span></div>
       <div class="small" style="margin-top:6px">${roleTag(o.role)} · ${o.kind === 'loan' ? '1시즌 임대' : `${o.years}년 계약`} · 연봉 ${money(o.salary)}${o.fee > 0 ? ` · 이적료 ${E.fmtFee(o.fee)}` : o.kind === 'transfer' ? ' · 자유 계약' : ''}</div>
       <button class="btn" data-act="win" data-arg="${i}">선택</button></div>`;
   });
@@ -503,7 +559,7 @@ function renderWindow() {
 function renderSeasonEnd() {
   const S = st(), s = S.pending.summary;
   const t = s.totals;
-  return `<div class="card gold"><h2>📜 ${s.label} 시즌 결산</h2>
+  return autoCard() + `<div class="card gold"><h2>📜 ${s.label} 시즌 결산</h2>
     <p>${clubLogo(s.club, 22)} ${esc(E.clubName(s.club))} · ${compLogo(s.lg, 16)} ${esc(s.lg)} <b>${s.pos}위</b> / ${s.teams}팀</p>
     <div class="grid3"><div class="stat"><b>${t.apps}</b><span>출전</span></div><div class="stat"><b>${t.g} / ${t.a}</b><span>골 / 도움</span></div><div class="stat"><b>${t.apps ? (t.rs / t.apps).toFixed(2) : '-'}</b><span>평균 평점</span></div></div>
     <p class="small">${esc(s.cupName)}: ${esc(s.cup)}${s.cont ? `<br>${esc(s.cont)}` : ''}</p>
@@ -642,7 +698,8 @@ function renderHof() {
 function renderGuide() {
   return `<div class="wrap"><div class="card"><h2>📖 게임 방법</h2>
     <h3>1. 한 시즌 = 12개월</h3><p class="small">7월 프리시즌 → 8월~5월 매달 진행 → 6월 시즌 결산. 1월과 시즌 종료 후에는 이적시장이 열립니다.</p>
-    <h3>2. 매달 정하는 것</h3><p class="small">🎯 집중 훈련(능력치 최대 2개) · 훈련 강도(4단계) · 🎓 스킬 수련 · 🗓️ 보조 활동(휴식·영상 분석·개인 트레이너 등)</p>
+    <h3>2. 매달 정하는 것</h3><p class="small">🎯 집중 훈련(능력치 최대 2개) · 훈련 강도(4단계) · 🎓 스킬 수련 · 🗓️ 보조 활동(휴식·영상 분석 등). 빠르게 넘기고 싶으면 ⏩ 자동 진행 버튼을 쓰세요.</p>
+    <h3>2-1. 💼 투자</h3><p class="small">번 돈으로 장비(영구)·트레이너·영양사·주거(월 비용)에 투자하면 성장 속도, 부상 위험, 피로 회복, 경기 판단이 좋아집니다. 좋은 구단일수록 시설 등급이 높아 같은 훈련도 효과가 큽니다.</p>
     <h3>3. 주요 경기</h3><p class="small">매달 가장 중요한 경기 하나를 직접 플레이합니다. 결정적 순간마다 선택지가 나오며, 성공률은 능력치·스킬·컨디션·상대 전력으로 정해집니다. 스킬을 배우면 새 선택지가 열립니다.</p>
     <h3>4. 출전 기회</h3><p class="small">오버롤, 감독 신뢰, 컨디션이 소속팀 전력과 비교되어 선발·교체·명단 제외가 정해집니다. 명단에서 제외되면 2군 경기에서 어필할 수 있습니다.</p>
     <h3>5. 성장</h3><p class="small">나이가 어릴수록, 출전 시간이 많을수록, 훈련 강도가 높을수록 빠르게 성장합니다. 잠재력에 가까워질수록 성장이 느려지고, 만 30세 무렵부터 능력치가 떨어집니다. 강훈련은 피로와 부상 위험을 키웁니다.</p>
@@ -667,6 +724,7 @@ function render() {
     body = ph === 'plan' ? renderPlan() : ph === 'match' ? renderMatch() : ph === 'event' ? renderEvent() : ph === 'window' ? renderWindow()
       : ph === 'seasonEnd' ? renderSeasonEnd() : ph === 'tournament' ? renderTour() : ph === 'offseason' ? renderOff() : ph === 'retired' ? renderRetired() : '';
   } else if (ui.tab === 'player') body = renderPlayer();
+  else if (ui.tab === 'shop') body = renderShop();
   else if (ui.tab === 'record') body = renderRecord();
   else if (ui.tab === 'table') body = renderTable();
   else body = renderMenu();
@@ -717,6 +775,9 @@ document.addEventListener('click', e => {
     case 'skill': ui.draft.skill = arg || null; render(); break;
     case 'act': ui.draft.act = arg; render(); break;
     case 'submit': act(() => { E.submitPlan(ui.draft); ui.draft = null; }); scrollTop(); break;
+    case 'auto': act(() => { const d = ui.draft; E.autoRun(d, arg); ui.draft = null; }); scrollTop(); break;
+    case 'buy': { const [k, i] = arg.split(':'); const err = E.buyEquip(k, +i); act(() => {}); toast(err || `${EQUIPMENT[k].tiers[+i].name} 구입 완료`); break; }
+    case 'hire': { const [k, i] = arg.split(':'); const err = E.setStaff(k, +i); act(() => {}); toast(err || (+i ? `${STAFF[k].tiers[+i].name} 계약 (이번 달 진행분부터 효과·비용 적용)` : `${STAFF[k].name} 계약 해지`)); break; }
     case 'mom': act(() => E.resolveMoment(+arg)); break;
     case 'mdone': act(() => E.matchDone()); scrollTop(); break;
     case 'ev': act(() => E.eventChoice(+arg)); break;

@@ -289,19 +289,78 @@ const INTENSITY = [
 const ACTIVITIES = {
   rest:      { name: '휴식', icon: '☕', desc: '피로 -10, 사기 +3' },
   video:     { name: '영상 분석', icon: '📺', desc: '감독 신뢰 +3, 이번 달 경기 판단 성공률 +4%p' },
-  trainer:   { name: '개인 트레이너', icon: '🏋️', desc: '능력치 성장 ×1.15, 스킬 수련 ×1.25 (비용 발생)' },
-  nutrition: { name: '영양 관리', icon: '🥗', desc: '부상 위험 40% 감소, 피로 -6 (비용 발생)' },
   extra:     { name: '야간 개인훈련', icon: '🌙', desc: '능력치 성장 ×1.1, 피로 +8' },
   media:     { name: 'SNS · 미디어', icon: '📱', desc: '명성 +2, 소액 수입, 감독 신뢰 -1' },
   mental:    { name: '멘탈 코칭', icon: '🧘', desc: '사기 +8, 이번 달 빅매치 판단 +3%p' },
 };
+
+/* ---------- 투자: 장비(일시 구매) · 스태프/주거(월 비용) ----------
+ * 금액 단위: 만 원.  효과 키: growth(능력치 성장 배율) skill(스킬 수련 배율) injury(부상 확률 배율)
+ *                             recovery(월 피로 회복량) dec(경기 판단 %p) morale(사기 기준값)
+ */
+const EQUIPMENT = {
+  boots: { name: '축구화 · 장갑', icon: '👟', tiers: [
+    { name: '구단 지급품', cost: 0, fx: {} },
+    { name: '프로 모델', cost: 50, fx: { dec: 1 } },
+    { name: '맞춤 제작', cost: 500, fx: { dec: 2, injury: 0.95 } },
+    { name: '시그니처 에디션', cost: 3000, fx: { dec: 3, injury: 0.92 } },
+  ] },
+  recovery: { name: '회복 장비', icon: '🧊', tiers: [
+    { name: '없음', cost: 0, fx: {} },
+    { name: '폼롤러 · 마사지건', cost: 30, fx: { recovery: 2 } },
+    { name: '냉온 치료기', cost: 800, fx: { recovery: 4, injury: 0.95 } },
+    { name: '고압산소 챔버', cost: 10000, fx: { recovery: 7, injury: 0.88 } },
+  ] },
+  gym: { name: '개인 훈련 시설', icon: '🏋️', tiers: [
+    { name: '없음', cost: 0, fx: {} },
+    { name: '홈 트레이닝 세트', cost: 200, fx: { growth: 1.03 } },
+    { name: '개인 체육관', cost: 5000, fx: { growth: 1.06, skill: 1.05 } },
+    { name: '개인 훈련 센터', cost: 50000, fx: { growth: 1.10, skill: 1.12 } },
+  ] },
+  analysis: { name: '분석 장비', icon: '💻', tiers: [
+    { name: '없음', cost: 0, fx: {} },
+    { name: '분석 태블릿', cost: 100, fx: { dec: 1 } },
+    { name: '개인 분석 장비', cost: 2000, fx: { dec: 2 } },
+    { name: '전담 분석 시스템', cost: 20000, fx: { dec: 3, skill: 1.05 } },
+  ] },
+};
+const STAFF = {
+  trainer: { name: '개인 트레이너', icon: '🧑‍🏫', tiers: [
+    { name: '없음', cost: 0, fx: {} },
+    { name: '동네 PT 선생님', cost: 60, fx: { growth: 1.05, skill: 1.1 } },
+    { name: '프로 트레이너', cost: 500, fx: { growth: 1.10, skill: 1.2 } },
+    { name: '국가대표 출신 코치', cost: 2500, fx: { growth: 1.15, skill: 1.3 } },
+    { name: '월드클래스 퍼포먼스 코치', cost: 12000, fx: { growth: 1.20, skill: 1.4, injury: 0.9 } },
+  ] },
+  nutri: { name: '영양 · 메디컬', icon: '🥗', tiers: [
+    { name: '없음', cost: 0, fx: {} },
+    { name: '식단 관리 앱 · 도시락', cost: 20, fx: { injury: 0.9, recovery: 1 } },
+    { name: '전문 영양사', cost: 300, fx: { injury: 0.8, recovery: 3 } },
+    { name: '전담 메디컬 팀', cost: 2000, fx: { injury: 0.65, recovery: 5 } },
+  ] },
+  house: { name: '주거', icon: '🏠', tiers: [
+    { name: '구단 숙소', cost: 0, fx: {} },
+    { name: '아파트', cost: 150, fx: { morale: 3 } },
+    { name: '고급 아파트', cost: 1000, fx: { morale: 6, recovery: 1 } },
+    { name: '저택', cost: 8000, fx: { morale: 10, recovery: 2 } },
+  ] },
+};
+// 구단 시설 등급 (구단 기본 전력 기준)
+const FACILITY = [
+  null,
+  { name: '★1 열악', max: 55, growth: 0.92, skill: 0.9, injury: 1.15, recovery: 0 },
+  { name: '★2 보통', max: 64, growth: 0.98, skill: 1.0, injury: 1.05, recovery: 1 },
+  { name: '★3 양호', max: 73, growth: 1.04, skill: 1.08, injury: 1.0, recovery: 2 },
+  { name: '★4 우수', max: 81, growth: 1.10, skill: 1.15, injury: 0.9, recovery: 4 },
+  { name: '★5 최고급', max: 999, growth: 1.16, skill: 1.22, injury: 0.8, recovery: 6 },
+];
 
 /*NODE*/
 if (typeof module !== 'undefined') {
   module.exports = {
     POSITIONS, ADJACENT_POS, ATTRS_OUT, ATTRS_GK, ATTR_NAME, OVR_WEIGHTS, STYLES, SKILLS, SKILL_COST, SKILL_MAX_LV,
     SKILL_SLOTS, LEAGUES, CONTINENTAL, CLUB_LIST, KOR_YOUTH, NATIONS, NT_POOL, MONTHS, INTL_BREAKS, CUP_ROUNDS,
-    CONT_LEAGUE_MONTHS, CONT_KO, INTENSITY, ACTIVITIES, FLAG_CODE,
+    CONT_LEAGUE_MONTHS, CONT_KO, INTENSITY, ACTIVITIES, FLAG_CODE, EQUIPMENT, STAFF, FACILITY,
   };
 }
 /*/NODE*/

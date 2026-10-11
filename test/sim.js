@@ -5,7 +5,7 @@ const root = path.join(__dirname, '..');
 const code = fs.readFileSync(path.join(root, 'src/data.js'), 'utf8') + '\n' + fs.readFileSync(path.join(root, 'src/engine.js'), 'utf8');
 const ctx = { console, Date, Math, JSON };
 vm.createContext(ctx);
-vm.runInContext(code + '\nthis.Engine = Engine;', ctx);
+vm.runInContext(code + '\nthis.Engine = Engine; this.STAFF = STAFF; this.EQUIPMENT = EQUIPMENT;', ctx);
 const E = ctx.Engine;
 
 const KINDS = {};
@@ -34,8 +34,16 @@ function playCareer(seed, nat, pos, verbose) {
       const sk = E.skillList().filter(x => x.can);
       const rec = sk.find(x => (S.p.rec || []).includes(x.id)) || sk[0];
       pl.skill = rec && S.month % 3 !== 0 ? rec.id : null;
-      pl.act = S.p.money > E.trainerCost() * 3 ? 'trainer' : 'rest';
-      E.submitPlan(pl);
+      pl.act = 'rest';
+      // 투자: 월 수입의 일정 비율 안에서 스태프 고용, 여유 자금으로 장비 구입
+      const inc = E.monthlySalary() + 80;
+      for (const k of ['trainer', 'nutri', 'house']) {
+        const tiers = ctx.STAFF[k].tiers; let best = 0;
+        tiers.forEach((t, i) => { if (t.cost <= inc * (k === 'house' ? 0.08 : 0.15)) best = i; });
+        if ((S.p.staff || {})[k] !== best) E.setStaff(k, best);
+      }
+      for (const k of Object.keys(ctx.EQUIPMENT)) ctx.EQUIPMENT[k].tiers.forEach((t, i) => { if (i > ((S.p.equip || {})[k] || 0) && S.p.money > t.cost * 3) E.buyEquip(k, i); });
+      if (process.env.AUTO && S.month % 2 === 1) E.autoRun(pl, 'month'); else E.submitPlan(pl);
     } else if (ph === 'match') {
       const M = S.pending.match;
       if (M.done) E.matchDone();
