@@ -8,6 +8,7 @@ vm.createContext(ctx);
 vm.runInContext(code + '\nthis.Engine = Engine;', ctx);
 const E = ctx.Engine;
 
+const KINDS = {};
 function bestOffer(offers) {
   let bi = -1, bs = -1e9;
   const S = E.S, o = E.ovrF();
@@ -40,6 +41,7 @@ function playCareer(seed, nat, pos, verbose) {
       if (M.done) E.matchDone();
       else {
         const m = M.moments[M.mi];
+        KINDS[m.kind] = (KINDS[m.kind] || 0) + 1;
         let bi = 0, bp = -1;
         m.opts.forEach((o, i) => { if (!o.locked && o.out !== 'foul' && o.p > bp) { bp = o.p; bi = i; } });
         E.resolveMoment(bi);
@@ -78,3 +80,5 @@ console.log('peak', avg(r => r.c.peak), 'peakAge', avg(r => r.c.peakAge), 'seaso
 console.log('ballon avg', avg(r => r.c.ballon), 'with ballon', res.filter(r => r.c.ballon > 0).length, 'indiv', avg(r => r.c.indiv), 'trophies', avg(r => r.c.trophies), 'caps', avg(r => r.c.caps), 'steps', avg(r => r.steps));
 console.log('peak/pot', res.map(r => r.c.peak + '/' + Math.round(r.pot)).join(' '));
 console.log('types', res.map(r => r.c.type).join(' | '));
+const tot = Object.values(KINDS).reduce((a, b) => a + b, 0);
+console.log('moment kinds', Object.keys(KINDS).length, Object.entries(KINDS).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}:${(v / tot * 100).toFixed(1)}%`).join(' '));

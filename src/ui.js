@@ -231,6 +231,23 @@ function evText(e, M) {
   }
 }
 
+function optHint(o) {
+  if (o.out === 'safe') return '안전한 선택 · 득점 없음';
+  if (o.out === 'foul') return '확실히 끊지만 경고 위험';
+  if (o.attrLabel) return `예상 성공률 약 ${pct(o.p)}% · ${esc(o.attrLabel)}${o.off ? ' · 오프사이드 위험' : ''}${o.cr ? ' · 실패 시 역습 위험' : ''}${o.red ? ' · 퇴장 위험' : ''}`;
+  const N = { morale: '사기', rep: '명성', trust: '감독 신뢰', fatigue: '피로', dec: '남은 경기 판단력' };
+  const parts = [];
+  for (const k in (o.e || {})) { const v = o.e[k]; parts.push(`${N[k]} ${v > 0 ? '+' : '−'}`); }
+  if (o.yp) parts.push(o.yp >= 1 ? '경고 확정' : `경고 위험 ${pct(o.yp)}%`);
+  if (o.injp) parts.push('부상 위험');
+  if (o.out === 'tactic') parts.unshift(o.tac === 'att' ? '후반 공격 장면 증가' : o.tac === 'def' ? '후반 수비 장면 증가' : '전술 유지');
+  if (o.out === 'subreq') parts.unshift('경기에서 빠짐');
+  if (o.out === 'givepk') parts.unshift('동료가 키커');
+  if (o.out === 'takepk') parts.unshift('직접 PK 키커');
+  if (o.luck) parts.push('상대 경고 가능성');
+  return parts.join(' · ') || '선택';
+}
+
 function renderMatch() {
   const S = st(), M = S.pending.match, p = S.p;
   const key = `${S.year}-${S.month}-${M.fx.comp}-${M.oppName}`;
@@ -256,10 +273,10 @@ function renderMatch() {
     ${M.reserveNote ? `<p class="small">${esc(M.reserveNote)}</p>` : ''}
     <div class="log">${lines.map(([t, c], i) => `<div class="ln ${c} ${i >= startNew ? 'new' : ''}" style="animation-delay:${Math.max(0, i - startNew) * 110}ms">${t}</div>`).join('')}</div></div>`;
   if (!M.done && cur) {
-    h += `<div class="card moment"><div class="small muted">${Math.floor(cur.min)}분 · 결정적 순간 (${M.mi + 1}/${M.moments.length})</div><p class="q">⭐ ${esc(cur.text)}</p>
+    h += `<div class="card moment"><div class="small muted">${Math.floor(cur.min)}분 · 결정적 순간 (${M.mi + 1}/${M.moments.length + M.slots.length + M.queue.length})</div><p class="q">⭐ ${esc(cur.text)}</p>
       ${cur.opts.map((o, i) => o.locked
         ? `<button class="opt" disabled><b>🔒 ${esc(o.label)}</b><span class="small">${esc(o.lockReason)}</span></button>`
-        : `<button class="opt" data-act="mom" data-arg="${i}"><b>${esc(o.label)}</b><span class="small">${o.out === 'safe' ? '안전한 선택 · 득점 없음' : o.out === 'foul' ? '확실히 끊지만 경고 위험' : `예상 성공률 약 ${pct(o.p)}%${o.attrLabel ? ' · ' + esc(o.attrLabel) : ''}`}</span></button>`).join('')}
+        : `<button class="opt" data-act="mom" data-arg="${i}"><b>${esc(o.label)}</b><span class="small">${optHint(o)}</span></button>`).join('')}
     </div>`;
   }
   if (M.done) {
