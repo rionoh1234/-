@@ -454,7 +454,7 @@ function applyResult(fx, res) {
     mc.reserveMins += 45; // 2군 경기 출전으로 간주 (성장 계산용)
   }
   const line = {
-    m: S.month, comp: fx.comp, stage: fx.stage || '', opp: fx.oppName || clubName(fx.opp), home: !!fx.home, neutral: !!fx.neutral,
+    m: S.month, comp: fx.comp, stage: fx.stage || '', opp: fx.oppName || clubName(fx.opp), oppId: fx.opp || null, home: !!fx.home, neutral: !!fx.neutral,
     gf: res.gf, ga: res.ga, pens: res.pens, status: part.status, mins: part.mins, g: res.g, a: res.a, rating: res.rating, type: fx.type,
   };
   se.matches.push(line);

@@ -257,6 +257,18 @@ const NT_POOL = {
     ['이집트', 74], ['코트디부아르', 75], ['알제리', 74], ['가나', 71], ['카메룬', 72], ['튀니지', 71], ['코스타리카', 68], ['뉴질랜드', 64]],
 };
 
+// 국기 (flagcdn.com 코드)
+const FLAG_CODE = {
+  '대한민국': 'kr', '일본': 'jp', '잉글랜드': 'gb-eng', '스페인': 'es', '독일': 'de', '이탈리아': 'it', '프랑스': 'fr', '네덜란드': 'nl',
+  '포르투갈': 'pt', '브라질': 'br', '아르헨티나': 'ar', '이란': 'ir', '호주': 'au', '사우디아라비아': 'sa', '카타르': 'qa', '우즈베키스탄': 'uz',
+  '이라크': 'iq', '아랍에미리트': 'ae', '요르단': 'jo', '중국': 'cn', '오만': 'om', '바레인': 'bh', '태국': 'th', '베트남': 'vn',
+  '벨기에': 'be', '크로아티아': 'hr', '덴마크': 'dk', '스위스': 'ch', '오스트리아': 'at', '튀르키예': 'tr', '노르웨이': 'no', '세르비아': 'rs',
+  '폴란드': 'pl', '우크라이나': 'ua', '스코틀랜드': 'gb-sct', '체코': 'cz', '헝가리': 'hu', '우루과이': 'uy', '콜롬비아': 'co', '에콰도르': 'ec',
+  '파라과이': 'py', '칠레': 'cl', '페루': 'pe', '베네수엘라': 've', '볼리비아': 'bo', '모로코': 'ma', '미국': 'us', '멕시코': 'mx', '세네갈': 'sn',
+  '캐나다': 'ca', '나이지리아': 'ng', '이집트': 'eg', '코트디부아르': 'ci', '알제리': 'dz', '가나': 'gh', '카메룬': 'cm', '튀니지': 'tn',
+  '코스타리카': 'cr', '뉴질랜드': 'nz',
+};
+
 const MONTHS = ['7월', '8월', '9월', '10월', '11월', '12월', '1월', '2월', '3월', '4월', '5월', '6월'];
 // 대표팀 A매치 기간 (월 인덱스)
 const INTL_BREAKS = [2, 3, 4, 8];
@@ -289,7 +301,7 @@ if (typeof module !== 'undefined') {
   module.exports = {
     POSITIONS, ADJACENT_POS, ATTRS_OUT, ATTRS_GK, ATTR_NAME, OVR_WEIGHTS, STYLES, SKILLS, SKILL_COST, SKILL_MAX_LV,
     SKILL_SLOTS, LEAGUES, CONTINENTAL, CLUB_LIST, KOR_YOUTH, NATIONS, NT_POOL, MONTHS, INTL_BREAKS, CUP_ROUNDS,
-    CONT_LEAGUE_MONTHS, CONT_KO, INTENSITY, ACTIVITIES,
+    CONT_LEAGUE_MONTHS, CONT_KO, INTENSITY, ACTIVITIES, FLAG_CODE,
   };
 }
 /*/NODE*/

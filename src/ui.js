@@ -51,6 +51,32 @@ function resultTxt(l) {
   return `${l.gf}:${l.ga} ${r}${l.pens != null ? (l.pens ? ' (PK승)' : ' (PK패)') : ''}`;
 }
 
+/* ---------- 엠블럼 · 국기 ---------- */
+const HAS_LOGOS = typeof LOGOS !== 'undefined';
+const COMP_KEY = { 'FA컵': 'FA', '코파 델 레이': 'CDR', 'DFB 포칼': 'DFB', '코파 이탈리아': 'CIT', '쿠프 드 프랑스': 'CDF',
+  'FIFA 월드컵': 'WC', 'UEFA 유로': 'EURO', '코파 아메리카': 'COPA', 'AFC 아시안컵': 'ASIAN' };
+for (const k in LEAGUES) COMP_KEY[LEAGUES[k].name] = k;
+for (const k in CONTINENTAL) COMP_KEY[CONTINENTAL[k].name] = k;
+function badge(url, name, sz, big) {
+  const ini = esc(String(name || '?').replace(/^(FC|AC|AS|RC|SC|VfB|VfL|RB|OGC|NEC|PSV|AZ|SV)\s+/, '').charAt(0));
+  return `<span class="lg" style="width:${sz}px;height:${sz}px;font-size:${Math.round(sz * 0.45)}px">${ini}${url ? `<img src="${esc(url)}/${big ? 'small' : 'tiny'}" alt="" loading="lazy" onerror="this.remove()">` : ''}</span>`;
+}
+function clubLogo(id, sz, big) {
+  const c = E.CLUBS[id];
+  if (!c) return '';
+  const pid = c.youth ? c.parent : id;
+  return badge(HAS_LOGOS ? LOGOS.clubs[pid] : null, c.name, sz || 20, big);
+}
+function compLogo(name, sz) {
+  const k = COMP_KEY[String(name || '').replace(/ \(유스\)$/, '')];
+  const u = HAS_LOGOS && k ? LOGOS.leagues[k] : null;
+  return u ? badge(u, name, sz || 18) : '';
+}
+function flag(x, sz) {
+  const code = NATIONS[x] ? FLAG_CODE[NATIONS[x].name] : FLAG_CODE[x];
+  return code ? `<img class="fl" src="https://flagcdn.com/w80/${code}.png" style="height:${Math.round((sz || 16) * 0.72)}px" alt="" onerror="this.remove()">` : '';
+}
+
 /* ---------- 상단 헤더 ---------- */
 function header() {
   const S = st(), p = S.p;
@@ -58,8 +84,8 @@ function header() {
   const c = E.cond();
   return `<div class="top"><div class="top-row">
     <div class="ovr">${E.ovr()}<small>${p.pos}</small></div>
-    <div class="who"><b>${esc(p.name)}</b> <span class="muted small">${p.age}세 · ${NATIONS[p.nat].name}</span>
-      <div class="sub">${esc(E.clubName(p.club))} · ${roleTag(p.contract.role)}${p.injury > 0 ? ' <span class="tag r">🚑 부상 ' + p.injury + '경기</span>' : ''}${p.captain ? ' <span class="tag y">©</span>' : ''}</div></div>
+    <div class="who"><b>${esc(p.name)}</b> <span class="muted small">${p.age}세 · ${flag(p.nat, 14)} ${NATIONS[p.nat].name}</span>
+      <div class="sub">${clubLogo(p.club, 16)} ${esc(E.clubName(p.club))} · ${roleTag(p.contract.role)}${p.injury > 0 ? ' <span class="tag r">🚑 부상 ' + p.injury + '경기</span>' : ''}${p.captain ? ' <span class="tag y">©</span>' : ''}</div></div>
     <div class="when"><b>${MONTHS[S.month] || ''}</b>${se ? se.label : ''}</div>
   </div>
   <div class="meters">
@@ -97,11 +123,11 @@ function renderCreate() {
   let h = `<div class="wrap"><div class="card"><h2>👤 새 선수 만들기</h2>
     <label class="f">선수 이름 (실명 대신 닉네임 권장)</label>
     <input type="text" id="cName" maxlength="12" value="${esc(c.name)}" placeholder="예: 김루키">
-    <label class="f">국적</label>
+    <label class="f">국적 ${flag(c.nat, 18)}</label>
     <select id="cNat">${Object.keys(NATIONS).map(k => `<option value="${k}" ${k === c.nat ? 'selected' : ''}>${NATIONS[k].name}</option>`).join('')}</select>
     <label class="f">포지션</label>
     <div>${Object.keys(POSITIONS).map(k => `<button class="chip ${k === c.pos ? 'on' : ''}" data-act="cpos" data-arg="${k}">${k} · ${POSITIONS[k].name}</button>`).join('')}</div>
-    <label class="f">유스팀 ${c.nat === 'KOR' ? '(K리그 산하 고교)' : ''}</label>
+    <label class="f">유스팀 ${c.nat === 'KOR' ? '(K리그 산하 고교)' : ''} ${clubLogo(c.youth, 22)}</label>
     <select id="cYouth">${yo.map(id => `<option value="${id}" ${id === c.youth ? 'selected' : ''}>${esc(E.CLUBS[id].name)}</option>`).join('')}</select>
     <button class="btn" data-act="cgen">스카우트 후보 보기 🔍</button></div>`;
   if (c.cands) {
@@ -137,7 +163,7 @@ function reportCard(r) {
     ${d.length ? `<div>${d.map(k => `<span class="chip static">${ATTR_NAME[k]} ${sign(r.delta[k], true)}</span>`).join('')}</div>` : ''}
     ${r.skill ? `<p class="small">🎓 ${SKILLS[r.skill.id].icon} ${SKILLS[r.skill.id].name}: ${r.skill.maxed ? '최고 레벨 달성' : `Lv${r.skill.lvl} → 다음 레벨 ${r.skill.prog}/${r.skill.next}`}</p>` : ''}
     ${r.notes.map(n => `<p class="small">${esc(n)}</p>`).join('')}
-    ${r.lines.length ? `<details><summary class="small muted">경기 결과 ${r.lines.length}경기</summary><ul class="list">${r.lines.map(l => `<li class="row between"><span>${esc(l.comp)}${l.stage ? ' ' + esc(l.stage) : ''} · ${l.home ? 'vs' : '@'} ${esc(l.opp)}<br><span class="small muted">${resultTxt(l)} ${l.mins ? `· ${l.mins}분${l.g ? ` · ⚽${l.g}` : ''}${l.a ? ` · 🅰️${l.a}` : ''}` : ''}</span></span><span>${statusTag(l.status)} ${l.rating != null ? `<b>${l.rating.toFixed(1)}</b>` : ''}</span></li>`).join('')}</ul></details>` : ''}
+    ${r.lines.length ? `<details><summary class="small muted">경기 결과 ${r.lines.length}경기</summary><ul class="list">${r.lines.map(l => `<li class="row between"><span>${compLogo(l.comp, 14)} ${esc(l.comp)}${l.stage ? ' ' + esc(l.stage) : ''} · ${l.home ? 'vs' : '@'} ${l.type === 'intl' ? flag(l.opp, 14) : l.oppId ? clubLogo(l.oppId, 14) : ''} ${esc(l.opp)}<br><span class="small muted">${resultTxt(l)} ${l.mins ? `· ${l.mins}분${l.g ? ` · ⚽${l.g}` : ''}${l.a ? ` · 🅰️${l.a}` : ''}` : ''}</span></span><span>${statusTag(l.status)} ${l.rating != null ? `<b>${l.rating.toFixed(1)}</b>` : ''}</span></li>`).join('')}</ul></details>` : ''}
   </div>`;
 }
 
@@ -153,8 +179,8 @@ function renderPlan() {
   h += `<div class="card hl"><h2>📅 ${MONTHS[S.month]} 일정</h2>`;
   if (S.month === 0) h += `<p class="small">☀️ 프리시즌 훈련 캠프 — 이번 달 성장 효과 ×1.4</p>`;
   if (!fx.length) h += '<p class="small muted">공식 경기가 없습니다.</p>';
-  h += `<ul class="list">${fx.map((f, i) => `<li class="row between"><span>${i === S.featuredIdx ? '⭐ ' : ''}${esc(f.comp)}${f.stage ? ' · ' + esc(f.stage) : ''}<br><span class="small muted">${f.neutral ? '중립' : f.home ? '홈' : '원정'} vs ${esc(E.clubName(f.opp))} (전력 ${Math.round(f.oppStr)})</span></span>${i === S.featuredIdx ? '<span class="tag y">주요 경기</span>' : ''}</li>`).join('')}</ul>`;
-  if (S.intlThisMonth) h += `<p class="small">🇺🇳 ${NATIONS[p.nat].name} 국가대표 소집 예정 (A매치 2경기)</p>`;
+  h += `<ul class="list">${fx.map((f, i) => `<li class="row between"><span class="row" style="align-items:flex-start">${clubLogo(f.opp, 30)}<span>${i === S.featuredIdx ? '⭐ ' : ''}${compLogo(f.comp, 14)} ${esc(f.comp)}${f.stage ? ' · ' + esc(f.stage) : ''}<br><span class="small muted">${f.neutral ? '중립' : f.home ? '홈' : '원정'} vs ${esc(E.clubName(f.opp))} (전력 ${Math.round(f.oppStr)})</span></span></span>${i === S.featuredIdx ? '<span class="tag y">주요 경기</span>' : ''}</li>`).join('')}</ul>`;
+  if (S.intlThisMonth) h += `<p class="small">${flag(p.nat, 16)} ${NATIONS[p.nat].name} 국가대표 소집 예정 (A매치 2경기)</p>`;
   h += `<p class="small muted">⭐ 주요 경기는 직접 플레이하며 결정적인 순간에 선택합니다. 나머지 경기는 자동 진행됩니다.</p></div>`;
   // 집중 훈련
   h += `<div class="card"><h2>🎯 집중 훈련 <span class="small muted">(최대 2개)</span></h2>
@@ -220,8 +246,12 @@ function renderMatch() {
   const myL = M.fx.home || M.fx.neutral;
   const left = myL ? M.myName : M.oppName, right = myL ? M.oppName : M.myName;
   const sl = myL ? gf : ga, sr = myL ? ga : gf;
-  let h = `<div class="card"><div class="small muted center">${esc(M.fx.comp)}${M.fx.stage ? ' · ' + esc(M.fx.stage) : ''} ${M.fx.neutral ? '(중립)' : ''}</div>
-    <div class="score" style="margin-top:6px"><div class="t">${esc(left)}</div><div class="n">${sl} : ${sr}</div><div class="t">${esc(right)}</div></div>
+  const intl = M.fx.type === 'intl';
+  const mySide = intl ? flag(p.nat, 44) : clubLogo(p.club, 44, true);
+  const oppSide = intl ? flag(M.oppName, 44) : M.fx.opp ? clubLogo(M.fx.opp, 44, true) : badge(null, M.oppName, 44);
+  const compBadge = compLogo(M.fx.comp, 18);
+  let h = `<div class="card"><div class="small muted center">${compBadge} ${esc(M.fx.comp)}${M.fx.stage ? ' · ' + esc(M.fx.stage) : ''} ${M.fx.neutral ? '(중립)' : ''}</div>
+    <div class="score" style="margin-top:6px"><div class="t">${myL ? mySide : oppSide}<br>${esc(left)}</div><div class="n">${sl} : ${sr}</div><div class="t">${myL ? oppSide : mySide}<br>${esc(right)}</div></div>
     <div class="center" style="margin-top:6px">${statusTag(M.part.status)} ${M.part.status === 'sub' ? `<span class="small muted">${M.part.entry}분 투입</span>` : ''}</div>
     ${M.reserveNote ? `<p class="small">${esc(M.reserveNote)}</p>` : ''}
     <div class="log">${lines.map(([t, c], i) => `<div class="ln ${c} ${i >= startNew ? 'new' : ''}" style="animation-delay:${Math.max(0, i - startNew) * 110}ms">${t}</div>`).join('')}</div></div>`;
@@ -255,14 +285,14 @@ function renderWindow() {
   const kindName = { transfer: '이적', pro: '프로 계약', loan: '임대', renew: '재계약', return: '원소속팀 복귀' };
   let h = `<div class="card hl"><h2>${W.kind === 'summer' ? '☀️ 여름 이적시장' : '❄️ 겨울 이적시장'}</h2>
     ${W.note ? `<p>${esc(W.note)}</p>` : ''}
-    <p class="small">현재: ${esc(E.clubName(p.club))} · ${roleTag(p.contract.role)} · 계약 ${Math.max(0, p.contract.years)}년 남음 · 연봉 ${money(p.contract.salary)}</p>
+    <p class="small">현재: ${clubLogo(p.club, 16)} ${esc(E.clubName(p.club))} · ${roleTag(p.contract.role)} · 계약 ${Math.max(0, p.contract.years)}년 남음 · 연봉 ${money(p.contract.salary)}</p>
     <p class="small muted">시장 가치 약 ${E.fmtFee(E.marketValue())} · 오버롤 ${E.ovr()} · 소속팀 전력 ${Math.round(E.cs(p.club))}</p>
     ${W.mustChoose ? '<p class="small"><b>⚠️ 계약이 끝났습니다. 아래 제안 중 하나를 선택해야 합니다.</b></p>' : ''}</div>`;
   if (!W.offers.length) h += '<div class="card"><p class="muted">받은 제안이 없습니다.</p></div>';
   W.offers.forEach((o, i) => {
     const L = E.leagueOf(o.lg);
-    h += `<div class="card"><div class="row between"><b>${esc(E.clubName(o.club))}</b><span class="tag b">${kindName[o.kind]}</span></div>
-      <div class="small muted">${esc(L.name)} · 팀 전력 ${Math.round(E.cs(o.club))}</div>
+    h += `<div class="card"><div class="row between"><span class="row">${clubLogo(o.club, 40, true)}<b>${esc(E.clubName(o.club))}</b></span><span class="tag b">${kindName[o.kind]}</span></div>
+      <div class="small muted" style="margin-top:4px">${compLogo(L.name, 14)} ${esc(L.name)} · 팀 전력 ${Math.round(E.cs(o.club))}</div>
       <div class="small" style="margin-top:6px">${roleTag(o.role)} · ${o.kind === 'loan' ? '1시즌 임대' : `${o.years}년 계약`} · 연봉 ${money(o.salary)}${o.fee > 0 ? ` · 이적료 ${E.fmtFee(o.fee)}` : o.kind === 'transfer' ? ' · 자유 계약' : ''}</div>
       <button class="btn" data-act="win" data-arg="${i}">선택</button></div>`;
   });
@@ -275,11 +305,11 @@ function renderSeasonEnd() {
   const S = st(), s = S.pending.summary;
   const t = s.totals;
   return `<div class="card gold"><h2>📜 ${s.label} 시즌 결산</h2>
-    <p>${esc(E.clubName(s.club))} · ${esc(s.lg)} <b>${s.pos}위</b> / ${s.teams}팀</p>
+    <p>${clubLogo(s.club, 22)} ${esc(E.clubName(s.club))} · ${compLogo(s.lg, 16)} ${esc(s.lg)} <b>${s.pos}위</b> / ${s.teams}팀</p>
     <div class="grid3"><div class="stat"><b>${t.apps}</b><span>출전</span></div><div class="stat"><b>${t.g} / ${t.a}</b><span>골 / 도움</span></div><div class="stat"><b>${t.apps ? (t.rs / t.apps).toFixed(2) : '-'}</b><span>평균 평점</span></div></div>
     <p class="small">${esc(s.cupName)}: ${esc(s.cup)}${s.cont ? `<br>${esc(s.cont)}` : ''}</p>
     <p class="small">오버롤 ${s.ovrStart} → <b>${s.ovrEnd}</b> ${sign(s.ovrEnd - s.ovrStart)}${s.caps ? ` · A매치 ${s.caps}경기` : ''}</p>
-    ${s.trophies.length ? `<h3>🏆 우승</h3>${s.trophies.map(x => `<span class="chip static">${esc(x)}</span>`).join('')}` : ''}
+    ${s.trophies.length ? `<h3>🏆 우승</h3>${s.trophies.map(x => `<span class="chip static">${compLogo(x, 16)} ${esc(x)}</span>`).join('')}` : ''}
     ${s.awards.length ? `<h3>🏅 개인상</h3>${s.awards.map(x => `<span class="chip static">${esc(x)}</span>`).join('')}` : ''}
     <button class="btn" data-act="sack">다음 ▶</button></div>`;
 }
@@ -288,8 +318,8 @@ function renderSeasonEnd() {
 function renderTour() {
   const S = st(), tr = S.pending.tour, p = S.p;
   const stage = tr.alive ? (tr.bronze ? '3·4위전' : E.TOURS[tr.id].ko[tr.si]) : '';
-  return `<div class="card gold"><h2>🌍 ${esc(tr.name)}</h2><p class="small">${NATIONS[p.nat].name}${tr.u23 ? ' U-23' : ''} 대표팀에 발탁됐습니다!</p>
-    <ul class="list">${tr.games.map(l => `<li class="row between"><span>${esc(l.stage)} vs ${esc(l.opp)}<br><span class="small muted">${resultTxt(l)}${l.mins ? ` · ${l.mins}분${l.g ? ` · ⚽${l.g}` : ''}${l.a ? ` · 🅰️${l.a}` : ''}` : ''}</span></span><span>${statusTag(l.status)} ${l.rating != null ? `<b>${l.rating.toFixed(1)}</b>` : ''}</span></li>`).join('')}</ul>
+  return `<div class="card gold"><h2>${compLogo(tr.name, 22) || '🌍'} ${esc(tr.name)}</h2><p class="small">${flag(p.nat, 16)} ${NATIONS[p.nat].name}${tr.u23 ? ' U-23' : ''} 대표팀에 발탁됐습니다!</p>
+    <ul class="list">${tr.games.map(l => `<li class="row between"><span>${esc(l.stage)} vs ${flag(l.opp, 14)} ${esc(l.opp)}<br><span class="small muted">${resultTxt(l)}${l.mins ? ` · ${l.mins}분${l.g ? ` · ⚽${l.g}` : ''}${l.a ? ` · 🅰️${l.a}` : ''}` : ''}</span></span><span>${statusTag(l.status)} ${l.rating != null ? `<b>${l.rating.toFixed(1)}</b>` : ''}</span></li>`).join('')}</ul>
     ${tr.alive ? `<p class="small">조별리그 ${tr.pts}점 — 토너먼트 진행 중</p><button class="btn" data-act="tnext">⭐ ${stage} 경기 ▶</button>`
       : `<p><b>최종 성적: ${esc(tr.result)}</b></p>${tr.exempt ? '<p class="small">🎖️ 병역 특례 대상이 됐습니다! (예술·체육요원 편입)</p>' : ''}<button class="btn" data-act="tack">계속 ▶</button>`}</div>`;
 }
@@ -313,7 +343,7 @@ function renderOff() {
 
 /* ---------- 은퇴 ---------- */
 function careerCard(c) {
-  return `<div class="card gold"><h2>🏛️ ${esc(c.name)}</h2><p class="small">${NATIONS[c.nat].name} · ${posName(c.pos)} · 만 ${c.age}세 은퇴 · ${c.seasons}시즌</p>
+  return `<div class="card gold"><h2>🏛️ ${esc(c.name)}</h2><p class="small">${flag(c.nat, 14)} ${NATIONS[c.nat].name} · ${posName(c.pos)} · 만 ${c.age}세 은퇴 · ${c.seasons}시즌</p>
     <p><span class="tag y">${esc(c.type)}</span></p>
     <div class="grid3"><div class="stat"><b>${c.ballon}</b><span>발롱도르</span></div><div class="stat"><b>${c.peak}</b><span>최고 오버롤 (${c.peakAge}세)</span></div><div class="stat"><b>${c.indiv}</b><span>개인상</span></div>
     <div class="stat"><b>${c.apps}</b><span>출전</span></div><div class="stat"><b>${c.g} / ${c.a}</b><span>골 / 도움</span></div><div class="stat"><b>${c.caps}</b><span>A매치 (${c.intlGoals}골)</span></div></div>
@@ -332,7 +362,7 @@ function renderRetired() {
 function renderPlayer() {
   const S = st(), p = S.p, keys = E.attrKeys(), se = S.season;
   const G = { early: '조기 성장형', normal: '표준 성장형', late: '대기만성형' };
-  let h = `<div class="card"><div class="row between"><div><h2 style="margin:0">${esc(p.name)}</h2><div class="small muted">${posName(p.pos)} · ${esc(p.style)} · ${NATIONS[p.nat].name}</div></div><div class="ovr" style="min-width:60px;height:60px;font-size:26px">${E.ovr()}<small>OVR</small></div></div>
+  let h = `<div class="card"><div class="row between"><div><h2 style="margin:0">${esc(p.name)}</h2><div class="small muted">${posName(p.pos)} · ${esc(p.style)} · ${flag(p.nat, 14)} ${NATIONS[p.nat].name}</div></div><div class="ovr" style="min-width:60px;height:60px;font-size:26px">${E.ovr()}<small>OVR</small></div></div>
     <p class="small">잠재력 (스카우트 추정) <b style="color:var(--gold)">${stars(p.stars)}</b> · 약발 ${p.weakFoot ? '★'.repeat(p.weakFoot) : '-'} · 최고 오버롤 ${p.peak}</p>
     ${keys.map(k => `<div class="attr"><span>${ATTR_NAME[k]}</span>${bar(p.attrs[k], 99)}<span class="v">${Math.floor(p.attrs[k])}</span><span class="d">${se ? sign(p.attrs[k] - se.startAttrs[k], true) : ''}</span></div>`).join('')}
     <p class="note">오른쪽 숫자는 이번 시즌 시작 대비 변화입니다.</p></div>`;
@@ -345,7 +375,7 @@ function renderPlayer() {
     ${p.rec ? `<p class="small muted">추천 스킬: ${p.rec.map(k => SKILLS[k].name).join(', ')}</p>` : ''}</div>`;
   const mil = p.nat === 'KOR' ? (p.mil.exempt ? '병역 특례 (예술·체육요원)' : p.mil.done ? '군필' : p.mil.serving ? '김천 상무 복무 중' : p.mil.planned ? '시즌 후 입대 예정' : '미필 (만 28세 전 입대 필요)') : null;
   h += `<div class="card"><h2>📄 계약 · 상태</h2><ul class="list">
-    <li class="row between"><span>소속</span><b>${esc(E.clubName(p.club))}</b></li>
+    <li class="row between"><span>소속</span><b>${clubLogo(p.club, 18)} ${esc(E.clubName(p.club))}</b></li>
     <li class="row between"><span>역할</span>${roleTag(p.contract.role)}</li>
     <li class="row between"><span>계약 기간</span><b>${Math.max(0, p.contract.years)}년 남음${p.contract.type === 'loan' ? ' (임대)' : ''}</b></li>
     <li class="row between"><span>연봉</span><b>${money(p.contract.salary)}</b></li>
@@ -379,8 +409,8 @@ function renderRecord() {
 /* ---------- 순위 탭 ---------- */
 function renderTable() {
   const S = st(), se = S.season, L = se.league, order = E.sortedTable(L);
-  let h = `<div class="card"><h2>🏆 ${esc(L.name)}</h2><div class="scroll-x"><table class="tb"><tr><th>#</th><th>팀</th><th>경기</th><th>승</th><th>무</th><th>패</th><th>득실</th><th>승점</th></tr>
-    ${order.map((id, i) => { const t = L.table[id]; return `<tr class="${id === S.p.club ? 'me' : ''}"><td>${i + 1}</td><td>${esc(E.clubName(id))}</td><td>${t.p}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td><td>${t.gf - t.ga}</td><td>${t.pts}</td></tr>`; }).join('')}
+  let h = `<div class="card"><h2>${compLogo(L.name, 22) || '🏆'} ${esc(L.name)}</h2><div class="scroll-x"><table class="tb"><tr><th>#</th><th>팀</th><th>경기</th><th>승</th><th>무</th><th>패</th><th>득실</th><th>승점</th></tr>
+    ${order.map((id, i) => { const t = L.table[id]; return `<tr class="${id === S.p.club ? 'me' : ''}"><td>${i + 1}</td><td>${clubLogo(id, 16)} ${esc(E.clubName(id))}</td><td>${t.p}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td><td>${t.gf - t.ga}</td><td>${t.pts}</td></tr>`; }).join('')}
     </table></div></div>`;
   h += `<div class="card"><h2>🎫 컵 · 대륙대회</h2><p class="small">${esc(se.cup.name)}: ${se.cup.alive ? '진행 중' : ''} ${esc(se.cup.result || '')}</p>
     ${se.cont ? `<p class="small">${esc(se.cont.name)}: ${se.cont.alive ? (se.cont.stage === 'league' ? `리그 페이즈 ${se.cont.played}경기 ${se.cont.pts}점` : '토너먼트 진행 중') : ''} ${esc(se.cont.result || '')}</p>` : '<p class="small muted">대륙대회 출전권 없음</p>'}</div>`;
@@ -502,6 +532,7 @@ document.addEventListener('click', e => {
   }
 });
 document.addEventListener('change', e => {
+  if (e.target.id === 'cYouth') { readCreate(); render(); }
   if (e.target.id === 'cNat') { readCreate(); ui.create.cands = null; ui.create.pick = null; ui.create.youth = null; render(); }
   if (e.target.id === 'importFile') importSave(e.target.files[0]);
 });
