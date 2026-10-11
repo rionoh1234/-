@@ -36,6 +36,10 @@ function addHof(c) {
   lsSet(HOF_KEY, JSON.stringify(sortHof(h)));
   cloud.hofDirty = true; queueCloud();
 }
+/* 레거시 (다회차): { lp, levels, runs, earned, ts } */
+const LEGACY_KEY = 'footballlife_legacy_v1';
+function getLegacy() { try { return Object.assign({ lp: 0, levels: {}, runs: 0, earned: 0, ts: 0 }, JSON.parse(lsGet(LEGACY_KEY) || '{}')); } catch (e) { return { lp: 0, levels: {}, runs: 0, earned: 0, ts: 0 }; } }
+function setLegacy(L) { L.ts = Date.now(); lsSet(LEGACY_KEY, JSON.stringify(L)); cloud.legDirty = true; queueCloud(); }
 const cloudRef = k => cloud.db.collection('data/users/' + cloud.uid).doc(k);
 function queueCloud() {
   if (!cloud.db) return;
@@ -44,26 +48,28 @@ function queueCloud() {
   cloud.timer = setTimeout(pushCloud, 1500);
 }
 async function pushCloud() {
-  if (!cloud.db || cloud.busy || (!cloud.dirty && !cloud.hofDirty)) return;
+  if (!cloud.db || cloud.busy || (!cloud.dirty && !cloud.hofDirty && !cloud.legDirty)) return;
   cloud.busy = true;
-  const doSave = cloud.dirty, doHof = cloud.hofDirty;
-  cloud.dirty = false; cloud.hofDirty = false;
+  const doSave = cloud.dirty, doHof = cloud.hofDirty, doLeg = cloud.legDirty;
+  cloud.dirty = false; cloud.hofDirty = false; cloud.legDirty = false;
   try {
     if (doSave) {
       const S = st(), raw = lsGet(SAVE_KEY);
       await cloudRef('save').set({ ts: S && raw ? S.savedAt : Date.now(), data: raw || null });
     }
     if (doHof) await cloudRef('hof').set({ ts: Date.now(), list: lsGet(HOF_KEY) || '[]' });
+    if (doLeg) await cloudRef('legacy').set({ ts: getLegacy().ts, data: lsGet(LEGACY_KEY) || '{}' });
     cloud.state = 'on';
   } catch (e) {
     cloud.state = 'err';
     if (doSave) cloud.dirty = true;
     if (doHof) cloud.hofDirty = true;
+    if (doLeg) cloud.legDirty = true;
     if (e && e.code === 'unavailable') setTimeout(pushCloud, 2000 + Math.random() * 2000);
   } finally {
     cloud.busy = false;
     paintCloud();
-    if (cloud.state === 'on' && (cloud.dirty || cloud.hofDirty)) cloud.timer = setTimeout(pushCloud, 1500);
+    if (cloud.state === 'on' && (cloud.dirty || cloud.hofDirty || cloud.legDirty)) cloud.timer = setTimeout(pushCloud, 1500);
   }
 }
 async function initCloud() {
@@ -74,7 +80,11 @@ async function initCloud() {
     const uid = user ? await user.id() : null;
     if (!db || !uid) { cloud.state = 'off'; paintCloud(); return; }
     cloud.db = db; cloud.uid = uid;
-    const [sv, hf] = await Promise.all([cloudRef('save').get(), cloudRef('hof').get()]);
+    const [sv, hf, lg] = await Promise.all([cloudRef('save').get(), cloudRef('hof').get(), cloudRef('legacy').get()]);
+    // 레거시: 더 최근 것을 사용
+    const ld = lg.exists ? lg.data() : null, myLeg = getLegacy();
+    if (ld && (ld.ts || 0) > (myLeg.ts || 0)) { lsSet(LEGACY_KEY, ld.data || '{}'); render(); }
+    else if ((myLeg.ts || 0) > (ld ? ld.ts || 0 : 0)) cloud.legDirty = true;
     // 저장 데이터: 더 최근 것을 사용
     const local = loadSave();
     const localTs = Math.max(local ? local.savedAt || 0 : 0, +(lsGet(SAVE_KEY + '_clearedAt') || 0));
@@ -93,7 +103,7 @@ async function initCloud() {
     if (merged.length !== remote.length) cloud.hofDirty = true;
     cloud.state = 'on';
     paintCloud();
-    if (cloud.dirty || cloud.hofDirty) pushCloud();
+    if (cloud.dirty || cloud.hofDirty || cloud.legDirty) pushCloud();
   } catch (e) { cloud.state = 'err'; paintCloud(); }
 }
 function cloudText() {
@@ -191,8 +201,10 @@ function renderHome() {
   <div class="wrap">
     ${has ? '<button class="btn" data-act="continue">▶ 이어하기</button>' : ''}
     <button class="btn ${has ? 'sec' : ''}" data-act="new">새 커리어 시작</button>
+    <button class="btn sec" data-act="legacy">🏅 레거시 업그레이드 <span class="tag y">${getLegacy().lp} LP</span></button>
     <button class="btn sec" data-act="hof">🏛️ 명예의 전당</button>
     <button class="btn sec" data-act="guide">📖 게임 방법</button>
+    <p class="note center">지금까지 ${getLegacy().runs}회차 은퇴 · 은퇴할 때마다 레거시 포인트(LP)를 받아 다음 선수를 강화할 수 있습니다.</p>
     <p class="note center cloud-st">${cloudText()}</p>
     <p class="note center"> 구단·대회 명칭은 식별 목적으로만 사용하며 각 권리자와 무관한 비공식 팬 게임입니다.</p>
   </div>`;
@@ -204,33 +216,53 @@ function renderCreate() {
   const c = ui.create;
   const yo = youthOptions(c.nat);
   if (!yo.includes(c.youth)) c.youth = yo[0];
-  let h = `<div class="wrap"><div class="card"><h2>👤 새 선수 만들기</h2>
+  const L = getLegacy(), pk = E.perksFrom(L.levels);
+  const grp = POSITIONS[c.pos].group, styles = STYLES[grp];
+  if (!styles.find(s => s.id === c.style)) c.style = styles[0].id;
+  if (!c.seed) c.seed = (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0;
+  const cd = E.genPlayer(c.pos, c.style, c.seed, pk, pk.chooseType ? c.gtype : null);
+  if (pk.startSkill && !cd.rec.includes(c.sskill)) c.sskill = cd.rec[0];
+  const keys = grp === 'GK' ? ATTRS_GK : ATTRS_OUT;
+  const potTxt = pk.scout >= 2 ? `<b>${cd.pot}</b>` : pk.scout >= 1 ? `<b style="color:var(--gold)">${stars(cd.stars)}</b> (${cd.stars}/5)` : '??? <span class="small muted">(만 18세에 스카우트 리포트로 공개)</span>';
+  const active = LEGACY.filter(x => (L.levels[x.id] || 0) > 0);
+  let h = `<div class="wrap"><div class="card"><h2>👤 새 선수 만들기 <span class="tag">${L.runs + 1}회차</span></h2>
     <label class="f">선수 이름 (실명 대신 닉네임 권장)</label>
     <input type="text" id="cName" maxlength="12" value="${esc(c.name)}" placeholder="예: 김루키">
     <label class="f">국적 ${flag(c.nat, 18)}</label>
     <select id="cNat">${Object.keys(NATIONS).map(k => `<option value="${k}" ${k === c.nat ? 'selected' : ''}>${NATIONS[k].name}</option>`).join('')}</select>
     <label class="f">포지션</label>
     <div>${Object.keys(POSITIONS).map(k => `<button class="chip ${k === c.pos ? 'on' : ''}" data-act="cpos" data-arg="${k}">${k} · ${POSITIONS[k].name}</button>`).join('')}</div>
+    <label class="f">플레이 스타일</label>
+    ${styles.map(s => `<button class="opt ${s.id === c.style ? 'on' : ''}" data-act="cstyle" data-arg="${s.id}"><b>${esc(s.name)}</b><span class="small">${esc(s.desc)} · 추천 스킬: ${s.rec.map(k => SKILLS[k].name).join(', ')}</span></button>`).join('')}
+    ${pk.chooseType ? `<label class="f">성장 유형 (레거시)</label><div>${['early', 'normal', 'late'].map(g => `<button class="chip ${(c.gtype || '') === g ? 'on' : ''}" data-act="cgtype" data-arg="${g}">${GROWTH_NAME[g]}</button>`).join('')}<button class="chip ${!c.gtype ? 'on' : ''}" data-act="cgtype" data-arg="">무작위</button></div>` : ''}
+    ${pk.startSkill ? `<label class="f">유스 시절 특기 (레거시)</label><div>${cd.rec.map(k => `<button class="chip ${c.sskill === k ? 'on' : ''}" data-act="csskill" data-arg="${k}">${SKILLS[k].icon} ${SKILLS[k].name} Lv1</button>`).join('')}</div>` : ''}
     <label class="f">유스팀 ${c.nat === 'KOR' ? '(K리그 산하 고교)' : ''} ${clubLogo(c.youth, 22)}</label>
-    <select id="cYouth">${yo.map(id => `<option value="${id}" ${id === c.youth ? 'selected' : ''}>${esc(E.CLUBS[id].name)}</option>`).join('')}</select>
-    <button class="btn" data-act="cgen">스카우트 후보 보기 🔍</button></div>`;
-  if (c.cands) {
-    h += `<div class="card"><h2>🔍 스카우트 후보</h2><p class="small muted">잠재력은 스카우트의 추정치이며 실제와 다를 수 있습니다.</p>`;
-    c.cands.forEach((cd, i) => {
-      const keys = POSITIONS[c.pos].group === 'GK' ? ATTRS_GK : ATTRS_OUT;
-      const o = Math.round(E.overallOf(cd.attrs, c.pos));
-      h += `<div class="opt ${c.pick === i ? 'on' : ''}" data-act="cpick" data-arg="${i}">
-        <div class="row between"><b>${esc(cd.styleName)} <span class="tag">${cd.tag}</span></b><span class="big" style="font-size:22px">${o}</span></div>
-        <div class="small muted">${esc(cd.styleDesc)}</div>
-        <div class="small">잠재력 <b style="color:var(--gold)">${stars(cd.stars)}</b> · 약발 ${cd.weakFoot ? '★'.repeat(cd.weakFoot) : '-'}</div>
-        <div class="grid3" style="margin-top:6px">${keys.map(k => `<div class="small">${ATTR_NAME[k]} <b>${Math.round(cd.attrs[k])}</b></div>`).join('')}</div>
-      </div>`;
-    });
-    h += `<button class="btn" data-act="cstart" ${c.pick == null ? 'disabled' : ''}>이 선수로 시작 ▶</button>
-      <button class="btn sec" data-act="cgen">후보 다시 받기</button></div>`;
-  }
-  h += `<button class="btn sec" data-act="home">← 처음으로</button></div>`;
+    <select id="cYouth">${yo.map(id => `<option value="${id}" ${id === c.youth ? 'selected' : ''}>${esc(E.CLUBS[id].name)}</option>`).join('')}</select></div>
+  <div class="card hl"><div class="row between"><h2 style="margin:0">🔍 스카우트 리포트</h2><span class="big" style="font-size:24px">${Math.round(E.overallOf(cd.attrs, c.pos))}</span></div>
+    <p class="small">잠재력: ${potTxt} · 약발 ${cd.weakFoot ? '★'.repeat(cd.weakFoot) : '-'}</p>
+    ${pk.scout >= 1 ? `<p class="small">성장 유형 ${GROWTH_NAME[cd.traits.growth]} · 프로 의식 ×${cd.traits.prof} · 부상 체질 ×${cd.traits.injury}</p>` : '<p class="small muted">잠재력과 숨은 특성은 무작위로 정해지며, 선수를 만든 뒤에 바꿀 수 없습니다.</p>'}
+    <div class="grid3" style="margin-top:6px">${keys.map(k => `<div class="small">${ATTR_NAME[k]} <b>${Math.round(cd.attrs[k])}</b></div>`).join('')}</div>
+    ${active.length ? `<h3>🏅 적용 중인 레거시</h3><p class="small">${active.map(x => `${x.icon} ${x.name} Lv${L.levels[x.id]}`).join(' · ')}</p>` : '<p class="note">은퇴하면 레거시 포인트를 받아 다음 회차 선수를 강화할 수 있습니다.</p>'}
+    <button class="btn" data-act="cstart">이 선수로 시작 ▶</button></div>
+  <button class="btn sec" data-act="legacy">🏅 레거시 업그레이드 (${L.lp} LP)</button>
+  <button class="btn sec" data-act="home">← 처음으로</button></div>`;
   return h;
+}
+
+/* ---------- 레거시 화면 ---------- */
+function renderLegacy() {
+  const L = getLegacy();
+  const spent = LEGACY.reduce((s, x) => s + x.cost.slice(0, L.levels[x.id] || 0).reduce((a, b) => a + b, 0), 0);
+  return `<div class="wrap"><div class="card hl"><h2>🏅 레거시 업그레이드</h2>
+    <div class="grid3"><div class="stat"><b>${L.lp}</b><span>보유 LP</span></div><div class="stat"><b>${L.runs}</b><span>은퇴한 회차</span></div><div class="stat"><b>${spent}</b><span>사용한 LP</span></div></div>
+    <p class="small muted" style="margin-top:8px">업그레이드는 영구적이며 다음에 만드는 선수부터 적용됩니다. LP는 은퇴할 때 시즌 수·최고 오버롤·발롱도르·개인상·우승·A매치로 계산합니다.</p></div>
+    ${LEGACY.map(x => {
+      const lv = L.levels[x.id] || 0, maxed = lv >= x.max, cost = maxed ? 0 : x.cost[lv];
+      return `<div class="card"><div class="row between"><b>${x.icon} ${x.name}</b><span class="tag ${lv ? 'g' : ''}">Lv${lv}/${x.max}</span></div>
+        <p class="small">${lv ? `현재: ${x.desc(lv)}` : '미보유'}${maxed ? '' : `<br>다음: <b>${x.desc(lv + 1)}</b>`}</p>
+        ${maxed ? '<span class="tag g">최고 레벨</span>' : `<button class="btn ${L.lp >= cost ? '' : 'sec'}" data-act="legbuy" data-arg="${x.id}" ${L.lp >= cost ? '' : 'disabled'}>${cost} LP로 강화</button>`}</div>`;
+    }).join('')}
+    <button class="btn sec" data-act="back">← 돌아가기</button></div>`;
 }
 
 /* ---------- 용어 설명 (누르면 아래에서 설명 창) ---------- */
@@ -254,7 +286,7 @@ const INFO = {
     return ['오버롤', `<p>포지션에 맞게 능력치를 가중 평균한 종합 점수입니다. 출전 경쟁, 이적 제안, 연봉, 발롱도르 평가의 기준이 됩니다.</p>
       <p><b>현재 포지션(${st().p.pos}) 가중치</b><br>${list}</p><p class="small muted">비중이 큰 능력치를 집중 훈련하면 오버롤이 빨리 오릅니다.</p>`];
   },
-  pot: () => ['잠재력', `<p>선수가 성장할 수 있는 <b>한계</b>입니다. 별점은 스카우트의 추정치라 실제 값과 조금 다를 수 있습니다.</p>
+  pot: () => ['잠재력', `<p>선수가 성장할 수 있는 <b>한계</b>입니다. 선수를 만들 때 무작위로 정해지고, 만 18세 시즌이 끝나면 스카우트 리포트로 별점이 공개됩니다(레거시 「스카우트 네트워크」가 있으면 처음부터 공개). 별점은 추정치라 실제 값과 조금 다를 수 있습니다.</p>
     <ul><li>오버롤이 잠재력에 가까워질수록 성장이 느려지고, 넘어서지는 못합니다.</li><li>만 22세까지는 시즌 평점과 출전 비율에 따라 매년 조금씩 오르거나 내려갑니다.</li></ul>`],
   weak: () => { const w = st().p.weakFoot || 0; return ['약발', `<p>주로 쓰지 않는 발의 숙련도(★1~5)입니다. 경기 중 「약발로 바로 슈팅」 같은 선택지의 성공률을 정합니다.</p>
     <p>현재 ★${w}: 약발 선택지는 능력치의 <b>${Math.round((0.6 + 0.08 * w) * 100)}%</b>만 발휘됩니다. (★5면 100%)</p><p class="small muted">「약발 강화」 스킬 한 레벨마다 ★1씩 오릅니다.</p>`]; },
@@ -363,6 +395,11 @@ function skillChips(p) {
     return `<button class="chip" data-act="info" data-arg="skill:${k}">${SKILLS[k].icon} ${SKILLS[k].name} <b>Lv${p.skills[k]}</b>${max ? ' <span class="tag g">MAX</span>' : ''}</button>`;
   }).join('');
 }
+function potView(p) {
+  if (p.potKnown) return `<b>${Math.round(p.pot)}</b>`;
+  const shown = p.revealed.stars || !st().run; // 이전 버전 저장 데이터는 별점 표시
+  return shown ? `<span style="color:var(--gold)">${stars(p.stars)}</span> <span class="small muted">${p.stars}/5</span>` : '<span class="muted">??? (만 18세 공개)</span>';
+}
 function statCard() {
   const S = st(), p = S.p, se = S.season, keys = E.attrKeys();
   const rows = [];
@@ -371,7 +408,7 @@ function statCard() {
   const G = { early: '조기 성장형', normal: '표준 성장형', late: '대기만성형' };
   return `<div class="card statcard"><h2>📊 내 능력치</h2>
     <table class="st-tb"><tr><th>${ib('ovr', '오버롤')}</th><td><b class="up">${E.ovr()}</b> <span class="small muted">(최고 ${p.peak})</span></td><th>${ib('style', '포지션')}</th><td>${p.pos} · ${esc(p.style)}</td></tr>
-      <tr><th>${ib('pot', '잠재력')}</th><td><span style="color:var(--gold)">${stars(p.stars)}</span> <span class="small muted">${p.stars}/5</span></td><th>${ib('weak', '약발')}</th><td>${p.weakFoot ? '★'.repeat(p.weakFoot) + '☆'.repeat(5 - p.weakFoot) : '-'}</td></tr>
+      <tr><th>${ib('pot', '잠재력')}</th><td>${potView(p)}</td><th>${ib('weak', '약발')}</th><td>${p.weakFoot ? '★'.repeat(p.weakFoot) + '☆'.repeat(5 - p.weakFoot) : '-'}</td></tr>
       <tr><th>${ib('value', '시장 가치')}</th><td>${E.fmtFee(E.marketValue())}</td><th>${ib('growth', '성장 유형')}</th><td>${p.revealed.growth ? G[p.traits.growth] : '???'}</td></tr>
       <tr><th>${ib('facility', '구단 시설')}</th><td colspan="3"><span style="color:var(--gold)">${'★'.repeat(E.facLevel())}${'☆'.repeat(5 - E.facLevel())}</span> <span class="small muted">성장 ×${E.fac().growth} · 부상 ×${E.fac().injury}</span></td></tr></table>
     <table class="st-tb attrs">${rows.map(r => `<tr>${r.map(cell).join('')}</tr>`).join('')}</table>
@@ -607,7 +644,10 @@ function careerCard(c) {
 function renderRetired() {
   const S = st(), c = S.pending.career;
   if (!S.hofSaved) { addHof(c); S.hofSaved = true; save(); }
-  return `${S.pending.reason ? `<div class="card"><p>${esc(S.pending.reason)}</p></div>` : ''}${careerCard(c)}
+  if (!S.lpAwarded && c.lp) { const L = getLegacy(); L.lp += c.lp.total; L.earned += c.lp.total; L.runs += 1; setLegacy(L); S.lpAwarded = true; save(); }
+  const lpCard = c.lp ? `<div class="card hl"><h2>🏅 레거시 포인트 +${c.lp.total} LP</h2><ul class="list">${c.lp.parts.map(([k, v]) => `<li class="row between"><span>${esc(k)}</span><b>+${v}</b></li>`).join('')}</ul>
+    <p class="small">보유 LP: <b>${getLegacy().lp}</b> — 다음 회차 선수를 강화하세요.</p><button class="btn" data-act="legacy">🏅 레거시 업그레이드</button></div>` : '';
+  return `${S.pending.reason ? `<div class="card"><p>${esc(S.pending.reason)}</p></div>` : ''}${careerCard(c)}${lpCard}
     <div class="card"><h3>우승 기록</h3><ul class="list">${c.trophyList.map(x => `<li>${esc(x)}</li>`).join('') || '<li class="muted">없음</li>'}</ul>
     <h3>개인상</h3><ul class="list">${c.awardList.map(x => `<li>${esc(x)}</li>`).join('') || '<li class="muted">없음</li>'}</ul></div>
     <button class="btn" data-act="hof">🏛️ 명예의 전당</button><button class="btn sec" data-act="newconfirm">새 커리어 시작</button>`;
@@ -618,7 +658,7 @@ function renderPlayer() {
   const S = st(), p = S.p, keys = E.attrKeys(), se = S.season;
   const G = { early: '조기 성장형', normal: '표준 성장형', late: '대기만성형' };
   let h = `<div class="card"><div class="row between"><div><h2 style="margin:0">${esc(p.name)}</h2><div class="small muted">${posName(p.pos)} · ${esc(p.style)} · ${flag(p.nat, 14)} ${NATIONS[p.nat].name}</div></div><div class="ovr" style="min-width:60px;height:60px;font-size:26px">${E.ovr()}<small>OVR</small></div></div>
-    <p class="small">${ib('pot', '잠재력')} <b style="color:var(--gold)">${stars(p.stars)}</b> · ${ib('weak', '약발')} ${p.weakFoot ? '★'.repeat(p.weakFoot) : '-'} · ${ib('ovr', '최고 오버롤')} ${p.peak}</p>
+    <p class="small">${ib('pot', '잠재력')} ${potView(p)} · ${ib('weak', '약발')} ${p.weakFoot ? '★'.repeat(p.weakFoot) : '-'} · ${ib('ovr', '최고 오버롤')} ${p.peak}</p>
     ${keys.map(k => `<div class="attr"><span>${ib('attr:' + k, ATTR_NAME[k])}</span>${bar(p.attrs[k], 99)}<span class="v">${Math.floor(p.attrs[k])}</span><span class="d">${se ? sign(p.attrs[k] - se.startAttrs[k], true) : ''}</span></div>`).join('')}
     <p class="note">오른쪽 숫자는 이번 시즌 시작 대비 변화입니다.</p></div>`;
   h += `<div class="card"><h2>🧬 숨은 특성</h2>
@@ -704,7 +744,7 @@ function renderGuide() {
     <h3>4. 출전 기회</h3><p class="small">오버롤, 감독 신뢰, 컨디션이 소속팀 전력과 비교되어 선발·교체·명단 제외가 정해집니다. 명단에서 제외되면 2군 경기에서 어필할 수 있습니다.</p>
     <h3>5. 성장</h3><p class="small">나이가 어릴수록, 출전 시간이 많을수록, 훈련 강도가 높을수록 빠르게 성장합니다. 잠재력에 가까워질수록 성장이 느려지고, 만 30세 무렵부터 능력치가 떨어집니다. 강훈련은 피로와 부상 위험을 키웁니다.</p>
     <h3>6. 병역 (대한민국 국적)</h3><p class="small">만 28세 전에 김천 상무에서 약 18개월간 복무해야 합니다. 아시안게임 금메달 또는 올림픽 메달을 따면 병역 특례 대상이 됩니다.</p>
-    <h3>7. 은퇴</h3><p class="small">만 32세부터 은퇴할 수 있으며, 은퇴한 선수는 명예의 전당에 기록됩니다.</p>
+    <h3>7. 은퇴 · 다회차</h3><p class="small">만 32세부터 은퇴할 수 있으며, 은퇴한 선수는 명예의 전당에 기록됩니다. 은퇴하면 커리어 성적에 따라 <b>레거시 포인트(LP)</b>를 받고, 🏅 레거시 업그레이드에서 잠재력 하한·시작 오버롤·성장 효율·스킬 수련·시작 자금·부상 내성·스카우트 정보·약발·성장 유형 선택·시작 스킬을 영구 강화할 수 있습니다. 회차를 거듭할수록 더 좋은 선수로 시작합니다.</p>
     <p class="note">본 게임의 경기 결과·능력치·계약·이적료는 가상 기록이며 실제 선수·구단 평가와 무관합니다.</p></div>
     <button class="btn sec" data-act="back">← 돌아가기</button></div>`;
 }
@@ -717,6 +757,7 @@ function render() {
   if (ui.screen === 'create') { app.innerHTML = renderCreate(); return; }
   if (ui.screen === 'hof') { app.innerHTML = renderHof(); return; }
   if (ui.screen === 'guide') { app.innerHTML = renderGuide(); return; }
+  if (ui.screen === 'legacy') { app.innerHTML = renderLegacy(); return; }
   if (!S) { ui.screen = 'home'; return render(); }
   let body = '';
   if (ui.tab === 'play') {
@@ -748,23 +789,31 @@ document.addEventListener('click', e => {
     case 'continue': { const s = loadSave(); if (s) { E.load(s); ui.screen = 'game'; ui.tab = 'play'; ui.draft = null; render(); } break; }
     case 'new':
       if (loadSave()) { ui.screen = 'game'; E.load(loadSave()); ui.confirmNew = true; ui.tab = 'menu'; render(); break; }
-      ui.create = { name: '', nat: 'KOR', pos: 'ST', youth: null, cands: null, pick: null }; ui.screen = 'create'; render(); break;
+      ui.create = { name: '', nat: 'KOR', pos: 'ST', youth: null, style: null, gtype: null, sskill: null, seed: 0 }; ui.screen = 'create'; render(); break;
     case 'newconfirm': ui.confirmNew = true; ui.screen = 'game'; render(); scrollTop(); break;
     case 'newcancel': ui.confirmNew = false; render(); break;
-    case 'newgo': clearSave(); ui.confirmNew = false; ui.create = { name: '', nat: 'KOR', pos: 'ST', youth: null, cands: null, pick: null }; ui.screen = 'create'; render(); scrollTop(); break;
+    case 'newgo': clearSave(); ui.confirmNew = false; ui.create = { name: '', nat: 'KOR', pos: 'ST', youth: null, style: null, gtype: null, sskill: null, seed: 0 }; ui.screen = 'create'; render(); scrollTop(); break;
     case 'home': ui.screen = 'home'; render(); scrollTop(); break;
     case 'hof': ui.prev = ui.screen; ui.screen = 'hof'; render(); scrollTop(); break;
     case 'guide': ui.prev = ui.screen; ui.screen = 'guide'; render(); scrollTop(); break;
-    case 'back': ui.screen = ui.prev && ui.prev !== 'hof' && ui.prev !== 'guide' ? ui.prev : (S ? 'game' : 'home'); render(); scrollTop(); break;
-    case 'cpos': readCreate(); ui.create.pos = arg; ui.create.cands = null; ui.create.pick = null; render(); break;
-    case 'cgen': readCreate(); ui.create.cands = E.genCandidates(ui.create.pos, ui.create.nat, (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0); ui.create.pick = null; render(); break;
-    case 'cpick': readCreate(); ui.create.pick = +arg; render(); break;
+    case 'back': ui.screen = ['home', 'create', 'game'].includes(ui.prev) ? ui.prev : (st() ? 'game' : 'home'); render(); scrollTop(); break;
+    case 'cpos': readCreate(); ui.create.pos = arg; render(); break;
+    case 'cstyle': readCreate(); ui.create.style = arg; render(); break;
+    case 'cgtype': readCreate(); ui.create.gtype = arg || null; render(); break;
+    case 'csskill': readCreate(); ui.create.sskill = arg; render(); break;
     case 'cstart': {
       readCreate();
-      const c = ui.create;
+      const c = ui.create, L = getLegacy(), pk = E.perksFrom(L.levels);
+      const cand = E.genPlayer(c.pos, c.style, c.seed, pk, pk.chooseType ? c.gtype : null);
       const name = (c.name || '').trim() || '루키';
-      E.newCareer({ name, nat: c.nat, pos: c.pos, cand: c.cands[c.pick], youthClub: c.youth, seed: (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0 });
+      E.newCareer({ name, nat: c.nat, pos: c.pos, cand, youthClub: c.youth, seed: (c.seed * 7 + 13) >>> 0, perks: pk, startSkill: c.sskill, run: L.runs + 1 });
       ui.screen = 'game'; ui.tab = 'play'; ui.draft = null; save(); render(); scrollTop(); break;
+    }
+    case 'legacy': ui.prev = ui.screen; ui.screen = 'legacy'; render(); scrollTop(); break;
+    case 'legbuy': {
+      const L = getLegacy(), x = LEGACY.find(y => y.id === arg), lv = L.levels[arg] || 0;
+      if (x && lv < x.max && L.lp >= x.cost[lv]) { L.lp -= x.cost[lv]; L.levels[arg] = lv + 1; setLegacy(L); toast(`${x.name} Lv${lv + 1} 강화 완료`); }
+      render(); break;
     }
     case 'focus': {
       const f = ui.draft.focus, i = f.indexOf(arg);
@@ -797,7 +846,7 @@ document.addEventListener('click', e => { if (e.target.id === 'sheet') closeInfo
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeInfo(); });
 document.addEventListener('change', e => {
   if (e.target.id === 'cYouth') { readCreate(); render(); }
-  if (e.target.id === 'cNat') { readCreate(); ui.create.cands = null; ui.create.pick = null; ui.create.youth = null; render(); }
+  if (e.target.id === 'cNat') { readCreate(); ui.create.youth = null; render(); }
   if (e.target.id === 'importFile') importSave(e.target.files[0]);
 });
 function readCreate() {

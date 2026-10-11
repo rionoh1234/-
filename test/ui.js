@@ -14,8 +14,6 @@ const out = process.env.SHOT_DIR || path.join(__dirname, 'shots');
   await page.click('[data-act=new]');
   await page.fill('#cName', '김루키');
   await page.click('[data-act=cpos][data-arg=ST]');
-  await page.click('[data-act=cgen]');
-  await page.click('[data-act=cpick][data-arg="1"]');
   await page.screenshot({ path: out + '/02-create.png', fullPage: true });
   await page.click('[data-act=cstart]');
   await page.screenshot({ path: out + '/03-plan.png', fullPage: true });
@@ -37,7 +35,7 @@ const out = process.env.SHOT_DIR || path.join(__dirname, 'shots');
       await page.click('[data-act=int][data-arg="2"]');
     }
     await (phase === 'plan' ? page.click('[data-act=submit]') : btn.click());
-    if (phase === 'retired') break;
+    if (phase === 'retired') { await page.click('[data-act=legacy]'); await page.screenshot({ path: out + '/legacy.png', fullPage: true }); await page.click('[data-act=back]'); break; }
   }
   for (const t of ['player', 'record', 'table', 'menu']) {
     await page.click(`[data-act=tab][data-arg=${t}]`);

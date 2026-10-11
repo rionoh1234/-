@@ -5,7 +5,7 @@ const root = path.join(__dirname, '..');
 const code = fs.readFileSync(path.join(root, 'src/data.js'), 'utf8') + '\n' + fs.readFileSync(path.join(root, 'src/engine.js'), 'utf8');
 const ctx = { console, Date, Math, JSON };
 vm.createContext(ctx);
-vm.runInContext(code + '\nthis.Engine = Engine; this.STAFF = STAFF; this.EQUIPMENT = EQUIPMENT;', ctx);
+vm.runInContext(code + '\nthis.Engine = Engine; this.STAFF = STAFF; this.EQUIPMENT = EQUIPMENT; this.STYLES = STYLES; this.POSITIONS = POSITIONS; this.LEGACY = LEGACY;', ctx);
 const E = ctx.Engine;
 
 const KINDS = {};
@@ -19,11 +19,12 @@ function bestOffer(offers) {
   return { bi, bs };
 }
 
-function playCareer(seed, nat, pos, verbose) {
-  const cands = E.genCandidates(pos, nat, seed);
-  const cand = cands[seed % 3];
+function playCareer(seed, nat, pos, verbose, levels) {
+  const perks = E.perksFrom(levels || {});
+  const grpStyles = ctx.STYLES[ctx.POSITIONS[pos].group];
+  const cand = E.genPlayer(pos, grpStyles[seed % grpStyles.length].id, seed, perks);
   const youth = Object.keys(E.CLUBS).filter(id => E.CLUBS[id].lg === 'Y_' + nat);
-  E.newCareer({ name: '테스트', nat, pos, cand, youthClub: youth[seed % youth.length], seed });
+  E.newCareer({ name: '테스트', nat, pos, cand, youthClub: youth[seed % youth.length], seed, perks, startSkill: cand.rec[0] });
   let steps = 0;
   while (E.S.phase !== 'retired' && steps < 20000) {
     steps++;
@@ -75,6 +76,21 @@ function playCareer(seed, nat, pos, verbose) {
   return { c, steps, pot: E.S.p.pot };
 }
 
+if (process.env.RUNS) {
+  // 다회차 시뮬레이션: LP를 가장 싼 업그레이드부터 사며 회차별 결과 출력
+  const levels = {}; let lp = 0;
+  for (let r = 1; r <= +process.env.RUNS; r++) {
+    const { c } = playCareer(5000 + r * 131, process.argv[3] || 'KOR', process.argv[4] || 'ST', false, levels);
+    lp += c.lp.total;
+    for (;;) {
+      const opts = ctx.LEGACY.filter(x => (levels[x.id] || 0) < x.max).map(x => ({ id: x.id, cost: x.cost[levels[x.id] || 0] })).sort((a, b) => a.cost - b.cost);
+      if (!opts.length || opts[0].cost > lp) break;
+      lp -= opts[0].cost; levels[opts[0].id] = (levels[opts[0].id] || 0) + 1;
+    }
+    console.log(`회차 ${r}: 최고 OVR ${c.peak} · 발롱 ${c.ballon} · 개인상 ${c.indiv} · LP +${c.lp.total} · 남은 LP ${lp} · ${JSON.stringify(levels)}`);
+  }
+  process.exit(0);
+}
 const n = +process.argv[2] || 20, nat = process.argv[3] || 'KOR', pos = process.argv[4] || 'ST';
 const res = [];
 for (let i = 0; i < n; i++) {

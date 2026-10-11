@@ -140,6 +140,52 @@ function genCandidatesInner(pos, nat) {
   });
 }
 
+/* ---------- 레거시 ---------- */
+// levels: { pot: 2, start: 1, ... } → 이번 회차에 적용할 보너스
+function perksFrom(levels) {
+  const l = id => Math.max(0, Math.min((LEGACY.find(x => x.id === id) || { max: 0 }).max, (levels || {})[id] || 0));
+  return {
+    potMin: 60 + 3 * l('pot'), potMax: 90 + l('pot'), ovr: l('start'), growth: 1 + 0.03 * l('growth'), skill: 1 + 0.08 * l('skill'),
+    money: 500 * l('money'), injury: 1 - 0.06 * l('body'), wf: l('wf'), scout: l('scout'), chooseType: l('type') > 0, startSkill: l('askill') > 0,
+  };
+}
+// 포지션·스타일을 고르면 잠재력은 숨겨진 채 무작위로 정해짐
+function genPlayer(pos, styleId, seed, perks, growthType) {
+  const prev = S;
+  S = { rng: seed >>> 0 };
+  try {
+    perks = perks || perksFrom({});
+    const grp = POSITIONS[pos].group, keys = grp === 'GK' ? ATTRS_GK : ATTRS_OUT, w = OVR_WEIGHTS[grp];
+    const st = STYLES[grp].find(x => x.id === styleId) || STYLES[grp][0];
+    const target = 44 + perks.ovr + ri(0, 2);
+    const attrs = {};
+    for (const k of keys) attrs[k] = target + (w[k] - 1 / 6) * 45 + (st.bias[k] || 0) + normal() * 3;
+    const shift = target - overallOf(attrs, pos);
+    for (const k of keys) attrs[k] = clamp(r1(attrs[k] + shift), 20, 75);
+    // 두 난수의 평균 → 가운데가 두터운 분포
+    const pot = Math.round(perks.potMin + (perks.potMax - perks.potMin) * (rnd() + rnd()) / 2);
+    const stars = clamp(Math.round((pot + normal() * 3 - 52) / 8.5 * 2) / 2, 1, 5);
+    return {
+      style: st.id, styleName: st.name, styleDesc: st.desc, rec: st.rec, attrs, pot: Math.min(97, pot), stars,
+      traits: {
+        growth: growthType || pick(['early', 'normal', 'normal', 'late']),
+        prof: Math.round((0.85 + rnd() * 0.3) * 100) / 100,
+        injury: Math.round((0.7 + rnd() * 0.8) * 100) / 100,
+        temper: Math.round((rnd() * 2 - 1) * 100) / 100,
+      },
+      weakFoot: grp === 'GK' ? 0 : Math.min(5, ri(1, 3) + perks.wf),
+    };
+  } finally { S = prev; }
+}
+// 은퇴 시 레거시 포인트
+function legacyPoints(c) {
+  const parts = [
+    ['시즌', c.seasons * 2], ['최고 오버롤', Math.max(0, c.peak - 60) * 2], ['발롱도르', c.ballon * 40], ['개인상', c.indiv * 3],
+    ['우승', c.trophies * 2], ['A매치', Math.floor(c.caps / 10) * 2], ['월드클래스 달성', c.peak >= 85 ? 20 : 0],
+  ].filter(x => x[1] > 0).map(([k, v]) => [k, Math.round(v)]);
+  return { total: parts.reduce((s, x) => s + x[1], 0), parts };
+}
+
 function newCareer(o) {
   // o: {name, nat, pos, cand, youthClub, seed}
   S = {
@@ -157,8 +203,17 @@ function newCareer(o) {
     mil: { done: false, exempt: false, serving: false, planned: false },
     intl: { caps: 0, goals: 0, youthCaps: 0 }, peak: Math.round(overallOf(c.attrs, o.pos)), peakAge: 16,
     wantsMove: false, agent: null, captain: false, trainerMonths: 0, buff: {}, clubs: [yc], seasonsAtClub: 0,
-    loan: null,
+    loan: null, perk: { growth: 1, skill: 1, injury: 1 }, potKnown: false,
   };
+  const pk = o.perks;
+  if (pk) {
+    S.p.perk = { growth: pk.growth, skill: pk.skill, injury: pk.injury };
+    S.p.money += pk.money;
+    if (pk.scout >= 1) { S.p.revealed = { growth: true, prof: true, injury: true, stars: true }; }
+    if (pk.scout >= 2) S.p.potKnown = true;
+    if (pk.startSkill && o.startSkill && SKILLS[o.startSkill]) S.p.skills[o.startSkill] = 1;
+    S.run = o.run || 1;
+  }
   addNews(`${CLUBS[yc].name}에 ${o.name} 입단 — ${POSITIONS[o.pos].name}`);
   setupSeason();
   prepareMonth();
@@ -1228,6 +1283,7 @@ function bonuses(withFacility) {
   const add = fx => { for (const k in fx) { if (k === 'growth' || k === 'skill' || k === 'injury') b[k] *= fx[k]; else b[k] += fx[k]; } };
   for (const k in EQUIPMENT) add(EQUIPMENT[k].tiers[p.equip[k] || 0].fx);
   for (const k in STAFF) add(STAFF[k].tiers[staffTier(k)].fx);
+  if (p.perk) { b.growth *= p.perk.growth || 1; b.skill *= p.perk.skill || 1; b.injury *= p.perk.injury || 1; }
   if (withFacility !== false) { const f = fac(); b.growth *= f.growth; b.skill *= f.skill; b.injury *= f.injury; b.recovery += f.recovery; }
   return b;
 }
@@ -2113,6 +2169,7 @@ function offseason() {
   // 특성 공개
   const G = { early: '조기 성장형', normal: '표준 성장형', late: '대기만성형' };
   if (p.age === 18 && !p.revealed.growth) { p.revealed.growth = true; notes.push(`📋 스카우트 리포트: 성장 유형은 「${G[p.traits.growth]}」입니다.`); }
+  if (p.age === 18 && !p.revealed.stars) { p.revealed.stars = true; p.stars = clamp(Math.round((p.pot + normal() * 3 - 52) / 8.5 * 2) / 2, 1, 5); notes.push(`📋 스카우트 리포트: 잠재력 평가 ${'★'.repeat(Math.floor(p.stars))}${p.stars % 1 ? '☆' : ''} (${p.stars}/5)`); }
   if (p.age === 19 && !p.revealed.prof) { p.revealed.prof = true; notes.push(`📋 코치진 평가: 프로 의식 ${p.traits.prof >= 1.05 ? '매우 높음' : p.traits.prof >= 0.95 ? '보통' : '낮음'}.`); }
   if (p.age === 20 && !p.revealed.injury) { p.revealed.injury = true; notes.push(`📋 메디컬 리포트: 부상 체질 ${p.traits.injury <= 0.9 ? '강함 (부상이 적음)' : p.traits.injury <= 1.2 ? '보통' : '약함 (부상 주의)'}.`); }
   // 계약
@@ -2181,6 +2238,11 @@ function retire() {
 }
 
 function careerSummary() {
+  const c = careerSummaryBase();
+  c.lp = legacyPoints(c);
+  return c;
+}
+function careerSummaryBase() {
   const p = S.p, H = S.history.filter(h => !h.youth);
   const sum = f => H.reduce((s, h) => s + (h[f] || 0), 0);
   const ballon = S.awards.filter(a => a.t === '발롱도르').length;
@@ -2204,7 +2266,7 @@ function careerSummary() {
     name: p.name, nat: p.nat, pos: p.pos, age: p.age, seasons: H.length, apps: sum('apps'), g: sum('g'), a: sum('a'), cs: sum('cs'),
     peak: p.peak, peakAge: p.peakAge, ballon, indiv, trophies, caps: p.intl.caps, intlGoals: p.intl.goals, clubs: p.clubs.filter(c => !CLUBS[c].youth).map(clubName),
     topClub: topClub ? clubName(topClub) : '-', type, endYear: S.year + 1, money: p.money,
-    trophyList: S.trophies.map(t => `${t.y} ${t.t}`), awardList: S.awards.map(a => `${a.y} ${a.t}`),
+    trophyList: S.trophies.map(t => `${t.y} ${t.t}`), awardList: S.awards.map(a => `${a.y} ${a.t}`), run: S.run || 1,
   };
 }
 
@@ -2225,7 +2287,7 @@ var Engine = {
   get S() { return S; }, load(s) { S = s; }, genCandidates, newCareer, submitPlan, resolveMoment, matchDone, eventChoice, eventAck,
   windowChoice, seasonAck, tourNext, tourAck, offAction, defaultPlan, skillList, skillStatus, ovr, ovrF, overallOf, marketValue, cs,
   clubName, CLUBS, leagueOf, sortedTable, trainerCost, nutritionCost, actCost, monthlySalary, careerSummary, fmtMoney, fmtFee, potLabel,
-  attrKeys, group, cond, josa, TOURS, autoRun, buyEquip, setStaff, bonuses, staffCost, facLevel, fac,
+  attrKeys, group, cond, josa, TOURS, perksFrom, genPlayer, legacyPoints, autoRun, buyEquip, setStaff, bonuses, staffCost, facLevel, fac,
 };
 /*NODE*/
 if (typeof module !== 'undefined') module.exports = Engine;
