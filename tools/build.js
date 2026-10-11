@@ -1,12 +1,21 @@
-// src/ 의 파일을 하나의 index.html 로 합칩니다.  사용: node tools/build.js
+// src/ 의 파일을 합칩니다.
+//   node tools/build.js            → index.html (단일 파일, 엠블럼은 인터넷 주소)
+//   node tools/build.js --artifact → dist/artifact.html (claude.ai Artifact용, 엠블럼 내장·계정 저장)
+//                                     먼저 python3 tools/embed-logos.py 로 dist/logo-data.js 생성 필요
 const fs = require('fs'), path = require('path');
 const root = path.join(__dirname, '..');
-const rd = f => fs.readFileSync(path.join(root, 'src', f), 'utf8');
-const strip = s => s.replace(/\/\*NODE\*\/[\s\S]*?\/\*\/NODE\*\//g, '');
-let html = rd('template.html');
-html = html.replace('/*STYLE*/', () => rd('style.css'))
-  .replace('/*DATA*/', () => strip(rd('data.js')) + '\n' + (fs.existsSync(path.join(root, 'src', 'logos.js')) ? rd('logos.js').replace(/^'use strict';\n/, '') : ''))
-  .replace('/*ENGINE*/', () => strip(rd('engine.js')).replace(/^'use strict';\n/, ''))
-  .replace('/*UI*/', () => rd('ui.js').replace(/^'use strict';\n/, ''));
-fs.writeFileSync(path.join(root, 'index.html'), html);
-console.log('index.html', (html.length / 1024).toFixed(1) + 'KB');
+const rd = f => fs.readFileSync(path.join(root, f), 'utf8');
+const strip = s => s.replace(/\/\*NODE\*\/[\s\S]*?\/\*\/NODE\*\//g, '').replace(/^'use strict';\n/, '');
+const artifact = process.argv.includes('--artifact');
+const js = [strip(rd('src/data.js')), fs.existsSync(path.join(root, 'src/logos.js')) ? strip(rd('src/logos.js')) : '',
+  artifact ? rd('dist/logo-data.js') : '', strip(rd('src/engine.js')), strip(rd('src/ui.js'))].join('\n');
+let html;
+if (artifact) {
+  // Artifact 게시 시 doctype/head/body 골격이 자동으로 씌워지므로 내용만 작성
+  html = `<title>풋볼 라이프</title>\n<style>\n${rd('src/style.css')}\n</style>\n<div id="app"></div>\n<script>\n'use strict';\n${js}\n</script>\n`;
+} else {
+  html = rd('src/template.html').replace('/*STYLE*/', () => rd('src/style.css')).replace('/*DATA*/\n/*ENGINE*/\n/*UI*/', () => js);
+}
+const out = path.join(root, artifact ? 'dist/artifact.html' : 'index.html');
+fs.writeFileSync(out, html);
+console.log(path.relative(root, out), (html.length / 1024).toFixed(1) + 'KB');

@@ -9,7 +9,7 @@ const out = process.env.SHOT_DIR || path.join(__dirname, 'shots');
   const errors = [];
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
-  await page.goto('file://' + path.join(__dirname, '..', 'index.html'));
+  await page.goto('file://' + path.join(__dirname, '..', process.env.FILE || 'index.html'));
   await page.screenshot({ path: out + '/01-home.png' });
   await page.click('[data-act=new]');
   await page.fill('#cName', '김루키');

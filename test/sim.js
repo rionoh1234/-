@@ -82,3 +82,22 @@ console.log('peak/pot', res.map(r => r.c.peak + '/' + Math.round(r.pot)).join(' 
 console.log('types', res.map(r => r.c.type).join(' | '));
 const tot = Object.values(KINDS).reduce((a, b) => a + b, 0);
 console.log('moment kinds', Object.keys(KINDS).length, Object.entries(KINDS).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}:${(v / tot * 100).toFixed(1)}%`).join(' '));
+if (process.env.SIZE) {
+  // 커리어 중간 저장 크기 측정
+  const E2 = E; const seed = 4242;
+  const cands = E2.genCandidates('ST', 'KOR', seed);
+  E2.newCareer({ name: 'x', nat: 'KOR', pos: 'ST', cand: cands[0], youthClub: 'Y_suwon', seed });
+  let mx = 0, steps = 0;
+  while (E2.S.phase !== 'retired' && steps++ < 20000) {
+    const S = E2.S, ph = S.phase;
+    if (ph === 'plan') E2.submitPlan(E2.defaultPlan());
+    else if (ph === 'match') { const M = S.pending.match; if (M.done) E2.matchDone(); else E2.resolveMoment(M.moments[M.mi].opts.findIndex(o => !o.locked)); }
+    else if (ph === 'event') { if (S.pending.evResult) E2.eventAck(); else E2.eventChoice(S.pending.events[0].opts.findIndex(o => !o.dis)); }
+    else if (ph === 'window') E2.windowChoice(S.pending.window.mustChoose ? 0 : -1);
+    else if (ph === 'seasonEnd') E2.seasonAck();
+    else if (ph === 'tournament') { if (S.pending.tour.alive) E2.tourNext(); else E2.tourAck(); }
+    else if (ph === 'offseason') E2.offAction('continue');
+    mx = Math.max(mx, JSON.stringify(E2.S).length);
+  }
+  console.log('max save size KB', (mx / 1024).toFixed(1), 'seasons', E2.S.history.length);
+}

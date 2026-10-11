@@ -13,19 +13,95 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&a
 const E = Engine;
 const st = () => E.S;
 
-/* ---------- 저장 ---------- */
-function save() { try { if (st()) localStorage.setItem(SAVE_KEY, JSON.stringify(st())); } catch (e) { /* 저장 불가 환경 */ } }
-function loadSave() { try { const s = localStorage.getItem(SAVE_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
-function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* noop */ } }
-function getHof() { try { return JSON.parse(localStorage.getItem(HOF_KEY) || '[]'); } catch (e) { return []; } }
-function addHof(c) {
-  try {
-    const h = getHof();
-    h.push({ ...c, savedAt: Date.now() });
-    h.sort((a, b) => (b.ballon - a.ballon) || (b.peak - a.peak) || (b.indiv - a.indiv) || ((b.g + b.a) - (a.g + a.a)));
-    localStorage.setItem(HOF_KEY, JSON.stringify(h.slice(0, 100)));
-  } catch (e) { /* noop */ }
+/* ---------- 저장 ----------
+ * 1차: 이 브라우저(localStorage)  2차: claude.ai 계정 저장소(Artifact db, 기기 간 유지)
+ */
+const cloud = { db: null, uid: null, state: 'off', busy: false, dirty: false, hofDirty: false, timer: null };
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* 저장 불가 환경 */ } }
+function save() {
+  const S = st();
+  if (!S) return;
+  S.savedAt = Date.now();
+  lsSet(SAVE_KEY, JSON.stringify(S));
+  queueCloud();
 }
+function loadSave() { try { const s = lsGet(SAVE_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+function clearSave() { lsSet(SAVE_KEY, null); lsSet(SAVE_KEY + '_clearedAt', String(Date.now())); queueCloud(); }
+function getHof() { try { return JSON.parse(lsGet(HOF_KEY) || '[]'); } catch (e) { return []; } }
+function sortHof(h) { return h.sort((a, b) => (b.ballon - a.ballon) || (b.peak - a.peak) || (b.indiv - a.indiv) || ((b.g + b.a) - (a.g + a.a))).slice(0, 100); }
+function addHof(c) {
+  const h = getHof();
+  h.push({ ...c, savedAt: Date.now() });
+  lsSet(HOF_KEY, JSON.stringify(sortHof(h)));
+  cloud.hofDirty = true; queueCloud();
+}
+const cloudRef = k => cloud.db.collection('data/users/' + cloud.uid).doc(k);
+function queueCloud() {
+  if (!cloud.db) return;
+  cloud.dirty = true;
+  clearTimeout(cloud.timer);
+  cloud.timer = setTimeout(pushCloud, 1500);
+}
+async function pushCloud() {
+  if (!cloud.db || cloud.busy || (!cloud.dirty && !cloud.hofDirty)) return;
+  cloud.busy = true;
+  const doSave = cloud.dirty, doHof = cloud.hofDirty;
+  cloud.dirty = false; cloud.hofDirty = false;
+  try {
+    if (doSave) {
+      const S = st(), raw = lsGet(SAVE_KEY);
+      await cloudRef('save').set({ ts: S && raw ? S.savedAt : Date.now(), data: raw || null });
+    }
+    if (doHof) await cloudRef('hof').set({ ts: Date.now(), list: lsGet(HOF_KEY) || '[]' });
+    cloud.state = 'on';
+  } catch (e) {
+    cloud.state = 'err';
+    if (doSave) cloud.dirty = true;
+    if (doHof) cloud.hofDirty = true;
+    if (e && e.code === 'unavailable') setTimeout(pushCloud, 2000 + Math.random() * 2000);
+  } finally {
+    cloud.busy = false;
+    paintCloud();
+    if (cloud.state === 'on' && (cloud.dirty || cloud.hofDirty)) cloud.timer = setTimeout(pushCloud, 1500);
+  }
+}
+async function initCloud() {
+  if (!(window.claude && typeof window.claude.use === 'function')) return;
+  cloud.state = 'connecting'; paintCloud();
+  try {
+    const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    const uid = user ? await user.id() : null;
+    if (!db || !uid) { cloud.state = 'off'; paintCloud(); return; }
+    cloud.db = db; cloud.uid = uid;
+    const [sv, hf] = await Promise.all([cloudRef('save').get(), cloudRef('hof').get()]);
+    // 저장 데이터: 더 최근 것을 사용
+    const local = loadSave();
+    const localTs = Math.max(local ? local.savedAt || 0 : 0, +(lsGet(SAVE_KEY + '_clearedAt') || 0));
+    const d = sv.exists ? sv.data() : null;
+    if (d && (d.ts || 0) > localTs) {
+      lsSet(SAVE_KEY, d.data || null);
+      if (ui.screen === 'game' && d.data) { E.load(JSON.parse(d.data)); ui.draft = null; }
+      if (!d.data && ui.screen === 'game') ui.screen = 'home';
+      render();
+    } else if (localTs > (d ? d.ts || 0 : 0)) cloud.dirty = true;
+    // 명예의 전당: 합치기
+    const remote = hf.exists ? JSON.parse(hf.data().list || '[]') : [];
+    const mine = getHof(), seen = new Set(mine.map(c => c.name + '|' + c.savedAt));
+    const merged = mine.concat(remote.filter(c => !seen.has(c.name + '|' + c.savedAt)));
+    if (merged.length !== mine.length) { lsSet(HOF_KEY, JSON.stringify(sortHof(merged))); render(); }
+    if (merged.length !== remote.length) cloud.hofDirty = true;
+    cloud.state = 'on';
+    paintCloud();
+    if (cloud.dirty || cloud.hofDirty) pushCloud();
+  } catch (e) { cloud.state = 'err'; paintCloud(); }
+}
+function cloudText() {
+  return { on: '☁️ 계정에 자동 저장 중 (다른 기기에서도 이어하기 가능)', connecting: '☁️ 계정 저장소 연결 중…', err: '⚠️ 계정 저장 실패 — 이 브라우저에만 저장됨', off: '💾 이 브라우저에만 저장됩니다' }[cloud.state];
+}
+function paintCloud() { document.querySelectorAll('.cloud-st').forEach(el => { el.textContent = cloudText(); }); }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { clearTimeout(cloud.timer); pushCloud(); } });
+
 function applyTheme() {
   let t = 'system';
   try { t = localStorage.getItem(THEME_KEY) || 'system'; } catch (e) { /* noop */ }
@@ -57,24 +133,31 @@ const COMP_KEY = { 'FA컵': 'FA', '코파 델 레이': 'CDR', 'DFB 포칼': 'DFB
   'FIFA 월드컵': 'WC', 'UEFA 유로': 'EURO', '코파 아메리카': 'COPA', 'AFC 아시안컵': 'ASIAN' };
 for (const k in LEAGUES) COMP_KEY[LEAGUES[k].name] = k;
 for (const k in CONTINENTAL) COMP_KEY[CONTINENTAL[k].name] = k;
-function badge(url, name, sz, big) {
+// 내장 이미지(LOGO_DATA, Artifact 빌드)가 있으면 사용, 없으면 인터넷 주소
+const EMBED = typeof LOGO_DATA !== 'undefined' ? LOGO_DATA : null;
+function logoSrc(kind, key, big) {
+  if (EMBED) return EMBED[kind][key] || null;
+  const u = HAS_LOGOS ? LOGOS[kind][key] : null;
+  return u ? `${u}/${big ? 'small' : 'tiny'}` : null;
+}
+function badge(src, name, sz) {
   const ini = esc(String(name || '?').replace(/^(FC|AC|AS|RC|SC|VfB|VfL|RB|OGC|NEC|PSV|AZ|SV)\s+/, '').charAt(0));
-  return `<span class="lg" style="width:${sz}px;height:${sz}px;font-size:${Math.round(sz * 0.45)}px">${ini}${url ? `<img src="${esc(url)}/${big ? 'small' : 'tiny'}" alt="" loading="lazy" onerror="this.remove()">` : ''}</span>`;
+  return `<span class="lg" style="width:${sz}px;height:${sz}px;font-size:${Math.round(sz * 0.45)}px">${ini}${src ? `<img src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">` : ''}</span>`;
 }
 function clubLogo(id, sz, big) {
   const c = E.CLUBS[id];
   if (!c) return '';
-  const pid = c.youth ? c.parent : id;
-  return badge(HAS_LOGOS ? LOGOS.clubs[pid] : null, c.name, sz || 20, big);
+  return badge(logoSrc('clubs', c.youth ? c.parent : id, big), c.name, sz || 20);
 }
 function compLogo(name, sz) {
   const k = COMP_KEY[String(name || '').replace(/ \(유스\)$/, '')];
-  const u = HAS_LOGOS && k ? LOGOS.leagues[k] : null;
-  return u ? badge(u, name, sz || 18) : '';
+  const src = k ? logoSrc('leagues', k) : null;
+  return src ? badge(src, name, sz || 18) : '';
 }
 function flag(x, sz) {
   const code = NATIONS[x] ? FLAG_CODE[NATIONS[x].name] : FLAG_CODE[x];
-  return code ? `<img class="fl" src="https://flagcdn.com/w80/${code}.png" style="height:${Math.round((sz || 16) * 0.72)}px" alt="" onerror="this.remove()">` : '';
+  const src = code ? (EMBED ? EMBED.flags[code] : `https://flagcdn.com/w80/${code}.png`) : null;
+  return src ? `<img class="fl" src="${src}" style="height:${Math.round((sz || 16) * 0.72)}px" alt="" onerror="this.remove()">` : '';
 }
 
 /* ---------- 상단 헤더 ---------- */
@@ -110,7 +193,8 @@ function renderHome() {
     <button class="btn ${has ? 'sec' : ''}" data-act="new">새 커리어 시작</button>
     <button class="btn sec" data-act="hof">🏛️ 명예의 전당</button>
     <button class="btn sec" data-act="guide">📖 게임 방법</button>
-    <p class="note center">회원가입 없이 브라우저에 저장됩니다. 구단·대회 명칭은 식별 목적으로만 사용하며 각 권리자와 무관한 비공식 팬 게임입니다.</p>
+    <p class="note center cloud-st">${cloudText()}</p>
+    <p class="note center"> 구단·대회 명칭은 식별 목적으로만 사용하며 각 권리자와 무관한 비공식 팬 게임입니다.</p>
   </div>`;
 }
 
@@ -468,7 +552,7 @@ function renderMenu() {
   try { theme = localStorage.getItem(THEME_KEY) || 'system'; } catch (e) { /* noop */ }
   return `<div class="card"><h2>☰ 메뉴</h2>
     <h3>화면 모드</h3><div>${[['system', '시스템'], ['light', '라이트'], ['dark', '다크']].map(([k, n]) => `<button class="chip ${theme === k ? 'on' : ''}" data-act="theme" data-arg="${k}">${n}</button>`).join('')}</div>
-    <h3>저장 파일</h3><p class="small muted">진행 내용은 이 브라우저에 자동 저장됩니다. 다른 기기로 옮기거나 백업하려면 파일로 내보내세요.</p>
+    <h3>저장</h3><p class="small cloud-st">${cloudText()}</p><p class="small muted">진행 내용은 선택할 때마다 자동 저장됩니다. 백업이 필요하면 파일로 내보내세요.</p>
     <button class="btn sec" data-act="export">💾 저장 파일 내보내기</button>
     <button class="btn sec" data-act="import">📂 저장 파일 가져오기</button><input type="file" id="importFile" accept=".json,application/json" style="display:none">
     <h3>기타</h3>
@@ -587,13 +671,26 @@ function readCreate() {
   if (nat) ui.create.nat = nat.value;
   if (y) ui.create.youth = y.value;
 }
-function exportSave() {
+function toast(msg) {
+  let el = $('#toast');
+  if (!el) { el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+  el.textContent = msg; el.hidden = false;
+  clearTimeout(toast.t); toast.t = setTimeout(() => { el.hidden = true; }, 2600);
+}
+async function exportSave() {
   const S = st();
   if (!S) return;
-  const blob = new Blob([JSON.stringify(S)], { type: 'application/json' });
+  const filename = `football-life-${S.p.name}-${S.season ? S.season.label : ''}.json`;
+  const data = JSON.stringify(S);
+  const dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null;
+  if (dl) {
+    try { await dl.save({ filename, data }); toast('저장 파일을 내보냈습니다.'); }
+    catch (e) { toast(e && e.code === 'declined' ? '내보내기를 취소했습니다.' : '이 화면에서는 파일로 내보낼 수 없습니다.'); }
+    return;
+  }
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `football-life-${S.p.name}-${S.season ? S.season.label : ''}.json`;
+  a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+  a.download = filename;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
@@ -605,11 +702,12 @@ function importSave(file) {
       const s = JSON.parse(rd.result);
       if (!s || !s.p || !s.phase) throw new Error('형식 오류');
       E.load(s); save(); ui.screen = 'game'; ui.tab = 'play'; ui.draft = null; render();
-      alert('저장 파일을 불러왔습니다.');
-    } catch (err) { alert('저장 파일을 읽을 수 없습니다.'); }
+      toast('저장 파일을 불러왔습니다.');
+    } catch (err) { toast('저장 파일을 읽을 수 없습니다. 이 게임에서 내보낸 .json 파일인지 확인해 주세요.'); }
   };
   rd.readAsText(file);
 }
 
 applyTheme();
 render();
+initCloud();
