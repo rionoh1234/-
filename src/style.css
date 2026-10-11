@@ -158,3 +158,13 @@ label.f { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 6
 .lg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--card); padding: 1px; }
 .fl { vertical-align: middle; border-radius: 2px; box-shadow: 0 0 0 1px var(--line); }
 .score .t .lg, .score .t .fl { margin-bottom: 4px; }
+
+/* 내 능력치 표 */
+.st-tb { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 6px; }
+.st-tb th, .st-tb td { padding: 7px 6px; border-bottom: 1px solid var(--line); text-align: left; }
+.st-tb th { color: var(--muted); font-weight: 600; width: 22%; white-space: nowrap; }
+.st-tb.attrs td { width: 16.6%; }
+.st-tb.attrs td.sv { text-align: right; font-size: 15px; }
+.st-tb.attrs td.sd { text-align: right; font-size: 12px; }
+.st-tb tr:last-child th, .st-tb tr:last-child td { border-bottom: 0; }
+.statcard { padding-bottom: 10px; }

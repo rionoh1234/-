@@ -356,7 +356,7 @@ function participation(fx) {
 
 const GROWTH_K = 0.9;   // 월간 성장 계수 (밸런스 핵심값)
 const FOCUS_SHARE = 0.45; // 집중 훈련 능력치에 배분되는 비율
-const GOAL_SH = { ST: 0.21, W: 0.17, AM: 0.16, CM: 0.08, DM: 0.04, FB: 0.03, CB: 0.045, GK: 0 };
+const GOAL_SH = { ST: 0.23, W: 0.18, AM: 0.16, CM: 0.08, DM: 0.04, FB: 0.03, CB: 0.045, GK: 0 };
 const AST_SH = { ST: 0.2, W: 0.17, AM: 0.21, CM: 0.14, DM: 0.07, FB: 0.10, CB: 0.03, GK: 0.01 };
 
 function contribution(gf, mins, teamStr) {
@@ -1003,7 +1003,10 @@ function startFeatured(fx, ctx) {
     main = { type: 'reserve', comp: `${clubName(p.club)} 2군`, oppName: clubName(opp) + ' 2군', oppStr: cs(opp) - 8, home: rnd() < 0.5, imp: 0 };
     part = { status: 'start', mins: 90, entry: 0 };
   }
-  const nMom = part.status === 'start' ? (main.imp >= 8 ? 3 : 2) : part.status === 'sub' ? 1 : 0;
+  // 결정적 순간 횟수는 경기마다 다름 (조용히 지나가는 경기도 있음)
+  const pickN = ws => { let r = rnd(); for (let i = 0; i < ws.length; i++) { r -= ws[i]; if (r <= 0) return i; } return ws.length - 1; };
+  const nMom = part.status === 'start' ? pickN(main.imp >= 8 ? [0.05, 0.2, 0.45, 0.3] : [0.12, 0.33, 0.4, 0.15])
+    : part.status === 'sub' ? pickN([0.4, 0.6]) : 0;
   const teamStr = fxTeamStr(main, part);
   const [bgf, bga] = simScore(teamStr, main.oppStr, main.home, main.neutral, nMom * 0.18);
   const c = part.mins > 0 ? contribution(bgf, part.mins * (nMom ? 0.5 : 1), teamStr) : { g: 0, a: 0 };
@@ -1027,7 +1030,7 @@ function startFeatured(fx, ctx) {
   if (part.status === 'start') {
     const lo = 8, hi = Math.max(lo + 10, exitMin - 2), span = (hi - lo) / nMom;
     for (let i = 0; i < nMom; i++) slots.push(ri(Math.round(lo + span * i), Math.round(lo + span * (i + 1) - 1)));
-    if (nMom >= 2 && exitMin > 50 && rnd() < 0.3) slots.push({ min: 45.7, kind: 'halftime' });
+    if (nMom >= 1 && exitMin > 50 && rnd() < 0.3) slots.push({ min: 45.7, kind: 'halftime' });
   } else if (nMom) slots.push(ri(part.entry + 3, 89));
   const sl = slots.map(x => (typeof x === 'number' ? { min: x } : x)).sort((a, b) => a.min - b.min);
   S.pending.match = {

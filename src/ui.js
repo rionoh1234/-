@@ -149,6 +149,31 @@ function renderCreate() {
   return h;
 }
 
+/* ---------- 내 능력치 표 ---------- */
+function skillChips(p) {
+  const ids = Object.keys(p.skills).filter(k => p.skills[k] > 0);
+  if (!ids.length) return '<span class="small muted">아직 습득한 스킬이 없습니다.</span>';
+  return ids.map(k => {
+    const max = p.skills[k] >= SKILL_MAX_LV || (k === 'weakfoot' && p.weakFoot >= 5);
+    return `<span class="chip static">${SKILLS[k].icon} ${SKILLS[k].name} <b>Lv${p.skills[k]}</b>${max ? ' <span class="tag g">MAX</span>' : ''}</span>`;
+  }).join('');
+}
+function statCard() {
+  const S = st(), p = S.p, se = S.season, keys = E.attrKeys();
+  const rows = [];
+  for (let i = 0; i < keys.length; i += 2) rows.push(keys.slice(i, i + 2));
+  const cell = k => `<td>${ATTR_NAME[k]}</td><td class="sv"><b>${Math.floor(p.attrs[k])}</b></td><td class="sd">${se ? sign(p.attrs[k] - se.startAttrs[k], true) : ''}</td>`;
+  const G = { early: '조기 성장형', normal: '표준 성장형', late: '대기만성형' };
+  return `<div class="card statcard"><h2>📊 내 능력치</h2>
+    <table class="st-tb"><tr><th>오버롤</th><td><b class="up">${E.ovr()}</b> <span class="small muted">(최고 ${p.peak})</span></td><th>포지션</th><td>${p.pos} · ${esc(p.style)}</td></tr>
+      <tr><th>잠재력</th><td><span style="color:var(--gold)">${stars(p.stars)}</span> <span class="small muted">${p.stars}/5</span></td><th>약발</th><td>${p.weakFoot ? '★'.repeat(p.weakFoot) + '☆'.repeat(5 - p.weakFoot) : '-'}</td></tr>
+      <tr><th>시장 가치</th><td>${E.fmtFee(E.marketValue())}</td><th>성장 유형</th><td>${p.revealed.growth ? G[p.traits.growth] : '???'}</td></tr></table>
+    <table class="st-tb attrs">${rows.map(r => `<tr>${r.map(cell).join('')}</tr>`).join('')}</table>
+    <p class="note" style="margin-top:4px">능력치 옆 숫자는 이번 시즌 시작 대비 변화</p>
+    <h3 style="margin-top:10px">🎓 보유 스킬 ${Object.keys(p.skills).filter(k => p.skills[k] > 0 && k !== 'weakfoot').length}/${SKILL_SLOTS}</h3>
+    <div>${skillChips(p)}</div></div>`;
+}
+
 /* ---------- 월간 계획 ---------- */
 function reportCard(r) {
   if (!r) return '';
@@ -174,7 +199,7 @@ function renderPlan() {
   const keys = E.attrKeys();
   d.focus = d.focus.filter(k => keys.includes(k));
   const fx = S.monthFx || [];
-  let h = reportCard(S.pending.report);
+  let h = statCard() + reportCard(S.pending.report);
   // 일정
   h += `<div class="card hl"><h2>📅 ${MONTHS[S.month]} 일정</h2>`;
   if (S.month === 0) h += `<p class="small">☀️ 프리시즌 훈련 캠프 — 이번 달 성장 효과 ×1.4</p>`;
@@ -189,8 +214,9 @@ function renderPlan() {
     <h3>훈련 강도</h3><div class="opts4">${INTENSITY.map(I => `<button class="opt ${d.intensity === I.id ? 'on' : ''}" data-act="int" data-arg="${I.id}"><b>${I.icon} ${I.name}</b><span class="small">${I.desc}</span></button>`).join('')}</div>
   </div>`;
   // 스킬 수련
-  const sl = E.skillList();
-  const owned = sl.filter(x => x.lvl > 0);
+  const all = E.skillList();
+  const sl = all.filter(x => !x.maxed);
+  const mastered = all.filter(x => x.maxed && x.lvl > 0);
   h += `<div class="card"><h2>🎓 스킬 수련 <span class="small muted">(수련 중에는 능력치 성장 ×0.75)</span></h2>
     <button class="opt ${!d.skill ? 'on' : ''}" data-act="skill" data-arg=""><b>수련하지 않음</b><span class="small">능력치 성장에 전념</span></button>
     ${[sl.filter(x => x.can || x.lvl), sl.filter(x => !x.can && !x.lvl)].map((grp, gi) => (gi && grp.length ? `<details><summary class="small muted" style="margin-top:10px">🔒 조건 미달 스킬 ${grp.length}개 보기</summary>` : '') + grp.map(x => {
@@ -201,7 +227,8 @@ function renderPlan() {
         <div class="row between"><b>${s.icon} ${s.name}</b><span class="tag ${x.lvl ? 'g' : ''}">${lvTxt}</span></div>
         <span class="small">${s.desc}</span>${!x.maxed && x.can ? bar(x.prog, x.next) : ''}<span class="small">${info}</span></button>`;
     }).join('') + (gi && grp.length ? '</details>' : '')).join('')}
-    <p class="small muted">보유 스킬 ${owned.filter(x => x.id !== 'weakfoot').length}/${SKILL_SLOTS} · 약발 ${'★'.repeat(p.weakFoot || 0) || '-'}</p></div>`;
+    ${mastered.length ? `<p class="small muted">최고 레벨 달성 ${mastered.length}개 (${mastered.map(x => SKILLS[x.id].name).join(', ')})는 내 능력치 표에 표시됩니다.</p>` : ''}
+    <p class="small muted">보유 스킬 ${all.filter(x => x.lvl > 0 && x.id !== 'weakfoot').length}/${SKILL_SLOTS} · 약발 ${'★'.repeat(p.weakFoot || 0) || '-'}</p></div>`;
   // 보조 활동
   h += `<div class="card"><h2>🗓️ 보조 활동</h2>${Object.keys(ACTIVITIES).map(k => {
     const A = ACTIVITIES[k], cost = E.actCost(k);
@@ -282,6 +309,7 @@ function renderMatch() {
   if (M.done) {
     const r = M.result;
     h += `<div class="card hl"><h2>🏁 경기 종료 ${r.gf}:${r.ga}${r.pens != null ? (r.pens ? ' · 승부차기 승' : ' · 승부차기 패') : ''}</h2>
+      ${M.part.mins > 0 && !M.moments.length ? '<p class="small muted">이번 경기에서는 결정적인 순간이 찾아오지 않았습니다.</p>' : ''}
       ${M.part.mins > 0 ? `<div class="grid3"><div class="stat"><b>${r.rating.toFixed(1)}</b><span>평점</span></div><div class="stat"><b>${r.g}</b><span>골</span></div><div class="stat"><b>${r.a}</b><span>도움</span></div></div>` : `<p class="small muted">${M.part.status === 'injured' ? '부상으로 결장했습니다.' : M.part.status === 'susp' ? '출전 정지로 결장했습니다.' : '벤치에서 경기를 지켜봤습니다. 출전 기회를 얻으려면 감독 신뢰와 컨디션을 끌어올리세요.'}</p>`}
       <button class="btn" data-act="mdone">계속 ▶</button></div>`;
   }
@@ -388,7 +416,7 @@ function renderPlayer() {
     <p class="small">프로 의식: <b>${p.revealed.prof ? (p.traits.prof >= 1.05 ? '매우 높음' : p.traits.prof >= 0.95 ? '보통' : '낮음') : '??? (만 19세에 공개)'}</b></p>
     <p class="small">부상 체질: <b>${p.revealed.injury ? (p.traits.injury <= 0.9 ? '강함' : p.traits.injury <= 1.2 ? '보통' : '약함') : '??? (만 20세에 공개)'}</b></p></div>`;
   const sk = Object.keys(p.skills).filter(k => p.skills[k] > 0);
-  h += `<div class="card"><h2>🎓 보유 스킬</h2>${sk.length ? sk.map(k => `<div class="row between" style="margin:6px 0"><span>${SKILLS[k].icon} <b>${SKILLS[k].name}</b><br><span class="small muted">${SKILLS[k].desc}</span></span><span class="tag g">Lv${p.skills[k]}</span></div>`).join('') : '<p class="small muted">아직 습득한 스킬이 없습니다. 월간 계획에서 스킬 수련을 선택하세요.</p>'}
+  h += `<div class="card"><h2>🎓 보유 스킬</h2>${sk.length ? sk.map(k => `<div class="row between" style="margin:6px 0"><span>${SKILLS[k].icon} <b>${SKILLS[k].name}</b><br><span class="small muted">${SKILLS[k].desc}</span></span><span class="tag g">Lv${p.skills[k]}${p.skills[k] >= SKILL_MAX_LV || (k === 'weakfoot' && p.weakFoot >= 5) ? ' MAX' : ''}</span></div>`).join('') : '<p class="small muted">아직 습득한 스킬이 없습니다. 월간 계획에서 스킬 수련을 선택하세요.</p>'}
     ${p.rec ? `<p class="small muted">추천 스킬: ${p.rec.map(k => SKILLS[k].name).join(', ')}</p>` : ''}</div>`;
   const mil = p.nat === 'KOR' ? (p.mil.exempt ? '병역 특례 (예술·체육요원)' : p.mil.done ? '군필' : p.mil.serving ? '김천 상무 복무 중' : p.mil.planned ? '시즌 후 입대 예정' : '미필 (만 28세 전 입대 필요)') : null;
   h += `<div class="card"><h2>📄 계약 · 상태</h2><ul class="list">
