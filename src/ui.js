@@ -235,7 +235,7 @@ function renderCreate() {
   const cd = E.genPlayer(c.pos, c.style, c.seed, pk, pk.chooseType ? c.gtype : null);
   if (pk.startSkill && !cd.rec.includes(c.sskill)) c.sskill = cd.rec[0];
   const keys = grp === 'GK' ? ATTRS_GK : ATTRS_OUT;
-  const potTxt = '??? <span class="small muted">(만 18세에 스카우트 리포트로 공개)</span>';
+  const potTxt = '??? <span class="small muted">(만 25세에 스카우트 리포트로 공개)</span>';
   const active = LEGACY.filter(x => (L.levels[x.id] || 0) > 0);
   let h = `<div class="wrap"><div class="card"><h2>👤 새 선수 만들기 <span class="tag">${L.runs + 1}회차</span></h2>
     <label class="f">선수 이름 (실명 대신 닉네임 권장)</label>
@@ -298,7 +298,7 @@ const INFO = {
     return ['오버롤', `<p>포지션에 맞게 능력치를 가중 평균한 종합 점수입니다. 출전 경쟁, 이적 제안, 연봉, 발롱도르 평가의 기준이 됩니다.</p>
       <p><b>현재 포지션(${st().p.pos}) 가중치</b><br>${list}</p><p class="small muted">비중이 큰 능력치를 집중 훈련하면 오버롤이 빨리 오릅니다.</p>`];
   },
-  pot: () => ['잠재력', `<p>선수가 성장할 수 있는 <b>한계</b>입니다. 선수를 만들 때 무작위로 정해지고, 만 18세 시즌이 끝나면 스카우트 리포트로 별점이 공개됩니다. 별점은 추정치라 실제 값과 조금 다를 수 있습니다.</p>
+  pot: () => ['잠재력', `<p>선수가 성장할 수 있는 <b>한계</b>입니다. 선수를 만들 때 무작위로 정해지고, <b>만 25세 시즌이 끝나면</b> 스카우트 리포트로 별점이 공개됩니다. 그 전까지는 성장 속도와 활약을 보고 스스로 가늠해야 합니다. 별점은 추정치라 실제 값과 조금 다를 수 있습니다.</p>
     <ul><li>오버롤이 잠재력에 가까워질수록 성장이 느려지고, 넘어서지는 못합니다.</li><li>만 22세까지는 시즌 평점과 출전 비율에 따라 매년 조금씩 오르거나 내려갑니다.</li></ul>`],
   weak: () => { const w = st().p.weakFoot || 0; return ['약발', `<p>주로 쓰지 않는 발의 숙련도(★1~5)입니다. 경기 중 「약발로 바로 슈팅」 같은 선택지의 성공률을 정합니다.</p>
     <p>현재 ★${w}: 약발 선택지는 능력치의 <b>${Math.round((0.6 + 0.08 * w) * 100)}%</b>만 발휘됩니다. (★5면 100%)</p><p class="small muted">「약발 강화」 스킬 한 레벨마다 ★1씩 오릅니다.</p>`]; },
@@ -410,8 +410,8 @@ function skillChips(p) {
 }
 function potView(p) {
   if (p.potKnown) return `<b>${Math.round(p.pot)}</b>`;
-  const shown = p.revealed.stars || !st().run; // 이전 버전 저장 데이터는 별점 표시
-  return shown ? `<span style="color:var(--gold)">${stars(p.stars)}</span> <span class="small muted">${p.stars}/5</span>` : '<span class="muted">??? (만 18세 공개)</span>';
+  const shown = p.revealed.pot25 || !st().run; // 이전 버전(선택형 후보) 저장 데이터는 별점 표시
+  return shown ? `<span style="color:var(--gold)">${stars(p.stars)}</span> <span class="small muted">${p.stars}/5</span>` : '<span class="muted">??? (만 25세 공개)</span>';
 }
 function statCard() {
   const S = st(), p = S.p, se = S.season, keys = E.attrKeys();

@@ -2200,7 +2200,7 @@ function offseason() {
   // 특성 공개
   const G = { early: '조기 성장형', normal: '표준 성장형', late: '대기만성형' };
   if (p.age === 18 && !p.revealed.growth) { p.revealed.growth = true; notes.push(`📋 스카우트 리포트: 성장 유형은 「${G[p.traits.growth]}」입니다.`); }
-  if (p.age === 18 && !p.revealed.stars) { p.revealed.stars = true; p.stars = clamp(Math.round((p.pot + normal() * 3 - 52) / 8.5 * 2) / 2, 1, 5); notes.push(`📋 스카우트 리포트: 잠재력 평가 ${'★'.repeat(Math.floor(p.stars))}${p.stars % 1 ? '☆' : ''} (${p.stars}/5)`); }
+  if (p.age >= 25 && !p.revealed.pot25) { p.revealed.pot25 = true; p.revealed.stars = true; p.stars = clamp(Math.round((p.pot + normal() * 3 - 52) / 8.5 * 2) / 2, 1, 5); notes.push(`📋 스카우트 리포트: 잠재력 평가 ${'★'.repeat(Math.floor(p.stars))}${p.stars % 1 ? '☆' : ''} (${p.stars}/5)`); }
   if (p.age === 19 && !p.revealed.prof) { p.revealed.prof = true; notes.push(`📋 코치진 평가: 프로 의식 ${p.traits.prof >= 1.05 ? '매우 높음' : p.traits.prof >= 0.95 ? '보통' : '낮음'}.`); }
   if (p.age === 20 && !p.revealed.injury) { p.revealed.injury = true; notes.push(`📋 메디컬 리포트: 부상 체질 ${p.traits.injury <= 0.9 ? '강함 (부상이 적음)' : p.traits.injury <= 1.2 ? '보통' : '약함 (부상 주의)'}.`); }
   // 계약
