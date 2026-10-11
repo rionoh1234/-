@@ -138,7 +138,7 @@ function condCls(v) { return v >= 65 ? '' : v >= 40 ? 'warn' : 'bad'; }
 function sign(x, d) { const v = Math.round(x * (d ? 10 : 1)) / (d ? 10 : 1); return v > 0 ? `<span class="up">+${v}</span>` : v < 0 ? `<span class="down">${v}</span>` : '<span class="muted">0</span>'; }
 function stars(n) { return '★'.repeat(Math.floor(n)) + (n % 1 ? '☆' : ''); }
 const money = m => E.fmtMoney(m);
-function roleTag(r) { return `<span class="tag ${r === '주전' ? 'g' : r === '로테이션' ? 'b' : r === '유망주' ? 'y' : ''}">${esc(r)}</span>`; }
+function roleTag(r) { return `<span class="tag ${r === '핵심 선수' ? 'y' : r === '주전' ? 'g' : r === '로테이션' ? 'b' : r === '유망주' ? 'r' : ''}">${r === '핵심 선수' ? '⭐ ' : ''}${esc(r)}</span>`; }
 function statusTag(s) {
   const m = { start: ['선발', 'g'], sub: ['교체', 'b'], bench: ['벤치', ''], out: ['명단 제외', 'r'], injured: ['부상', 'r'], susp: ['출전 정지', 'r'] };
   const [t, c] = m[s] || [s, ''];
@@ -329,7 +329,8 @@ const INFO = {
       ${FACILITY.slice(1).map((f, i) => `<tr class="${i + 1 === lvl ? 'me' : ''}"><td>${f.name}</td><td>${i === 0 ? '~55' : i === 4 ? '82~' : `${FACILITY[i].max + 1}~${f.max}`}</td><td>×${f.growth}</td><td>×${f.skill}</td><td>×${f.injury}</td><td>+${f.recovery}</td></tr>`).join('')}</table></div>`];
   },
   role: () => { const r = st().p.contract.role; return ['계약 역할', `<p>계약할 때 구단이 약속한 역할입니다. 선발 경쟁 점수에 보정이 붙습니다.</p>
-    <ul><li><b>주전</b>: +2.5</li><li><b>로테이션</b>: +1</li><li><b>유망주</b>: −1</li><li><b>유스</b>: 보정 없음</li></ul><p>현재 역할: <b>${esc(r)}</b>${st().p.captain ? ' · 주장 +3' : ''}</p>`]; },
+    <ul><li><b>⭐ 핵심 선수</b>: +3.5 (연봉 ×1.3)</li><li><b>주전</b>: +2.5 (연봉 ×1.1)</li><li><b>로테이션</b>: +1</li><li><b>유망주</b>: −1 (연봉 ×0.7)</li><li><b>유스</b>: 보정 없음</li></ul>
+    <p><b>시즌이 끝나면 구단이 역할을 재평가합니다.</b> 선발 비율 70% 이상·평균 평점 7.2 이상이면 핵심 선수, 50% 이상이면 주전, 25% 이상이면 로테이션입니다. 역할이 오르면 계약이 남아 있어도 연봉 인상 재계약 제안이 오고, 출전이 거의 없으면 역할이 내려갑니다.</p><p>현재 역할: <b>${esc(r)}</b>${st().p.captain ? ' · 주장 +3' : ''}</p>`]; },
 };
 function attrInfo(k) { return [ATTR_NAME[k], `<p>${ATTR_DESC[k] || ''}</p><p>현재 <b>${Math.floor(st().p.attrs[k])}</b> · 최대 99</p>`]; }
 function skillInfo(k) {
@@ -597,7 +598,7 @@ function renderWindow() {
     const L = E.leagueOf(o.lg);
     h += `<div class="card"><div class="row between"><span class="row">${clubLogo(o.club, 40, true)}<b>${esc(E.clubName(o.club))}</b></span><span class="tag b">${kindName[o.kind]}</span></div>
       <div class="small muted" style="margin-top:4px">${compLogo(L.name, 14)} ${esc(L.name)} · 팀 전력 ${Math.round(E.cs(o.club))} · 시설 <span style="color:var(--gold)">${'★'.repeat(E.facLevel(o.club))}</span></div>
-      <div class="small" style="margin-top:6px">${roleTag(o.role)} · ${o.kind === 'loan' ? '1시즌 임대' : `${o.years}년 계약`} · 연봉 ${money(o.salary)}${o.fee > 0 ? ` · 이적료 ${E.fmtFee(o.fee)}` : o.kind === 'transfer' ? ' · 자유 계약' : ''}</div>
+      <div class="small" style="margin-top:6px">${o.early ? '<span class="tag y">🔼 활약 보상 조기 재계약</span> ' : ''}${roleTag(o.role)} · ${o.kind === 'loan' ? '1시즌 임대' : `${o.years}년 계약`} · 연봉 ${money(o.salary)}${o.fee > 0 ? ` · 이적료 ${E.fmtFee(o.fee)}` : o.kind === 'transfer' ? ' · 자유 계약' : ''}</div>
       <button class="btn" data-act="win" data-arg="${i}">선택</button></div>`;
   });
   if (!W.mustChoose) h += `<button class="btn sec" data-act="win" data-arg="-1">현 소속팀 잔류</button>`;

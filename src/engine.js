@@ -383,10 +383,30 @@ function seniorCallupCheck() {
 }
 
 /* ===================== 경기 참여 ===================== */
-function roleBonus() {
-  const r = S.p.contract.role;
-  return (r === '주전' ? 2.5 : r === '로테이션' ? 1 : r === '유망주' ? -1 : 0) + (S.p.captain ? 3 : 0);
+const ROLES = ['유망주', '로테이션', '주전', '핵심 선수'];
+const ROLE_BONUS = { '핵심 선수': 3.5, '주전': 2.5, '로테이션': 1, '유망주': -1 };
+const ROLE_PAY = { '핵심 선수': 1.3, '주전': 1.1, '로테이션': 1, '유망주': 0.7 };
+const ROLE_TRUST = { '핵심 선수': 70, '주전': 62, '로테이션': 52, '유망주': 45 };
+function roleBonus() { return (ROLE_BONUS[S.p.contract.role] || 0) + (S.p.captain ? 3 : 0); }
+// 시즌 출전 기록 → 선발 비율·평점 (컵·대륙대회 포함, 친선·2군·대표팀 제외)
+function perfOf(se) {
+  let apps = 0, starts = 0, rs = 0;
+  for (const k in se.stats) {
+    if (k === '친선경기' || k === '2군 경기' || Object.values(TOURS).some(t => t.name === k)) continue;
+    apps += se.stats[k].apps; starts += se.stats[k].starts; rs += se.stats[k].rs;
+  }
+  const matches = Math.max(1, Math.round(se.possible / 90));
+  return { apps, starts, matches, share: starts / matches, avg: apps ? rs / apps : 0 };
 }
+// 활약 기준 역할: 선발 70%↑·평점 7.2↑ 핵심, 선발 50%↑ 주전, 25%↑ 로테이션
+function roleFromPerf(pf) {
+  if (!pf || pf.matches < 8) return null;
+  if (pf.share >= 0.7 && pf.avg >= 7.2) return '핵심 선수';
+  if (pf.share >= 0.5) return '주전';
+  if (pf.share >= 0.25) return '로테이션';
+  return '유망주';
+}
+const roleIdx = r => Math.max(0, ROLES.indexOf(r));
 
 function participation(fx) {
   const p = S.p;
@@ -1550,6 +1570,7 @@ function nextMonth() {
   if (S.month === 6) {
     const se = S.season;
     S.lastShare = se.possible ? se.mins / se.possible : 1;
+    if (se.possible >= 90 * 10) S.lastPerf = perfOf(se);
     if (p.mil.serving && S.year >= p.mil.dischargeYear) {
       const note = discharge();
       const offers = genOffers('summer').filter(o => o.kind !== 'renew');
@@ -1803,9 +1824,16 @@ function eventAck() {
 /* ===================== 이적시장 ===================== */
 function mkOffer(c, kind) {
   const p = S.p, o = ovrF(), fit = o - cs(c.id);
-  const role = fit >= 1 ? '주전' : fit >= -4 ? '로테이션' : '유망주';
+  let ri2 = fit >= 6 ? 3 : fit >= 1 ? 2 : fit >= -4 ? 1 : 0; // 전력 대비 기량
+  const pf = S.lastPerf, pr = roleFromPerf(pf);
+  if (pr) {
+    if (c.id === p.club) ri2 = Math.max(ri2, roleIdx(pr)); // 현 소속팀은 실제 활약을 그대로 인정
+    else if (fit >= -4) ri2 = Math.max(ri2, Math.min(roleIdx(pr), fit >= 1 ? 3 : 2)); // 다른 팀도 활약을 참고
+  }
+  if (p.age <= 19 && ri2 > 1 && c.id !== p.club) ri2 = Math.min(ri2, 2);
+  const role = ROLES[ri2];
   const years = kind === 'loan' ? 1 : p.age < 24 ? ri(3, 5) : p.age < 30 ? ri(2, 4) : ri(1, 2);
-  let salary = salaryFor(o, c.lg) * (role === '주전' ? 1.1 : role === '유망주' ? 0.7 : 1) * (p.agent === 'big' ? 1.15 : p.agent === 'small' ? 1.05 : 1);
+  let salary = salaryFor(o, c.lg) * ROLE_PAY[role] * (p.agent === 'big' ? 1.15 : p.agent === 'small' ? 1.05 : 1);
   if (p.age <= 19) salary *= 0.6;
   const fee = kind === 'loan' || kind === 'renew' || kind === 'return' || p.contract.years <= 0 || curClub().youth ? 0 : marketValue();
   return { kind, club: c.id, lg: c.lg, role, years, salary: Math.round(salary / 10) * 10, fee: Math.round(fee * 10) / 10 };
@@ -1853,10 +1881,14 @@ function genOffers(kind) {
     offers.push(mkOffer(c, youth ? 'pro' : 'transfer'));
   }
   // 재계약
-  if (!youth && kind === 'summer' && p.contract.type !== 'loan' && p.contract.type !== 'military' && p.contract.years <= 1 && p.age < 38) {
-    if (o >= cs(p.club) - 6 || (p.age <= 22 && p.pot > cs(p.club))) {
+  const perfRole = roleFromPerf(S.lastPerf);
+  const promote = (perfRole && roleIdx(perfRole) > roleIdx(p.contract.role)) || (kind === 'summer' && p.raiseDue);
+  if (kind === 'summer') p.raiseDue = false;
+  if (!youth && kind === 'summer' && p.contract.type !== 'loan' && p.contract.type !== 'military' && (p.contract.years <= 1 || promote) && p.age < 38) {
+    if (o >= cs(p.club) - 6 || (p.age <= 22 && p.pot > cs(p.club)) || promote) {
       const r = mkOffer(cur, 'renew');
-      r.salary = Math.max(r.salary, Math.round(p.contract.salary * 1.1 / 10) * 10);
+      r.salary = Math.max(r.salary, Math.round(p.contract.salary * (promote ? 1.25 : 1.1) / 10) * 10);
+      if (promote) r.early = true;
       offers.unshift(r);
     }
   }
@@ -1902,7 +1934,7 @@ function applyOffer(of, mid) {
     p.captain = false;
     p.seasonsAtClub = mid ? 1 : 0;
   }
-  p.trust = of.role === '주전' ? 62 : of.role === '로테이션' ? 52 : 45;
+  p.trust = ROLE_TRUST[of.role] || 50;
   p.wantsMove = false;
   if (!p.clubs.includes(p.club)) p.clubs.push(p.club);
   if (mid && prevClub !== p.club) switchClubMidseason();
@@ -1960,6 +1992,7 @@ function seasonEnd() {
   if (pos === 1) { se.trophies.push(L.name + (youth ? ' (유스)' : '')); addNews(`🏆 ${clubName(p.club)}, ${L.name} 우승!`); }
   S.lastTables[L.lg] = order;
   S.lastShare = se.possible ? se.mins / se.possible : 1;
+  S.lastPerf = perfOf(se);
   // 리그 개인상
   const st = se.stats[L.name] || { apps: 0, g: 0, a: 0, cs: 0, rs: 0 };
   const rounds = L.rounds.length;
@@ -2175,6 +2208,15 @@ function offseason() {
     p.club = p.loan.from; p.contract = p.loan.contract; p.loan = null; p.contract.years--;
     notes.push(`↩️ 임대 종료 — ${clubName(p.club)} 복귀`);
   } else if (p.contract.type !== 'military') p.contract.years--;
+  // 구단의 역할 재평가 (활약에 따라 계약 역할 조정)
+  const pr = roleFromPerf(S.lastPerf);
+  if (pr && !curClub().youth && p.contract.type !== 'military' && S.season.clubs.includes(p.club)) {
+    const cur = p.contract.role, d = roleIdx(pr) - roleIdx(cur);
+    const pf = S.lastPerf;
+    const stat = `선발 ${pf.starts}/${pf.matches}경기 (${Math.round(pf.share * 100)}%) · 평균 평점 ${pf.avg.toFixed(2)}`;
+    if (d > 0) { p.contract.role = pr; p.raiseDue = true; notes.push(`⬆️ 역할 승격: ${cur} → ${pr} (${stat}). 이적시장에서 연봉 인상 재계약 제안이 옵니다.`); }
+    else if (d < -1 || (d < 0 && pf.share < 0.15)) { const nr = ROLES[roleIdx(cur) - 1]; p.contract.role = nr; notes.push(`⬇️ 역할 하향: ${cur} → ${nr} (${stat})`); }
+  }
   // 구단 전력 변동
   for (const id in CLUBS) {
     const b = CLUBS[id].str, c = cs(id);
