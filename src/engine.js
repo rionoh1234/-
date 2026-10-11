@@ -209,8 +209,6 @@ function newCareer(o) {
   if (pk) {
     S.p.perk = { growth: pk.growth, skill: pk.skill, injury: pk.injury };
     S.p.money += pk.money;
-    if (pk.scout >= 1) { S.p.revealed = { growth: true, prof: true, injury: true, stars: true }; }
-    if (pk.scout >= 2) S.p.potKnown = true;
     if (pk.startSkill && o.startSkill && SKILLS[o.startSkill]) S.p.skills[o.startSkill] = 1;
     S.run = o.run || 1;
   }

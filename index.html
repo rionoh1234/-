@@ -488,7 +488,6 @@ const LEGACY = [
   { id: 'money', name: '가문의 후원', icon: '💰', max: 5, cost: [20, 40, 70, 110, 160], desc: l => `시작 자금 +${(500 * l).toLocaleString()}만 원` },
   { id: 'body', name: '타고난 몸', icon: '🛡️', max: 3, cost: [40, 90, 160], desc: l => `부상 위험 -${6 * l}%` },
   { id: 'wf', name: '양발 훈련 유년기', icon: '🦶', max: 2, cost: [40, 100], desc: l => `시작 약발 ★+${l} (필드 플레이어)` },
-  { id: 'scout', name: '스카우트 네트워크', icon: '🔭', max: 2, cost: [30, 120], desc: l => (l >= 2 ? '잠재력 정확한 수치와 숨은 특성을 처음부터 공개' : '잠재력 별점과 숨은 특성을 처음부터 공개') },
   { id: 'type', name: '성장 유형 선택권', icon: '⏳', max: 1, cost: [150], desc: () => '선수 생성 시 성장 유형(조기·표준·대기만성)을 직접 선택' },
   { id: 'askill', name: '유스 시절 특기', icon: '✨', max: 1, cost: [120], desc: () => '추천 스킬 중 1개를 Lv1로 보유한 채 시작' },
 ];
@@ -1001,8 +1000,6 @@ function newCareer(o) {
   if (pk) {
     S.p.perk = { growth: pk.growth, skill: pk.skill, injury: pk.injury };
     S.p.money += pk.money;
-    if (pk.scout >= 1) { S.p.revealed = { growth: true, prof: true, injury: true, stars: true }; }
-    if (pk.scout >= 2) S.p.potKnown = true;
     if (pk.startSkill && o.startSkill && SKILLS[o.startSkill]) S.p.skills[o.startSkill] = 1;
     S.run = o.run || 1;
   }
@@ -3123,6 +3120,18 @@ function addHof(c) {
 /* 레거시 (다회차): { lp, levels, runs, earned, ts } */
 const LEGACY_KEY = 'footballlife_legacy_v1';
 function getLegacy() { try { return Object.assign({ lp: 0, levels: {}, runs: 0, earned: 0, ts: 0 }, JSON.parse(lsGet(LEGACY_KEY) || '{}')); } catch (e) { return { lp: 0, levels: {}, runs: 0, earned: 0, ts: 0 }; } }
+// 1회성 조정: 스카우트 업그레이드 폐지(사용 LP 환급), 300 LP 지급
+function migrateLegacy() {
+  const L = getLegacy();
+  L.grants = L.grants || [];
+  const msgs = [];
+  if (L.levels.scout) {
+    const refund = [30, 120].slice(0, L.levels.scout).reduce((a, b) => a + b, 0);
+    L.lp += refund; delete L.levels.scout; msgs.push(`스카우트 네트워크 폐지 · ${refund} LP 환급`);
+  }
+  if (!L.grants.includes('gift300_v1')) { L.lp += 300; L.grants.push('gift300_v1'); msgs.push('보너스 300 LP 지급'); }
+  if (msgs.length) { setLegacy(L); setTimeout(() => toast('🏅 ' + msgs.join(' · ')), 300); }
+}
 function setLegacy(L) { L.ts = Date.now(); lsSet(LEGACY_KEY, JSON.stringify(L)); cloud.legDirty = true; queueCloud(); }
 const cloudRef = k => cloud.db.collection('data/users/' + cloud.uid).doc(k);
 function queueCloud() {
@@ -3167,7 +3176,7 @@ async function initCloud() {
     const [sv, hf, lg] = await Promise.all([cloudRef('save').get(), cloudRef('hof').get(), cloudRef('legacy').get()]);
     // 레거시: 더 최근 것을 사용
     const ld = lg.exists ? lg.data() : null, myLeg = getLegacy();
-    if (ld && (ld.ts || 0) > (myLeg.ts || 0)) { lsSet(LEGACY_KEY, ld.data || '{}'); render(); }
+    if (ld && (ld.ts || 0) > (myLeg.ts || 0)) { lsSet(LEGACY_KEY, ld.data || '{}'); migrateLegacy(); render(); }
     else if ((myLeg.ts || 0) > (ld ? ld.ts || 0 : 0)) cloud.legDirty = true;
     // 저장 데이터: 더 최근 것을 사용
     const local = loadSave();
@@ -3307,7 +3316,7 @@ function renderCreate() {
   const cd = E.genPlayer(c.pos, c.style, c.seed, pk, pk.chooseType ? c.gtype : null);
   if (pk.startSkill && !cd.rec.includes(c.sskill)) c.sskill = cd.rec[0];
   const keys = grp === 'GK' ? ATTRS_GK : ATTRS_OUT;
-  const potTxt = pk.scout >= 2 ? `<b>${cd.pot}</b>` : pk.scout >= 1 ? `<b style="color:var(--gold)">${stars(cd.stars)}</b> (${cd.stars}/5)` : '??? <span class="small muted">(만 18세에 스카우트 리포트로 공개)</span>';
+  const potTxt = '??? <span class="small muted">(만 18세에 스카우트 리포트로 공개)</span>';
   const active = LEGACY.filter(x => (L.levels[x.id] || 0) > 0);
   let h = `<div class="wrap"><div class="card"><h2>👤 새 선수 만들기 <span class="tag">${L.runs + 1}회차</span></h2>
     <label class="f">선수 이름 (실명 대신 닉네임 권장)</label>
@@ -3324,7 +3333,7 @@ function renderCreate() {
     <select id="cYouth">${yo.map(id => `<option value="${id}" ${id === c.youth ? 'selected' : ''}>${esc(E.CLUBS[id].name)}</option>`).join('')}</select></div>
   <div class="card hl"><div class="row between"><h2 style="margin:0">🔍 스카우트 리포트</h2><span class="big" style="font-size:24px">${Math.round(E.overallOf(cd.attrs, c.pos))}</span></div>
     <p class="small">잠재력: ${potTxt} · 약발 ${cd.weakFoot ? '★'.repeat(cd.weakFoot) : '-'}</p>
-    ${pk.scout >= 1 ? `<p class="small">성장 유형 ${GROWTH_NAME[cd.traits.growth]} · 프로 의식 ×${cd.traits.prof} · 부상 체질 ×${cd.traits.injury}</p>` : '<p class="small muted">잠재력과 숨은 특성은 무작위로 정해지며, 선수를 만든 뒤에 바꿀 수 없습니다.</p>'}
+    <p class="small muted">잠재력과 숨은 특성은 무작위로 정해지며, 선수를 만든 뒤에 바꿀 수 없습니다.</p>
     <div class="grid3" style="margin-top:6px">${keys.map(k => `<div class="small">${ATTR_NAME[k]} <b>${Math.round(cd.attrs[k])}</b></div>`).join('')}</div>
     ${active.length ? `<h3>🏅 적용 중인 레거시</h3><p class="small">${active.map(x => `${x.icon} ${x.name} Lv${L.levels[x.id]}`).join(' · ')}</p>` : '<p class="note">은퇴하면 레거시 포인트를 받아 다음 회차 선수를 강화할 수 있습니다.</p>'}
     <button class="btn" data-act="cstart">이 선수로 시작 ▶</button></div>
@@ -3370,7 +3379,7 @@ const INFO = {
     return ['오버롤', `<p>포지션에 맞게 능력치를 가중 평균한 종합 점수입니다. 출전 경쟁, 이적 제안, 연봉, 발롱도르 평가의 기준이 됩니다.</p>
       <p><b>현재 포지션(${st().p.pos}) 가중치</b><br>${list}</p><p class="small muted">비중이 큰 능력치를 집중 훈련하면 오버롤이 빨리 오릅니다.</p>`];
   },
-  pot: () => ['잠재력', `<p>선수가 성장할 수 있는 <b>한계</b>입니다. 선수를 만들 때 무작위로 정해지고, 만 18세 시즌이 끝나면 스카우트 리포트로 별점이 공개됩니다(레거시 「스카우트 네트워크」가 있으면 처음부터 공개). 별점은 추정치라 실제 값과 조금 다를 수 있습니다.</p>
+  pot: () => ['잠재력', `<p>선수가 성장할 수 있는 <b>한계</b>입니다. 선수를 만들 때 무작위로 정해지고, 만 18세 시즌이 끝나면 스카우트 리포트로 별점이 공개됩니다. 별점은 추정치라 실제 값과 조금 다를 수 있습니다.</p>
     <ul><li>오버롤이 잠재력에 가까워질수록 성장이 느려지고, 넘어서지는 못합니다.</li><li>만 22세까지는 시즌 평점과 출전 비율에 따라 매년 조금씩 오르거나 내려갑니다.</li></ul>`],
   weak: () => { const w = st().p.weakFoot || 0; return ['약발', `<p>주로 쓰지 않는 발의 숙련도(★1~5)입니다. 경기 중 「약발로 바로 슈팅」 같은 선택지의 성공률을 정합니다.</p>
     <p>현재 ★${w}: 약발 선택지는 능력치의 <b>${Math.round((0.6 + 0.08 * w) * 100)}%</b>만 발휘됩니다. (★5면 100%)</p><p class="small muted">「약발 강화」 스킬 한 레벨마다 ★1씩 오릅니다.</p>`]; },
@@ -3828,7 +3837,7 @@ function renderGuide() {
     <h3>4. 출전 기회</h3><p class="small">오버롤, 감독 신뢰, 컨디션이 소속팀 전력과 비교되어 선발·교체·명단 제외가 정해집니다. 명단에서 제외되면 2군 경기에서 어필할 수 있습니다.</p>
     <h3>5. 성장</h3><p class="small">나이가 어릴수록, 출전 시간이 많을수록, 훈련 강도가 높을수록 빠르게 성장합니다. 잠재력에 가까워질수록 성장이 느려지고, 만 30세 무렵부터 능력치가 떨어집니다. 강훈련은 피로와 부상 위험을 키웁니다.</p>
     <h3>6. 병역 (대한민국 국적)</h3><p class="small">만 28세 전에 김천 상무에서 약 18개월간 복무해야 합니다. 아시안게임 금메달 또는 올림픽 메달을 따면 병역 특례 대상이 됩니다.</p>
-    <h3>7. 은퇴 · 다회차</h3><p class="small">만 32세부터 은퇴할 수 있으며, 은퇴한 선수는 명예의 전당에 기록됩니다. 은퇴하면 커리어 성적에 따라 <b>레거시 포인트(LP)</b>를 받고, 🏅 레거시 업그레이드에서 잠재력 하한·시작 오버롤·성장 효율·스킬 수련·시작 자금·부상 내성·스카우트 정보·약발·성장 유형 선택·시작 스킬을 영구 강화할 수 있습니다. 회차를 거듭할수록 더 좋은 선수로 시작합니다.</p>
+    <h3>7. 은퇴 · 다회차</h3><p class="small">만 32세부터 은퇴할 수 있으며, 은퇴한 선수는 명예의 전당에 기록됩니다. 은퇴하면 커리어 성적에 따라 <b>레거시 포인트(LP)</b>를 받고, 🏅 레거시 업그레이드에서 잠재력 하한·시작 오버롤·성장 효율·스킬 수련·시작 자금·부상 내성·약발·성장 유형 선택·시작 스킬을 영구 강화할 수 있습니다. 회차를 거듭할수록 더 좋은 선수로 시작합니다.</p>
     <p class="note">본 게임의 경기 결과·능력치·계약·이적료는 가상 기록이며 실제 선수·구단 평가와 무관합니다.</p></div>
     <button class="btn sec" data-act="back">← 돌아가기</button></div>`;
 }
@@ -3977,6 +3986,7 @@ function importSave(file) {
 }
 
 applyTheme();
+migrateLegacy();
 render();
 initCloud();
 

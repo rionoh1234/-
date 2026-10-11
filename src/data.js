@@ -280,7 +280,6 @@ const LEGACY = [
   { id: 'money', name: '가문의 후원', icon: '💰', max: 5, cost: [20, 40, 70, 110, 160], desc: l => `시작 자금 +${(500 * l).toLocaleString()}만 원` },
   { id: 'body', name: '타고난 몸', icon: '🛡️', max: 3, cost: [40, 90, 160], desc: l => `부상 위험 -${6 * l}%` },
   { id: 'wf', name: '양발 훈련 유년기', icon: '🦶', max: 2, cost: [40, 100], desc: l => `시작 약발 ★+${l} (필드 플레이어)` },
-  { id: 'scout', name: '스카우트 네트워크', icon: '🔭', max: 2, cost: [30, 120], desc: l => (l >= 2 ? '잠재력 정확한 수치와 숨은 특성을 처음부터 공개' : '잠재력 별점과 숨은 특성을 처음부터 공개') },
   { id: 'type', name: '성장 유형 선택권', icon: '⏳', max: 1, cost: [150], desc: () => '선수 생성 시 성장 유형(조기·표준·대기만성)을 직접 선택' },
   { id: 'askill', name: '유스 시절 특기', icon: '✨', max: 1, cost: [120], desc: () => '추천 스킬 중 1개를 Lv1로 보유한 채 시작' },
 ];
