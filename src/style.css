@@ -173,3 +173,18 @@ label.f { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 6
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 20; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 13.5px; max-width: calc(100% - 32px); box-shadow: var(--shadow); }
 button:focus-visible, .opt:focus-visible, .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .log .ln.new { animation: none; } }
+
+/* 용어 설명 */
+.ib { border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+.ib i { font-style: normal; font-size: 0.78em; color: var(--accent); margin-left: 2px; vertical-align: super; }
+.meter { border: 0; background: none; padding: 0; text-align: left; font: inherit; font-size: 11px; color: var(--muted); cursor: pointer; }
+.sheet-bg { position: fixed; inset: 0; z-index: 30; background: rgba(0, 0, 0, .45); display: flex; align-items: flex-end; justify-content: center; }
+.sheet-bg[hidden] { display: none; }
+.sheet { background: var(--card); color: var(--ink); width: 100%; max-width: 560px; max-height: 80vh; overflow-y: auto; border-radius: 18px 18px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); animation: up .2s ease; }
+.sheet h2 { font-size: 17px; margin: 0; }
+.sheet-body { font-size: 14px; }
+.sheet-body ul { padding-left: 18px; margin: 8px 0; }
+.sheet-body li { margin: 4px 0; }
+.sheet-x { border: 0; background: var(--card2); border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 14px; }
+@keyframes up { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }

@@ -172,10 +172,10 @@ function header() {
     <div class="when"><b>${MONTHS[S.month] || ''}</b>${se ? se.label : ''}</div>
   </div>
   <div class="meters">
-    <div class="meter">컨디션 ${Math.round(c)}${bar(c, 100, condCls(c))}</div>
-    <div class="meter">감독 신뢰 ${Math.round(p.trust)}${bar(p.trust, 100)}</div>
-    <div class="meter">사기 ${Math.round(p.morale)}${bar(p.morale, 100)}</div>
-    <div class="meter">명성 ${Math.round(p.rep)}${bar(p.rep, 100)}</div>
+    <button class="meter" data-act="info" data-arg="cond">컨디션 ${Math.round(c)}${bar(c, 100, condCls(c))}</button>
+    <button class="meter" data-act="info" data-arg="trust">감독 신뢰 ${Math.round(p.trust)}${bar(p.trust, 100)}</button>
+    <button class="meter" data-act="info" data-arg="morale">사기 ${Math.round(p.morale)}${bar(p.morale, 100)}</button>
+    <button class="meter" data-act="info" data-arg="rep">명성 ${Math.round(p.rep)}${bar(p.rep, 100)}</button>
   </div></div>`;
 }
 
@@ -233,27 +233,97 @@ function renderCreate() {
   return h;
 }
 
+/* ---------- 용어 설명 (누르면 아래에서 설명 창) ---------- */
+const GROWTH_NAME = { early: '조기 성장형', normal: '표준 성장형', late: '대기만성형' };
+const ATTR_DESC = {
+  pac: '역습, 침투 타이밍, 최후방 커버, 상대 추적 같은 상황의 성공률에 쓰입니다. 30세 이후 가장 빨리 떨어지는 능력치입니다.',
+  sho: '경기 중 득점 확률과 슈팅·PK·발리 선택지의 성공률을 정합니다.',
+  pas: '도움 확률과 침투 패스·크로스·전환 패스 선택지의 성공률을 정합니다.',
+  dri: '드리블 돌파, 개인기, 접어서 슈팅, 탈압박 선택지의 성공률을 정합니다.',
+  def: '태클, 지연 수비, 패스 차단, 마크 선택지의 성공률을 정합니다.',
+  phy: '헤더, 몸싸움, 블록, 공중볼 경합의 성공률을 정합니다. 30세 이후 빨리 떨어집니다.',
+  ref: '근거리 슈팅 선방과 PK 방어에 쓰입니다.', div: '구석으로 오는 슈팅 선방과 1대1 다이빙에 쓰입니다.',
+  han: '공을 잡아내는 선방과 크로스 처리에 쓰입니다.', gpo: '1대1 각도 좁히기, 스위핑, 수비 지휘에 쓰입니다.',
+  kic: '롱킥, 빌드업 선택지의 성공률을 정합니다.',
+};
+function pctx(v) { return `${Math.round(v * 100)}%`; }
+const INFO = {
+  ovr: () => {
+    const w = OVR_WEIGHTS[POSITIONS[st().p.pos].group];
+    const list = Object.keys(w).filter(k => w[k] > 0).sort((a, b) => w[b] - w[a]).map(k => `${ATTR_NAME[k]} ${pctx(w[k])}`).join(', ');
+    return ['오버롤', `<p>포지션에 맞게 능력치를 가중 평균한 종합 점수입니다. 출전 경쟁, 이적 제안, 연봉, 발롱도르 평가의 기준이 됩니다.</p>
+      <p><b>현재 포지션(${st().p.pos}) 가중치</b><br>${list}</p><p class="small muted">비중이 큰 능력치를 집중 훈련하면 오버롤이 빨리 오릅니다.</p>`];
+  },
+  pot: () => ['잠재력', `<p>선수가 성장할 수 있는 <b>한계</b>입니다. 별점은 스카우트의 추정치라 실제 값과 조금 다를 수 있습니다.</p>
+    <ul><li>오버롤이 잠재력에 가까워질수록 성장이 느려지고, 넘어서지는 못합니다.</li><li>만 22세까지는 시즌 평점과 출전 비율에 따라 매년 조금씩 오르거나 내려갑니다.</li></ul>`],
+  weak: () => { const w = st().p.weakFoot || 0; return ['약발', `<p>주로 쓰지 않는 발의 숙련도(★1~5)입니다. 경기 중 「약발로 바로 슈팅」 같은 선택지의 성공률을 정합니다.</p>
+    <p>현재 ★${w}: 약발 선택지는 능력치의 <b>${Math.round((0.6 + 0.08 * w) * 100)}%</b>만 발휘됩니다. (★5면 100%)</p><p class="small muted">「약발 강화」 스킬 한 레벨마다 ★1씩 오릅니다.</p>`]; },
+  value: () => ['시장 가치', '<p>오버롤, 나이, 잠재력으로 계산한 몸값입니다. 계약 기간이 남은 상태로 이적하면 이 금액이 이적료가 됩니다. 어리고 잠재력이 높을수록 비싸고, 30세가 넘으면 빠르게 떨어집니다.</p>'],
+  style: () => { const p = st().p; const s = Object.values(STYLES).flat().find(x => x.name === p.style); return [p.style, `<p>${s ? esc(s.desc) : ''}</p><p>선수를 만들 때 정한 플레이 스타일로, 시작 능력치 분포를 결정했습니다.</p>${p.rec ? `<p><b>추천 스킬</b>: ${p.rec.map(k => SKILLS[k].name).join(', ')}</p>` : ''}`]; },
+  growth: () => {
+    const p = st().p, mine = p.revealed.growth ? p.traits.growth : null;
+    const row = (k, a, b, c) => `<tr class="${mine === k ? 'me' : ''}"><td>${GROWTH_NAME[k]}${mine === k ? ' (나)' : ''}</td><td>${a}</td><td>${b}</td><td>${c}</td></tr>`;
+    return ['성장 유형', `<p>나이대별로 언제 빨리 크고 언제 기량이 떨어지는지 정하는 숨은 특성입니다. ${mine ? '' : '<b>만 18세 시즌이 끝나면 공개됩니다.</b>'}</p>
+      <div class="scroll-x"><table class="tb"><tr><th>유형</th><th>~20세 성장</th><th>21~27세 성장</th><th>하락 시작</th></tr>
+      ${row('early', '×1.3', '×0.9~1.0', '약 29세')}${row('normal', '×1.0', '×1.0', '약 30세')}${row('late', '×0.8', '×1.25', '약 31세')}</table></div>
+      <p class="small muted">어느 유형이든 잠재력이 성장 한계입니다. 조기 성장형은 같은 한계에 더 일찍 도달하는 유형입니다.</p>`];
+  },
+  prof: () => { const p = st().p; return ['프로 의식', `<p>훈련을 얼마나 성실하게 소화하는지를 나타냅니다. 능력치 성장과 스킬 수련 속도에 <b>×0.85~1.15</b>로 곱해지고, 30세 이후에는 높을수록 기량이 천천히 떨어집니다.</p>
+    <p>${p.revealed.prof ? `내 선수: <b>${p.traits.prof >= 1.05 ? '매우 높음' : p.traits.prof >= 0.95 ? '보통' : '낮음'}</b> (×${p.traits.prof})` : '만 19세 시즌이 끝나면 공개됩니다.'}</p>`]; },
+  injury: () => { const p = st().p; return ['부상 체질', `<p>부상 확률에 <b>×0.7~1.5</b>로 곱해지는 숨은 특성입니다. 약한 체질이라면 피로 관리, 영양 관리, 「부상 방지 루틴」 스킬이 더 중요합니다.</p>
+    <p>${p.revealed.injury ? `내 선수: <b>${p.traits.injury <= 0.9 ? '강함' : p.traits.injury <= 1.2 ? '보통' : '약함'}</b> (×${p.traits.injury})` : '만 20세 시즌이 끝나면 공개됩니다.'}</p>`]; },
+  cond: () => ['컨디션', `<p>100에서 피로를 뺀 값입니다. 경기 출전과 강한 훈련으로 떨어지고, 「회복 위주」 훈련이나 휴식으로 회복합니다.</p>
+    <ul><li>선발 경쟁, 경기 평점, 결정적 순간의 성공률에 영향을 줍니다.</li><li>피로가 40을 넘으면 경기 중 부상 위험이, 60을 넘으면 훈련 중 부상 위험이 크게 오릅니다.</li></ul>`],
+  trust: () => ['감독 신뢰', `<p>감독이 나를 얼마나 믿는지입니다. 높을수록 선발 경쟁에서 유리합니다.</p>
+    <ul><li>경기 평점이 6.6보다 높으면 오르고, 낮으면 내려갑니다.</li><li>결정적 순간의 성공·실패, 면담·기자회견 같은 이벤트 선택, 영상 분석 활동으로도 바뀝니다.</li><li>매달 50 쪽으로 조금씩 되돌아갑니다.</li></ul>`],
+  morale: () => ['사기', '<p>선수의 기분과 자신감입니다. 경기 평점과 결정적 순간의 성공률에 조금 영향을 줍니다. 승리, 좋은 평점, 휴식, 멘탈 코칭, 가족 이벤트 등으로 오르고 매달 60 쪽으로 되돌아갑니다.</p>'],
+  rep: () => ['명성', '<p>세상이 나를 얼마나 아는지입니다. 이적 제안의 수와 수준, 스폰서·광고 이벤트, 발롱도르 평가에 영향을 줍니다. 활약, 우승, 국가대표 경기로 오르고 매 시즌 8%씩 줄어듭니다.</p>'],
+  role: () => { const r = st().p.contract.role; return ['계약 역할', `<p>계약할 때 구단이 약속한 역할입니다. 선발 경쟁 점수에 보정이 붙습니다.</p>
+    <ul><li><b>주전</b>: +2.5</li><li><b>로테이션</b>: +1</li><li><b>유망주</b>: −1</li><li><b>유스</b>: 보정 없음</li></ul><p>현재 역할: <b>${esc(r)}</b>${st().p.captain ? ' · 주장 +3' : ''}</p>`]; },
+};
+function attrInfo(k) { return [ATTR_NAME[k], `<p>${ATTR_DESC[k] || ''}</p><p>현재 <b>${Math.floor(st().p.attrs[k])}</b> · 최대 99</p>`]; }
+function skillInfo(k) {
+  const s = SKILLS[k], x = E.skillStatus(k);
+  const req = Object.keys(s.req).map(r => `${r === 'age' ? '나이' : r === 'rep' ? '명성' : ATTR_NAME[r] || r} ${s.req[r]}`).join(', ') || '없음';
+  return [`${s.icon} ${s.name}`, `<p>${s.desc}</p>
+    <ul><li>현재 레벨: <b>${x.lvl ? 'Lv' + x.lvl : '미습득'}</b>${x.maxed ? ' (MAX)' : ` · 다음 레벨까지 ${x.prog}/${x.next}`}</li><li>습득 조건: ${req}</li>
+    <li>레벨이 오를수록 관련 상황의 성공률 보너스가 커집니다.</li></ul>`];
+}
+function openInfo(key) {
+  let r = null;
+  if (key.startsWith('attr:')) r = attrInfo(key.slice(5));
+  else if (key.startsWith('skill:')) r = skillInfo(key.slice(6));
+  else if (INFO[key]) r = INFO[key]();
+  if (!r) return;
+  let bg = $('#sheet');
+  if (!bg) { bg = document.createElement('div'); bg.id = 'sheet'; bg.className = 'sheet-bg'; document.body.appendChild(bg); }
+  bg.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetT"><div class="row between"><h2 id="sheetT">${esc(r[0])}</h2><button class="sheet-x" data-act="infoclose" aria-label="닫기">✕</button></div><div class="sheet-body">${r[1]}</div><button class="btn sec" data-act="infoclose">확인</button></div>`;
+  bg.hidden = false;
+}
+function closeInfo() { const bg = $('#sheet'); if (bg) bg.hidden = true; }
+const ib = (key, label) => `<button class="ib" data-act="info" data-arg="${key}">${label}<i>ⓘ</i></button>`;
+
 /* ---------- 내 능력치 표 ---------- */
 function skillChips(p) {
   const ids = Object.keys(p.skills).filter(k => p.skills[k] > 0);
   if (!ids.length) return '<span class="small muted">아직 습득한 스킬이 없습니다.</span>';
   return ids.map(k => {
     const max = p.skills[k] >= SKILL_MAX_LV || (k === 'weakfoot' && p.weakFoot >= 5);
-    return `<span class="chip static">${SKILLS[k].icon} ${SKILLS[k].name} <b>Lv${p.skills[k]}</b>${max ? ' <span class="tag g">MAX</span>' : ''}</span>`;
+    return `<button class="chip" data-act="info" data-arg="skill:${k}">${SKILLS[k].icon} ${SKILLS[k].name} <b>Lv${p.skills[k]}</b>${max ? ' <span class="tag g">MAX</span>' : ''}</button>`;
   }).join('');
 }
 function statCard() {
   const S = st(), p = S.p, se = S.season, keys = E.attrKeys();
   const rows = [];
   for (let i = 0; i < keys.length; i += 2) rows.push(keys.slice(i, i + 2));
-  const cell = k => `<td>${ATTR_NAME[k]}</td><td class="sv"><b>${Math.floor(p.attrs[k])}</b></td><td class="sd">${se ? sign(p.attrs[k] - se.startAttrs[k], true) : ''}</td>`;
+  const cell = k => `<td>${ib('attr:' + k, ATTR_NAME[k])}</td><td class="sv"><b>${Math.floor(p.attrs[k])}</b></td><td class="sd">${se ? sign(p.attrs[k] - se.startAttrs[k], true) : ''}</td>`;
   const G = { early: '조기 성장형', normal: '표준 성장형', late: '대기만성형' };
   return `<div class="card statcard"><h2>📊 내 능력치</h2>
-    <table class="st-tb"><tr><th>오버롤</th><td><b class="up">${E.ovr()}</b> <span class="small muted">(최고 ${p.peak})</span></td><th>포지션</th><td>${p.pos} · ${esc(p.style)}</td></tr>
-      <tr><th>잠재력</th><td><span style="color:var(--gold)">${stars(p.stars)}</span> <span class="small muted">${p.stars}/5</span></td><th>약발</th><td>${p.weakFoot ? '★'.repeat(p.weakFoot) + '☆'.repeat(5 - p.weakFoot) : '-'}</td></tr>
-      <tr><th>시장 가치</th><td>${E.fmtFee(E.marketValue())}</td><th>성장 유형</th><td>${p.revealed.growth ? G[p.traits.growth] : '???'}</td></tr></table>
+    <table class="st-tb"><tr><th>${ib('ovr', '오버롤')}</th><td><b class="up">${E.ovr()}</b> <span class="small muted">(최고 ${p.peak})</span></td><th>${ib('style', '포지션')}</th><td>${p.pos} · ${esc(p.style)}</td></tr>
+      <tr><th>${ib('pot', '잠재력')}</th><td><span style="color:var(--gold)">${stars(p.stars)}</span> <span class="small muted">${p.stars}/5</span></td><th>${ib('weak', '약발')}</th><td>${p.weakFoot ? '★'.repeat(p.weakFoot) + '☆'.repeat(5 - p.weakFoot) : '-'}</td></tr>
+      <tr><th>${ib('value', '시장 가치')}</th><td>${E.fmtFee(E.marketValue())}</td><th>${ib('growth', '성장 유형')}</th><td>${p.revealed.growth ? G[p.traits.growth] : '???'}</td></tr></table>
     <table class="st-tb attrs">${rows.map(r => `<tr>${r.map(cell).join('')}</tr>`).join('')}</table>
-    <p class="note" style="margin-top:4px">능력치 옆 숫자는 이번 시즌 시작 대비 변화</p>
+    <p class="note" style="margin-top:4px">능력치 옆 숫자는 이번 시즌 시작 대비 변화 · ⓘ 항목을 누르면 설명이 나옵니다</p>
     <h3 style="margin-top:10px">🎓 보유 스킬 ${Object.keys(p.skills).filter(k => p.skills[k] > 0 && k !== 'weakfoot').length}/${SKILL_SLOTS}</h3>
     <div>${skillChips(p)}</div></div>`;
 }
@@ -492,24 +562,24 @@ function renderPlayer() {
   const S = st(), p = S.p, keys = E.attrKeys(), se = S.season;
   const G = { early: '조기 성장형', normal: '표준 성장형', late: '대기만성형' };
   let h = `<div class="card"><div class="row between"><div><h2 style="margin:0">${esc(p.name)}</h2><div class="small muted">${posName(p.pos)} · ${esc(p.style)} · ${flag(p.nat, 14)} ${NATIONS[p.nat].name}</div></div><div class="ovr" style="min-width:60px;height:60px;font-size:26px">${E.ovr()}<small>OVR</small></div></div>
-    <p class="small">잠재력 (스카우트 추정) <b style="color:var(--gold)">${stars(p.stars)}</b> · 약발 ${p.weakFoot ? '★'.repeat(p.weakFoot) : '-'} · 최고 오버롤 ${p.peak}</p>
-    ${keys.map(k => `<div class="attr"><span>${ATTR_NAME[k]}</span>${bar(p.attrs[k], 99)}<span class="v">${Math.floor(p.attrs[k])}</span><span class="d">${se ? sign(p.attrs[k] - se.startAttrs[k], true) : ''}</span></div>`).join('')}
+    <p class="small">${ib('pot', '잠재력')} <b style="color:var(--gold)">${stars(p.stars)}</b> · ${ib('weak', '약발')} ${p.weakFoot ? '★'.repeat(p.weakFoot) : '-'} · ${ib('ovr', '최고 오버롤')} ${p.peak}</p>
+    ${keys.map(k => `<div class="attr"><span>${ib('attr:' + k, ATTR_NAME[k])}</span>${bar(p.attrs[k], 99)}<span class="v">${Math.floor(p.attrs[k])}</span><span class="d">${se ? sign(p.attrs[k] - se.startAttrs[k], true) : ''}</span></div>`).join('')}
     <p class="note">오른쪽 숫자는 이번 시즌 시작 대비 변화입니다.</p></div>`;
   h += `<div class="card"><h2>🧬 숨은 특성</h2>
-    <p class="small">성장 유형: <b>${p.revealed.growth ? G[p.traits.growth] : '??? (만 18세에 공개)'}</b></p>
-    <p class="small">프로 의식: <b>${p.revealed.prof ? (p.traits.prof >= 1.05 ? '매우 높음' : p.traits.prof >= 0.95 ? '보통' : '낮음') : '??? (만 19세에 공개)'}</b></p>
-    <p class="small">부상 체질: <b>${p.revealed.injury ? (p.traits.injury <= 0.9 ? '강함' : p.traits.injury <= 1.2 ? '보통' : '약함') : '??? (만 20세에 공개)'}</b></p></div>`;
+    <p class="small">${ib('growth', '성장 유형')}: <b>${p.revealed.growth ? G[p.traits.growth] : '??? (만 18세에 공개)'}</b></p>
+    <p class="small">${ib('prof', '프로 의식')}: <b>${p.revealed.prof ? (p.traits.prof >= 1.05 ? '매우 높음' : p.traits.prof >= 0.95 ? '보통' : '낮음') : '??? (만 19세에 공개)'}</b></p>
+    <p class="small">${ib('injury', '부상 체질')}: <b>${p.revealed.injury ? (p.traits.injury <= 0.9 ? '강함' : p.traits.injury <= 1.2 ? '보통' : '약함') : '??? (만 20세에 공개)'}</b></p></div>`;
   const sk = Object.keys(p.skills).filter(k => p.skills[k] > 0);
-  h += `<div class="card"><h2>🎓 보유 스킬</h2>${sk.length ? sk.map(k => `<div class="row between" style="margin:6px 0"><span>${SKILLS[k].icon} <b>${SKILLS[k].name}</b><br><span class="small muted">${SKILLS[k].desc}</span></span><span class="tag g">Lv${p.skills[k]}${p.skills[k] >= SKILL_MAX_LV || (k === 'weakfoot' && p.weakFoot >= 5) ? ' MAX' : ''}</span></div>`).join('') : '<p class="small muted">아직 습득한 스킬이 없습니다. 월간 계획에서 스킬 수련을 선택하세요.</p>'}
+  h += `<div class="card"><h2>🎓 보유 스킬</h2>${sk.length ? sk.map(k => `<div class="row between" style="margin:6px 0"><span>${ib('skill:' + k, `${SKILLS[k].icon} <b>${SKILLS[k].name}</b>`)}<br><span class="small muted">${SKILLS[k].desc}</span></span><span class="tag g">Lv${p.skills[k]}${p.skills[k] >= SKILL_MAX_LV || (k === 'weakfoot' && p.weakFoot >= 5) ? ' MAX' : ''}</span></div>`).join('') : '<p class="small muted">아직 습득한 스킬이 없습니다. 월간 계획에서 스킬 수련을 선택하세요.</p>'}
     ${p.rec ? `<p class="small muted">추천 스킬: ${p.rec.map(k => SKILLS[k].name).join(', ')}</p>` : ''}</div>`;
   const mil = p.nat === 'KOR' ? (p.mil.exempt ? '병역 특례 (예술·체육요원)' : p.mil.done ? '군필' : p.mil.serving ? '김천 상무 복무 중' : p.mil.planned ? '시즌 후 입대 예정' : '미필 (만 28세 전 입대 필요)') : null;
   h += `<div class="card"><h2>📄 계약 · 상태</h2><ul class="list">
     <li class="row between"><span>소속</span><b>${clubLogo(p.club, 18)} ${esc(E.clubName(p.club))}</b></li>
-    <li class="row between"><span>역할</span>${roleTag(p.contract.role)}</li>
+    <li class="row between"><span>${ib('role', '역할')}</span>${roleTag(p.contract.role)}</li>
     <li class="row between"><span>계약 기간</span><b>${Math.max(0, p.contract.years)}년 남음${p.contract.type === 'loan' ? ' (임대)' : ''}</b></li>
     <li class="row between"><span>연봉</span><b>${money(p.contract.salary)}</b></li>
     <li class="row between"><span>보유 자금</span><b>${money(p.money)}</b></li>
-    <li class="row between"><span>시장 가치</span><b>${E.fmtFee(E.marketValue())}</b></li>
+    <li class="row between"><span>${ib('value', '시장 가치')}</span><b>${E.fmtFee(E.marketValue())}</b></li>
     <li class="row between"><span>에이전트</span><b>${p.agent === 'big' ? '대형 에이전시' : p.agent === 'small' ? '소형 에이전시' : '없음'}</b></li>
     <li class="row between"><span>A매치</span><b>${p.intl.caps}경기 ${p.intl.goals}골</b></li>
     ${mil ? `<li class="row between"><span>병역</span><b>${mil}</b></li>` : ''}
@@ -614,6 +684,8 @@ document.addEventListener('click', e => {
   const a = b.dataset.act, arg = b.dataset.arg;
   const S = st();
   switch (a) {
+    case 'info': openInfo(arg); break;
+    case 'infoclose': closeInfo(); break;
     case 'tab': ui.tab = arg; render(); scrollTop(); break;
     case 'continue': { const s = loadSave(); if (s) { E.load(s); ui.screen = 'game'; ui.tab = 'play'; ui.draft = null; render(); } break; }
     case 'new':
@@ -660,6 +732,8 @@ document.addEventListener('click', e => {
     default: break;
   }
 });
+document.addEventListener('click', e => { if (e.target.id === 'sheet') closeInfo(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeInfo(); });
 document.addEventListener('change', e => {
   if (e.target.id === 'cYouth') { readCreate(); render(); }
   if (e.target.id === 'cNat') { readCreate(); ui.create.cands = null; ui.create.pick = null; ui.create.youth = null; render(); }
