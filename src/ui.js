@@ -383,7 +383,7 @@ function renderShop() {
   const income = E.monthlySalary() + (E.CLUBS[p.club].youth ? 80 : 0), fixed = E.staffCost(), net = income - fixed;
   let h = `<div class="card hl"><h2>💼 투자</h2><div class="grid3"><div class="stat"><b class="${p.money < 0 ? 'down' : ''}">${money(p.money)}</b><span>보유 자금</span></div><div class="stat"><b>${money(income)}</b><span>월 수입</span></div><div class="stat"><b>${money(fixed)}</b><span>월 고정 지출</span></div></div>
     <p class="small" style="margin-top:8px">월 수지 <b class="${net < 0 ? 'down' : 'up'}">${net >= 0 ? '+' : ''}${money(net)}</b>${net < 0 ? ' — 고정 지출이 수입보다 많아 매달 자금이 줄어듭니다.' : ''}</p>
-    <p class="small muted">스태프·주거 계약은 <b>직접 해지하기 전까지 유지</b>됩니다. 자금이 모자라면 부채(최대 ${money(E.debtLimit())}, 월급 3개월치)로 버티고, 한도를 넘을 때만 가장 비싼 계약이 <b>한 단계씩</b> 낮아집니다(1단계 아래로는 내려가지 않음). 부채 중에는 새 구매·상위 계약이 막힙니다.</p></div>`;
+    <p class="small muted">스태프·주거 계약은 <b>직접 해지하기 전까지 유지</b>됩니다. 매달 시작할 때 비용을 낼 수 있으면 그 달 효과가 적용되고, 자금이 부족하면 그 달은 <b>비용도 나가지 않고 효과도 없습니다</b>. (결제 순서: 트레이너 → 영양·메디컬 → 주거)</p></div>`;
   h += `<div class="card"><h2>${clubLogo(p.club, 22)} ${ib('facility', '구단 시설')} <span class="tag y">${'★'.repeat(lvl)}${'☆'.repeat(5 - lvl)}</span></h2>
     <p class="small">${esc(E.clubName(p.club))}: 성장 ×${f.growth} · 스킬 수련 ×${f.skill} · 부상 위험 ×${f.injury} · 월 피로 회복 +${f.recovery}</p>
     <p class="small muted">더 좋은 구단으로 이적하면 시설 등급이 올라갑니다.</p>
@@ -393,10 +393,12 @@ function renderShop() {
     const Q = EQUIPMENT[k], cur = eq[k] || 0;
     h += `<h3>${Q.icon} ${Q.name} — 현재: ${esc(Q.tiers[cur].name)}</h3>${Q.tiers.map((x, i) => i === 0 ? '' : `<div class="opt ${i <= cur ? 'on' : ''}"><div class="row between"><b>${esc(x.name)}</b>${i <= cur ? '<span class="tag g">보유</span>' : `<button class="chip" data-act="buy" data-arg="${k}:${i}" ${p.money < x.cost ? 'disabled' : ''}>${money(x.cost)} 구매</button>`}</div><span class="small">${fxText(x.fx)}</span></div>`).join('')}`;
   }
+  const pv = E.staffPreview();
   h += `</div><div class="card"><h2>🧑‍💼 스태프 · 주거 <span class="small muted">(월 비용)</span></h2>`;
   for (const k in STAFF) {
     const Q = STAFF[k], cur = sf[k] || 0;
-    h += `<h3>${Q.icon} ${Q.name} — 현재: ${esc(Q.tiers[cur].name)}${k === 'trainer' && p.trainerMonths > 0 ? ` <span class="tag g">패키지 ${p.trainerMonths}개월</span>` : ''}</h3>${Q.tiers.map((x, i) => `<div class="opt ${i === cur ? 'on' : ''}"><div class="row between"><b>${esc(x.name)}</b>${i === cur ? '<span class="tag g">계약 중</span>' : `<button class="chip" data-act="hire" data-arg="${k}:${i}" ${i > cur && p.money < x.cost ? 'disabled' : ''}>${i === 0 ? '해지' : `월 ${money(x.cost)} ${i > cur ? '계약' : '변경'}`}</button>`}</div><span class="small">${fxText(x.fx)}${i > cur && x.cost > net + (STAFF[k].tiers[cur].cost) ? ' · <span class="down">수입보다 비쌈</span>' : ''}</span></div>`).join('')}`;
+    const st8 = pv[k] === true ? '<span class="tag g">다음 달 효과 적용</span>' : pv[k] === false ? '<span class="tag r">자금 부족 · 다음 달 미적용</span>' : '';
+    h += `<h3>${Q.icon} ${Q.name} — 현재: ${esc(Q.tiers[cur].name)} ${st8}${k === 'trainer' && p.trainerMonths > 0 ? ` <span class="tag g">패키지 ${p.trainerMonths}개월</span>` : ''}</h3>${Q.tiers.map((x, i) => `<div class="opt ${i === cur ? 'on' : ''}"><div class="row between"><b>${esc(x.name)}</b>${i === cur ? '<span class="tag g">계약 중</span>' : `<button class="chip" data-act="hire" data-arg="${k}:${i}">${i === 0 ? '해지' : `월 ${money(x.cost)} ${i > cur ? '계약' : '변경'}`}</button>`}</div><span class="small">${fxText(x.fx)}${i > cur && x.cost > net + (STAFF[k].tiers[cur].cost) ? ' · <span class="down">수입보다 비쌈</span>' : ''}</span></div>`).join('')}`;
   }
   return h + '</div>';
 }
@@ -841,7 +843,7 @@ document.addEventListener('click', e => {
     case 'submit': act(() => { E.submitPlan(ui.draft); ui.draft = null; }); scrollTop(); break;
     case 'auto': act(() => { const d = ui.draft; E.autoRun(d, arg); ui.draft = null; }); scrollTop(); break;
     case 'buy': { const [k, i] = arg.split(':'); const err = E.buyEquip(k, +i); act(() => {}); toast(err || `${EQUIPMENT[k].tiers[+i].name} 구입 완료`); break; }
-    case 'hire': { const [k, i] = arg.split(':'); const err = E.setStaff(k, +i); act(() => {}); toast(err || (+i ? `${STAFF[k].tiers[+i].name} 계약 (이번 달 진행분부터 효과·비용 적용)` : `${STAFF[k].name} 계약 해지`)); break; }
+    case 'hire': { const [k, i] = arg.split(':'); const err = E.setStaff(k, +i); act(() => {}); toast(err || (+i ? `${STAFF[k].tiers[+i].name} 계약 — 비용을 낼 수 있는 달마다 효과 적용` : `${STAFF[k].name} 계약 해지`)); break; }
     case 'mom': act(() => E.resolveMoment(+arg)); break;
     case 'mdone': act(() => E.matchDone()); scrollTop(); break;
     case 'ev': act(() => E.eventChoice(+arg)); break;

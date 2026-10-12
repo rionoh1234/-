@@ -1300,7 +1300,7 @@ function bonuses(withFacility) {
   const p = S.p, b = { growth: 1, skill: 1, injury: 1, recovery: 0, dec: 0, morale: 0 };
   const add = fx => { for (const k in fx) { if (k === 'growth' || k === 'skill' || k === 'injury') b[k] *= fx[k]; else b[k] += fx[k]; } };
   for (const k in EQUIPMENT) add(EQUIPMENT[k].tiers[p.equip[k] || 0].fx);
-  for (const k in STAFF) add(STAFF[k].tiers[staffTier(k)].fx);
+  for (const k in STAFF) { if (p.staffActive && p.staffActive[k] === false) continue; add(STAFF[k].tiers[staffTier(k)].fx); }
   if (p.perk) { b.growth *= p.perk.growth || 1; b.skill *= p.perk.skill || 1; b.injury *= p.perk.injury || 1; }
   if (withFacility !== false) { const f = fac(); b.growth *= f.growth; b.skill *= f.skill; b.injury *= f.injury; b.recovery += f.recovery; }
   return b;
@@ -1327,29 +1327,41 @@ function setStaff(kind, tier) {
   ensureInv();
   const p = S.p, T = STAFF[kind];
   if (!T || !T.tiers[tier]) return '잘못된 선택입니다.';
-  const cur = p.staff[kind] || 0;
-  if (tier > cur && p.money < T.tiers[tier].cost) return '첫 달 비용을 낼 자금이 부족합니다.';
   p.staff[kind] = tier;
+  if (p.staffActive) delete p.staffActive[kind];
   return '';
 }
-// 부채 한도: 월급 3개월치 (최소 500만 원). 한도 안에서는 계약 유지, 넘으면 한 단계씩만 낮춤 (1단계 아래로는 내리지 않음)
-const debtLimit = () => Math.max(500, monthlySalary() * 3);
+// 스태프·주거: 계약은 직접 해지하기 전까지 유지. 매달 시작 시 비용을 낼 수 있는 계약만 그 달 효과 적용 (부채 없음)
+const STAFF_ORDER = ['trainer', 'nutri', 'house'];
+function staffMonthCost(k) {
+  const t = S.p.staff[k] || 0;
+  if (k === 'trainer' && S.p.trainerMonths > 0 && t <= 2) return 0;
+  return STAFF[k].tiers[t].cost;
+}
+// 지금 자금으로 이번 달 어떤 계약이 적용될지 (UI 미리보기 겸용)
+function staffPreview(money) {
+  ensureInv();
+  let m = money != null ? money : S.p.money;
+  const out = {};
+  for (const k of STAFF_ORDER) {
+    const t = S.p.staff[k] || 0, c = staffMonthCost(k);
+    if (!t && !(k === 'trainer' && S.p.trainerMonths > 0)) { out[k] = null; continue; }
+    if (m >= c) { m -= c; out[k] = true; } else out[k] = false;
+  }
+  return out;
+}
 function payStaff(notes) {
   ensureInv();
-  const p = S.p, cost = staffCost();
-  p.money -= cost;
-  const limit = debtLimit();
-  while (p.money < -limit) {
-    const active = Object.keys(STAFF).filter(k => (p.staff[k] || 0) > 1);
-    if (!active.length) break;
-    const k = active.sort((a, b) => STAFF[b].tiers[p.staff[b]].cost - STAFF[a].tiers[p.staff[a]].cost)[0];
-    const from = STAFF[k].tiers[p.staff[k]], to = STAFF[k].tiers[p.staff[k] - 1];
-    p.money += from.cost - to.cost;
-    p.staff[k]--;
-    notes.push(`⬇️ 부채 한도(${fmtMoney(-limit)})를 넘어 ${josa(STAFF[k].name, '을', '를')} 한 단계 낮췄습니다: ${from.name} → ${to.name}`);
+  const p = S.p, pv = staffPreview();
+  let paid = 0;
+  p.staffActive = {};
+  for (const k of STAFF_ORDER) {
+    if (pv[k] === null) continue;
+    p.staffActive[k] = pv[k];
+    if (pv[k]) { const c = staffMonthCost(k); p.money -= c; paid += c; }
+    else notes.push(`⏸️ 자금 부족으로 이번 달 ${STAFF[k].name}(${STAFF[k].tiers[p.staff[k] || 0].name}) 효과가 적용되지 않았습니다. 계약은 유지되며, 비용을 낼 수 있는 달부터 다시 적용됩니다.`);
   }
-  if (p.money < 0) notes.push(`⚠️ 부채 ${fmtMoney(-p.money)} (한도 ${fmtMoney(limit)}) — 계약은 유지되며, 부채 중에는 새 구매·상위 계약이 막힙니다.`);
-  return cost;
+  return paid;
 }
 const trainerCost = () => Math.max(100, Math.round(monthlySalary() * 0.08));
 const nutritionCost = () => Math.max(50, Math.round(monthlySalary() * 0.04));
@@ -1415,8 +1427,10 @@ function submitPlan(plan, auto) {
     plan, intensity: plan.intensity, mins: 0, reserveMins: 0, possible: 0, ratings: [], g: 0, a: 0, lines: [],
     decision: plan.act === 'video' ? 4 : 0, big: plan.act === 'mental' ? 3 : 0, nutrition: plan.act === 'nutrition',
     ovrBefore: ovrF(), attrsBefore: Object.assign({}, p.attrs), moneyBefore: p.money, injuredNew: null, notes: [],
-    B: bonuses(), auto: !!auto,
+    B: null, auto: !!auto,
   };
+  S.mctx.staffPaid = payStaff(S.mctx.notes);
+  S.mctx.B = bonuses();
   if (cost) p.money -= cost;
   const fx = S.monthFx || [];
   fx.forEach((f, i) => { if (auto || i !== S.featuredIdx) simFixture(f); });
@@ -1544,7 +1558,6 @@ function finalizeMonth() {
   // 돈
   const sal = monthlySalary() * (p.agent === 'big' ? 0.9 : 1) + (curClub().youth ? 80 : 0);
   p.money += Math.round(sal);
-  const staffPaid = payStaff(mc.notes);
   if (p.trainerMonths > 0) p.trainerMonths--;
   // 표류
   p.trust = clamp(p.trust + (50 - p.trust) * 0.03, 0, 100);
@@ -2334,7 +2347,7 @@ var Engine = {
   get S() { return S; }, load(s) { S = s; }, genCandidates, newCareer, submitPlan, resolveMoment, matchDone, eventChoice, eventAck,
   windowChoice, seasonAck, tourNext, tourAck, offAction, defaultPlan, skillList, skillStatus, ovr, ovrF, overallOf, marketValue, cs,
   clubName, CLUBS, leagueOf, sortedTable, trainerCost, nutritionCost, actCost, monthlySalary, careerSummary, fmtMoney, fmtFee, potLabel,
-  attrKeys, group, cond, josa, TOURS, debtLimit, perksFrom, genPlayer, legacyPoints, autoRun, buyEquip, setStaff, bonuses, staffCost, facLevel, fac,
+  attrKeys, group, cond, josa, TOURS, staffPreview, staffMonthCost, perksFrom, genPlayer, legacyPoints, autoRun, buyEquip, setStaff, bonuses, staffCost, facLevel, fac,
 };
 /*NODE*/
 if (typeof module !== 'undefined') module.exports = Engine;
