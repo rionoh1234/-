@@ -1327,21 +1327,28 @@ function setStaff(kind, tier) {
   ensureInv();
   const p = S.p, T = STAFF[kind];
   if (!T || !T.tiers[tier]) return '잘못된 선택입니다.';
-  if (tier > 0 && p.money < T.tiers[tier].cost) return '첫 달 비용을 낼 자금이 부족합니다.';
+  const cur = p.staff[kind] || 0;
+  if (tier > cur && p.money < T.tiers[tier].cost) return '첫 달 비용을 낼 자금이 부족합니다.';
   p.staff[kind] = tier;
   return '';
 }
+// 부채 한도: 월급 3개월치 (최소 500만 원). 한도 안에서는 계약 유지, 넘으면 한 단계씩만 낮춤 (1단계 아래로는 내리지 않음)
+const debtLimit = () => Math.max(500, monthlySalary() * 3);
 function payStaff(notes) {
+  ensureInv();
   const p = S.p, cost = staffCost();
   p.money -= cost;
-  while (p.money < 0) {
-    const active = Object.keys(STAFF).filter(k => (p.staff[k] || 0) > 0);
+  const limit = debtLimit();
+  while (p.money < -limit) {
+    const active = Object.keys(STAFF).filter(k => (p.staff[k] || 0) > 1);
     if (!active.length) break;
     const k = active.sort((a, b) => STAFF[b].tiers[p.staff[b]].cost - STAFF[a].tiers[p.staff[a]].cost)[0];
-    p.money += STAFF[k].tiers[p.staff[k]].cost;
-    notes.push(`💸 자금 부족으로 ${STAFF[k].name}(${STAFF[k].tiers[p.staff[k]].name}) 계약을 해지했습니다.`);
-    p.staff[k] = 0;
+    const from = STAFF[k].tiers[p.staff[k]], to = STAFF[k].tiers[p.staff[k] - 1];
+    p.money += from.cost - to.cost;
+    p.staff[k]--;
+    notes.push(`⬇️ 부채 한도(${fmtMoney(-limit)})를 넘어 ${josa(STAFF[k].name, '을', '를')} 한 단계 낮췄습니다: ${from.name} → ${to.name}`);
   }
+  if (p.money < 0) notes.push(`⚠️ 부채 ${fmtMoney(-p.money)} (한도 ${fmtMoney(limit)}) — 계약은 유지되며, 부채 중에는 새 구매·상위 계약이 막힙니다.`);
   return cost;
 }
 const trainerCost = () => Math.max(100, Math.round(monthlySalary() * 0.08));
@@ -2327,7 +2334,7 @@ var Engine = {
   get S() { return S; }, load(s) { S = s; }, genCandidates, newCareer, submitPlan, resolveMoment, matchDone, eventChoice, eventAck,
   windowChoice, seasonAck, tourNext, tourAck, offAction, defaultPlan, skillList, skillStatus, ovr, ovrF, overallOf, marketValue, cs,
   clubName, CLUBS, leagueOf, sortedTable, trainerCost, nutritionCost, actCost, monthlySalary, careerSummary, fmtMoney, fmtFee, potLabel,
-  attrKeys, group, cond, josa, TOURS, perksFrom, genPlayer, legacyPoints, autoRun, buyEquip, setStaff, bonuses, staffCost, facLevel, fac,
+  attrKeys, group, cond, josa, TOURS, debtLimit, perksFrom, genPlayer, legacyPoints, autoRun, buyEquip, setStaff, bonuses, staffCost, facLevel, fac,
 };
 /*NODE*/
 if (typeof module !== 'undefined') module.exports = Engine;
