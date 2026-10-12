@@ -64,7 +64,7 @@ function playCareer(seed, nat, pos, verbose, levels) {
       const stayScore = E.cs(S.p.club) + (S.p.contract.role === '주전' ? 2 : 0);
       if (W.mustChoose || (bi >= 0 && bs > stayScore + 1)) E.windowChoice(bi < 0 ? 0 : bi); else E.windowChoice(-1);
     } else if (ph === 'seasonEnd') E.seasonAck();
-    else if (ph === 'tournament') { if (S.pending.tour.alive) E.tourNext(); else E.tourAck(); }
+    else if (ph === 'tournament') { if (S.pending.tour.invite) E.tourJoin(); else if (S.pending.tour.alive) E.tourNext(); else E.tourAck(); }
     else if (ph === 'offseason') E.offAction(S.p.age >= 36 && S.pending.off.canRetire ? 'retire' : 'continue');
     else throw new Error('unknown phase ' + ph);
   }

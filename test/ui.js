@@ -26,7 +26,7 @@ const out = process.env.SHOT_DIR || path.join(__dirname, 'shots');
       await page.screenshot({ path: `${out}/p-${phase}-${shots[phase]}.png`, fullPage: true });
     }
     const btn = await page.$('[data-act=mom]') || await page.$('[data-act=mdone]') || await page.$('[data-act=evok]') || await page.$('[data-act=ev]:not([disabled])')
-      || await page.$('[data-act=win]') || await page.$('[data-act=sack]') || await page.$('[data-act=tnext]') || await page.$('[data-act=tack]')
+      || await page.$('[data-act=win]') || await page.$('[data-act=sack]') || await page.$('[data-act=tjoin]') || await page.$('[data-act=tnext]') || await page.$('[data-act=tack]')
       || await page.$('[data-act=off][data-arg=continue]') || await page.$('[data-act=off]') || await page.$('[data-act=submit]');
     if (!btn) { console.log('no button at phase', phase); break; }
     if (phase === 'plan' && i % 5 === 0) {

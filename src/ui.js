@@ -640,10 +640,17 @@ function renderSeasonEnd() {
 /* ---------- 대표팀 대회 ---------- */
 function renderTour() {
   const S = st(), tr = S.pending.tour, p = S.p;
+  if (tr.invite) {
+    return `<div class="card gold"><h2>${compLogo(tr.name, 22) || '🌍'} ${esc(tr.name)} 소집 통보</h2>
+      <p>${flag(p.nat, 16)} ${NATIONS[p.nat].name}${tr.u23 ? ' U-23' : ''} 대표팀이 당신을 소집했습니다.</p>
+      <p class="small muted">참가하면 대표팀 경기 기록·명성·우승 기회를 얻습니다.${p.nat === 'KOR' && !p.mil.exempt && !p.mil.done && (tr.id === 'AG' || tr.id === 'OLY') ? ' <b>병역 특례 기회</b>가 걸린 대회입니다.' : ''} 불참하면 명성이 조금 떨어집니다.</p>
+      <div class="btn-row"><button class="btn" data-act="tjoin">참가한다</button><button class="btn sec" data-act="tdecline">불참한다</button></div>
+      <p class="note">앞으로 대표팀 소집을 모두 거절하려면 [선수] 탭에서 「국가대표 차출 거부」를 켜세요.</p></div>`;
+  }
   const stage = tr.alive ? (tr.bronze ? '3·4위전' : E.TOURS[tr.id].ko[tr.si]) : '';
   return `<div class="card gold"><h2>${compLogo(tr.name, 22) || '🌍'} ${esc(tr.name)}</h2><p class="small">${flag(p.nat, 16)} ${NATIONS[p.nat].name}${tr.u23 ? ' U-23' : ''} 대표팀에 발탁됐습니다!</p>
     <ul class="list">${tr.games.map(l => `<li class="row between"><span>${esc(l.stage)} vs ${flag(l.opp, 14)} ${esc(l.opp)}<br><span class="small muted">${resultTxt(l)}${l.mins ? ` · ${l.mins}분${l.g ? ` · ⚽${l.g}` : ''}${l.a ? ` · 🅰️${l.a}` : ''}` : ''}</span></span><span>${statusTag(l.status)} ${l.rating != null ? `<b>${l.rating.toFixed(1)}</b>` : ''}</span></li>`).join('')}</ul>
-    ${tr.alive ? `<p class="small">조별리그 ${tr.pts}점 — 토너먼트 진행 중</p><button class="btn" data-act="tnext">⭐ ${stage} 경기 ▶</button>`
+    ${tr.alive ? `<p class="small">조별리그 ${tr.pts}점 — 토너먼트 진행 중</p><button class="btn" data-act="tnext">⭐ ${stage} 경기 직접 플레이 ▶</button><button class="btn sec" data-act="tauto">⏭️ 대회 끝까지 자동 진행</button>`
       : `<p><b>최종 성적: ${esc(tr.result)}</b></p>${tr.exempt ? '<p class="small">🎖️ 병역 특례 대상이 됐습니다! (예술·체육요원 편입)</p>' : ''}<button class="btn" data-act="tack">계속 ▶</button>`}</div>`;
 }
 
@@ -710,6 +717,7 @@ function renderPlayer() {
     <li class="row between"><span>${ib('value', '시장 가치')}</span><b>${E.fmtFee(E.marketValue())}</b></li>
     <li class="row between"><span>에이전트</span><b>${p.agent === 'big' ? '대형 에이전시' : p.agent === 'small' ? '소형 에이전시' : '없음'}</b></li>
     <li class="row between"><span>A매치</span><b>${p.intl.caps}경기 ${p.intl.goals}골</b></li>
+    <li class="row between"><span>국가대표 차출</span>${p.ntDecline ? '<button class="chip" data-act="ntdecline" data-arg="off">거부 중 · 다시 응하기</button>' : '<button class="chip" data-act="ntdecline" data-arg="on">응함 · 차출 거부하기</button>'}</li>
     ${mil ? `<li class="row between"><span>병역</span><b>${mil}</b></li>` : ''}
   </ul></div>`;
   return h;
@@ -866,6 +874,10 @@ document.addEventListener('click', e => {
     case 'win': act(() => E.windowChoice(+arg)); scrollTop(); break;
     case 'sack': act(() => E.seasonAck()); scrollTop(); break;
     case 'tnext': act(() => E.tourNext()); scrollTop(); break;
+    case 'tauto': act(() => E.tourAuto()); scrollTop(); break;
+    case 'tjoin': act(() => E.tourJoin()); scrollTop(); break;
+    case 'tdecline': act(() => E.tourDecline()); scrollTop(); break;
+    case 'ntdecline': act(() => E.setNtDecline(arg === 'on')); toast(arg === 'on' ? '국가대표 차출을 거부합니다. A매치·대회 소집이 오지 않습니다.' : '국가대표 차출에 다시 응합니다.'); break;
     case 'tack': act(() => E.tourAck()); scrollTop(); break;
     case 'off': act(() => E.offAction(arg)); scrollTop(); break;
     case 'theme': try { localStorage.setItem(THEME_KEY, arg); } catch (err) { /* noop */ } applyTheme(); render(); break;

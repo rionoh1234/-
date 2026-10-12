@@ -377,7 +377,7 @@ function prepareMonth() {
 
 function seniorCallupCheck() {
   const p = S.p, N = NATIONS[p.nat];
-  if (p.age < 18 || p.injury > 2 || p.mil.serving && false) return false;
+  if (p.age < 18 || p.injury > 2 || p.ntDecline) return false;
   const score = ovrF() + p.rep * 0.05 + normal() * 1.2;
   return score >= N.thr;
 }
@@ -2078,6 +2078,7 @@ const TOURS = {
 function determineTours() {
   const p = S.p, N = NATIONS[p.nat], E = S.year + 1, out = [];
   if (p.age < 17) return out;
+  if (p.ntDecline) return out;
   const senior = () => p.age >= 18 && ovrF() + p.rep * 0.05 + normal() * 1.2 >= N.thr;
   const u23 = () => {
     if (p.age <= 23) return ovrF() + normal() * 1.5 >= N.thr - 9;
@@ -2101,6 +2102,26 @@ function ntPool(T) {
 }
 
 function startTour(id) {
+  S.pending.tour = { id, name: TOURS[id].name, u23: !!TOURS[id].u23, invite: true, alive: true, games: [], result: '' };
+  S.phase = 'tournament';
+}
+function tourDecline() {
+  const tr = S.pending.tour;
+  if (S.phase !== 'tournament' || !tr || !tr.invite) return;
+  S.p.rep = clamp(S.p.rep - 2, 0, 100);
+  addNews(`${S.p.name}, ${tr.name} 대표팀 소집 불참`);
+  S.pending.tour = null;
+  nextTourOrOff();
+}
+function setNtDecline(on) {
+  S.p.ntDecline = !!on;
+  addNews(on ? `${S.p.name}, 국가대표 은퇴 선언` : `${S.p.name}, 국가대표 복귀 의사 표명`);
+  if (on) S.intlThisMonth = false;
+}
+function tourJoin() {
+  const tr0 = S.pending.tour;
+  if (S.phase !== 'tournament' || !tr0 || !tr0.invite) return;
+  const id = tr0.id;
   const T = TOURS[id], p = S.p, N = NATIONS[p.nat];
   const base = N.str - (T.u23 ? 8 : 0);
   const pool = ntPool(T);
@@ -2123,7 +2144,7 @@ function tourStage() { const tr = S.pending.tour; return tr.bronze ? '3·4위전
 
 function tourNext() {
   const tr = S.pending.tour;
-  if (S.phase !== 'tournament' || !tr.alive) return;
+  if (S.phase !== 'tournament' || !tr.alive || tr.invite) return;
   const T = TOURS[tr.id];
   const stage = tourStage();
   const cand = ntPool(T).filter(x => !tr.used.includes(x[0]));
@@ -2134,10 +2155,31 @@ function tourNext() {
   startFeatured(fx, { kind: 'tour' });
 }
 
+function tourAuto() {
+  const tr = S.pending.tour;
+  if (S.phase !== 'tournament' || !tr || tr.invite) return;
+  const T = TOURS[tr.id];
+  for (let i = 0; i < 8 && tr.alive; i++) {
+    const stage = tourStage();
+    const cand = ntPool(T).filter(x => !tr.used.includes(x[0]));
+    const depth = tr.si / T.ko.length;
+    const [opp, str] = wpick(cand, x => Math.exp((x[1] - 75) / 6 * (0.5 + depth)));
+    tr.used.push(opp);
+    const fx = { type: 'intl', comp: T.name, stage, oppName: opp, oppStr: str - (T.u23 ? 8 : 0), neutral: true, teamBase: tr.base, imp: 7 + tr.si, ko: true, u23: tr.u23 };
+    const line = simFixture(fx);
+    tourResult({ gf: line.gf, ga: line.ga, pens: line.pens, g: line.g, mins: line.mins, line });
+  }
+}
+
 function tourAfterMatch() {
-  const M = S.pending.match, tr = S.pending.tour, T = TOURS[tr.id], p = S.p;
-  const r = M.result;
-  if (M.part.mins > 0) { p.intl.caps++; p.intl.goals += r.g; }
+  const M = S.pending.match, r = M.result;
+  tourResult({ gf: r.gf, ga: r.ga, pens: r.pens, g: r.g, mins: M.part.mins, line: r.line });
+  S.pending.match = null;
+  S.phase = 'tournament';
+}
+function tourResult(r) {
+  const tr = S.pending.tour, T = TOURS[tr.id], p = S.p;
+  if (r.mins > 0) { p.intl.caps++; p.intl.goals += r.g; }
   tr.games.push(r.line);
   const won = r.gf > r.ga || (r.gf === r.ga && r.pens);
   const stage = tourStage();
@@ -2148,8 +2190,6 @@ function tourAfterMatch() {
     else { tr.alive = false; tr.result = `${stage} 탈락`; }
   } else tr.si++;
   if (!tr.alive) finishTour();
-  S.pending.match = null;
-  S.phase = 'tournament';
 }
 
 function finishTour() {
@@ -2166,7 +2206,7 @@ function finishTour() {
 }
 
 function tourAck() {
-  if (S.phase !== 'tournament' || S.pending.tour.alive) return;
+  if (S.phase !== 'tournament' || S.pending.tour.alive || S.pending.tour.invite) return;
   S.pending.tour = null;
   nextTourOrOff();
 }
@@ -2363,7 +2403,7 @@ function potLabel() {
 
 var Engine = {
   get S() { return S; }, load(s) { S = s; }, genCandidates, newCareer, submitPlan, resolveMoment, matchDone, eventChoice, eventAck,
-  windowChoice, seasonAck, tourNext, tourAck, offAction, defaultPlan, skillList, skillStatus, ovr, ovrF, overallOf, marketValue, cs,
+  windowChoice, seasonAck, tourNext, tourAck, tourJoin, tourDecline, tourAuto, setNtDecline, offAction, defaultPlan, skillList, skillStatus, ovr, ovrF, overallOf, marketValue, cs,
   clubName, CLUBS, leagueOf, sortedTable, trainerCost, nutritionCost, actCost, monthlySalary, careerSummary, fmtMoney, fmtFee, potLabel,
   attrKeys, group, cond, josa, TOURS, ensureAging, staffPreview, staffMonthCost, perksFrom, genPlayer, legacyPoints, autoRun, buyEquip, setStaff, bonuses, staffCost, facLevel, fac,
 };
