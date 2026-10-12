@@ -17,5 +17,7 @@ if (artifact) {
   html = rd('src/template.html').replace('/*STYLE*/', () => rd('src/style.css')).replace('/*DATA*/\n/*ENGINE*/\n/*UI*/', () => js);
 }
 const out = path.join(root, artifact ? 'dist/artifact.html' : 'index.html');
+// 문법 검사: 스크립트가 해석되지 않으면 빌드 중단
+try { new Function(html.split('<script>')[1].split('</script>')[0]); } catch (e) { console.error('스크립트 문법 오류:', e.message); process.exit(1); }
 fs.writeFileSync(out, html);
 console.log(path.relative(root, out), (html.length / 1024).toFixed(1) + 'KB');

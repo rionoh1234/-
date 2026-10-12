@@ -48,7 +48,8 @@ function migrateLegacy() {
     const refund = [30, 120].slice(0, L.levels.scout).reduce((a, b) => a + b, 0);
     L.lp += refund; delete L.levels.scout; msgs.push(`스카우트 네트워크 폐지 · ${refund} LP 환급`);
   }
-  if (!L.grants.includes('gift300_v1')) { L.lp += 300; L.grants.push('gift300_v1'); msgs.push('보너스 300 LP 지급'); }
+  if (!L.grants.includes('gift300_v1')) { L.lp += 300; L.earned += 300; L.grants.push('gift300_v1'); msgs.push('보너스 300 LP 지급'); }
+  if (!L.grants.includes('restore800_v1')) { L.lp += 800; L.earned += 800; L.grants.push('restore800_v1'); msgs.push('레거시 복구 800 LP 지급'); }
   if (msgs.length) { setLegacy(L); setTimeout(() => toast('🏅 ' + msgs.join(' · ')), 300); }
 }
 function setLegacy(L) { L.ts = Date.now(); lsSet(LEGACY_KEY, JSON.stringify(L)); cloud.legDirty = true; queueCloud(); }
@@ -85,18 +86,21 @@ async function pushCloud() {
   }
 }
 async function initCloud() {
-  if (!(window.claude && typeof window.claude.use === 'function')) return;
+  if (!(window.claude && typeof window.claude.use === 'function')) { migrateLegacy(); render(); return; }
   cloud.state = 'connecting'; paintCloud();
   try {
     const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
     const uid = user ? await user.id() : null;
-    if (!db || !uid) { cloud.state = 'off'; paintCloud(); return; }
+    if (!db || !uid) { cloud.state = 'off'; paintCloud(); migrateLegacy(); render(); return; }
     cloud.db = db; cloud.uid = uid;
     const [sv, hf, lg] = await Promise.all([cloudRef('save').get(), cloudRef('hof').get(), cloudRef('legacy').get()]);
-    // 레거시: 더 최근 것을 사용
+    // 레거시: 누적 획득 LP(earned)가 큰 기록 우선, 같으면 최신 기록 (빈 기록이 진짜 기록을 덮어쓰지 않도록)
     const ld = lg.exists ? lg.data() : null, myLeg = getLegacy();
-    if (ld && (ld.ts || 0) > (myLeg.ts || 0)) { lsSet(LEGACY_KEY, ld.data || '{}'); migrateLegacy(); render(); }
-    else if ((myLeg.ts || 0) > (ld ? ld.ts || 0 : 0)) cloud.legDirty = true;
+    let remoteLeg = null;
+    try { remoteLeg = ld && ld.data ? JSON.parse(ld.data) : null; } catch (e) { remoteLeg = null; }
+    const better = (a, b) => (a.earned || 0) > (b.earned || 0) || ((a.earned || 0) === (b.earned || 0) && (a.ts || 0) > (b.ts || 0));
+    if (remoteLeg && better(remoteLeg, myLeg)) { lsSet(LEGACY_KEY, ld.data); render(); }
+    else if (!remoteLeg || better(myLeg, remoteLeg)) cloud.legDirty = true;
     // 저장 데이터: 더 최근 것을 사용
     const local = loadSave();
     const localTs = Math.max(local ? local.savedAt || 0 : 0, +(lsGet(SAVE_KEY + '_clearedAt') || 0));
@@ -116,7 +120,8 @@ async function initCloud() {
     cloud.state = 'on';
     paintCloud();
     if (cloud.dirty || cloud.hofDirty || cloud.legDirty) pushCloud();
-  } catch (e) { cloud.state = 'err'; paintCloud(); }
+    migrateLegacy(); render();
+  } catch (e) { cloud.state = 'err'; paintCloud(); migrateLegacy(); render(); }
 }
 function cloudText() {
   return { on: '☁️ 계정에 자동 저장 중 (다른 기기에서도 이어하기 가능)', connecting: '☁️ 계정 저장소 연결 중…', err: '⚠️ 계정 저장 실패 — 이 브라우저에만 저장됨', off: '💾 이 브라우저에만 저장됩니다' }[cloud.state];
@@ -910,6 +915,5 @@ function importSave(file) {
 }
 
 applyTheme();
-migrateLegacy();
 render();
-initCloud();
+initCloud(); // 레거시 보너스 지급(migrateLegacy)은 계정 기록을 불러온 뒤 실행
