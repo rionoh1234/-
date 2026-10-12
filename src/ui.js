@@ -333,6 +333,15 @@ const INFO = {
       <div class="scroll-x"><table class="tb"><tr><th>등급</th><th>구단 전력</th><th>성장</th><th>스킬</th><th>부상</th><th>회복</th></tr>
       ${FACILITY.slice(1).map((f, i) => `<tr class="${i + 1 === lvl ? 'me' : ''}"><td>${f.name}</td><td>${i === 0 ? '~55' : i === 4 ? '82~' : `${FACILITY[i].max + 1}~${f.max}`}</td><td>×${f.growth}</td><td>×${f.skill}</td><td>×${f.injury}</td><td>+${f.recovery}</td></tr>`).join('')}</table></div>`];
   },
+  aging: () => {
+    const p = st().p, a = p.revealed.aging ? E.ensureAging() : null;
+    return ['신체 노화', `<p>선수마다 타고난 몸이 다릅니다. <b>신체 능력치</b>(속도·피지컬, 골키퍼는 반사신경·다이빙)가 떨어지기 시작하는 나이는 선수마다 <b>만 27~36세</b> 사이이고, 하락 속도도 ×0.6~1.5로 다릅니다.</p>
+      <ul><li><b>기술 능력치</b>(슈팅·패스·드리블·수비, 골키퍼는 핸들링·위치선정·킥)는 신체보다 <b>2~5년 늦게</b> 떨어집니다(골키퍼는 1년 더).</li>
+      <li>만 29세부터 기술 능력치는 <b>노련미 보너스(성장 ×1.3)</b>를 받습니다. 신체가 떨어져 오버롤이 잠재력보다 낮아지면 기술이 더 빨리 자라 빈자리를 채울 수 있습니다.</li>
+      <li>집중 훈련으로 고른 능력치는 하락 폭이 65% 줄어듭니다. 프로 의식이 높고 부상 체질이 강할수록 신체 전성기가 길어지는 경향이 있습니다.</li>
+      <li>강제 은퇴: 만 43세, 또는 만 36세 이상이면서 오버롤 58 미만</li></ul>
+      <p>${a ? `내 선수: 신체 ~만 ${a.peak}세, 기술 ~만 ${a.techPeak}세, 하락 속도 ×${a.rate}` : '내 선수: 만 26세 시즌이 끝나면 메디컬 리포트로 공개됩니다.'}</p>`];
+  },
   role: () => { const r = st().p.contract.role; return ['계약 역할', `<p>계약할 때 구단이 약속한 역할입니다. 선발 경쟁 점수에 보정이 붙습니다.</p>
     <ul><li><b>⭐ 핵심 선수</b>: +3.5 (연봉 ×1.3)</li><li><b>주전</b>: +2.5 (연봉 ×1.1)</li><li><b>로테이션</b>: +1</li><li><b>유망주</b>: −1 (연봉 ×0.7)</li><li><b>유스</b>: 보정 없음</li></ul>
     <p><b>시즌이 끝나면 구단이 역할을 재평가합니다.</b> 선발 비율 70% 이상·평균 평점 7.2 이상이면 핵심 선수, 50% 이상이면 주전, 25% 이상이면 로테이션입니다. 역할이 오르면 계약이 남아 있어도 연봉 인상 재계약 제안이 오고, 출전이 거의 없으면 역할이 내려갑니다.</p><p>현재 역할: <b>${esc(r)}</b>${st().p.captain ? ' · 주장 +3' : ''}</p>`]; },
@@ -686,6 +695,7 @@ function renderPlayer() {
   h += `<div class="card"><h2>🧬 숨은 특성</h2>
     <p class="small">${ib('growth', '성장 유형')}: <b>${p.revealed.growth ? G[p.traits.growth] : '??? (만 18세에 공개)'}</b></p>
     <p class="small">${ib('prof', '프로 의식')}: <b>${p.revealed.prof ? (p.traits.prof >= 1.05 ? '매우 높음' : p.traits.prof >= 0.95 ? '보통' : '낮음') : '??? (만 19세에 공개)'}</b></p>
+    <p class="small">${ib('aging', '신체 노화')}: <b>${p.revealed.aging ? (() => { const a = E.ensureAging(); return `신체 ~${a.peak}세 · 기술 ~${a.techPeak}세 · 하락 ${a.rate <= 0.85 ? '완만' : a.rate <= 1.15 ? '보통' : '빠름'}`; })() : '??? (만 26세에 공개)'}</b></p>
     <p class="small">${ib('injury', '부상 체질')}: <b>${p.revealed.injury ? (p.traits.injury <= 0.9 ? '강함' : p.traits.injury <= 1.2 ? '보통' : '약함') : '??? (만 20세에 공개)'}</b></p></div>`;
   const sk = Object.keys(p.skills).filter(k => p.skills[k] > 0);
   h += `<div class="card"><h2>🎓 보유 스킬</h2>${sk.length ? sk.map(k => `<div class="row between" style="margin:6px 0"><span>${ib('skill:' + k, `${SKILLS[k].icon} <b>${SKILLS[k].name}</b>`)}<br><span class="small muted">${SKILLS[k].desc}</span></span><span class="tag g">Lv${p.skills[k]}${p.skills[k] >= SKILL_MAX_LV || (k === 'weakfoot' && p.weakFoot >= 5) ? ' MAX' : ''}</span></div>`).join('') : '<p class="small muted">아직 습득한 스킬이 없습니다. 월간 계획에서 스킬 수련을 선택하세요.</p>'}

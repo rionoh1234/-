@@ -1408,6 +1408,19 @@ function ageGrowth(age) {
   return b;
 }
 
+// 신체 노화: physPeak(신체 하락 시작 나이) · rate(하락 속도) · techExtra(기술 하락이 늦게 오는 햇수)
+const PHYS_ATTRS = ['pac', 'phy', 'ref', 'div'];
+function ensureAging() {
+  const p = S.p, t = p.traits;
+  if (!t.aging) {
+    const peak = clamp(Math.round(30 + normal() * 1.8 + (1 - t.injury) * 2 + (t.prof - 1) * 5), 27, 36);
+    t.aging = { peak, rate: Math.round(clamp(1 + normal() * 0.25 + (t.injury - 1) * 0.3, 0.6, 1.5) * 100) / 100, techExtra: ri(2, 5) + (group() === 'GK' ? 1 : 0) };
+  }
+  const a = t.aging, shift = a.peak - 30;
+  const eff = sh => (p.age <= 26 ? p.age : clamp(p.age - sh, 26, 40));
+  return { physBase: ageGrowth(eff(shift)), techBase: ageGrowth(eff(shift + a.techExtra)), rate: a.rate, peak: a.peak, techPeak: a.peak + a.techExtra };
+}
+
 function submitPlan(plan, auto) {
   if (S.phase !== 'plan') return;
   const p = S.p;
@@ -1489,32 +1502,33 @@ function finalizeMonth() {
   const injuredFrac = p.injury > 0 ? clamp(p.injury / 4, 0, 1) : 0;
   // 능력치 성장
   const keys = attrKeys(), w = OVR_WEIGHTS[group()];
-  const base = ageGrowth(p.age);
   const B = mc.B || bonuses();
   const extra = plan.act === 'extra' ? 1.1 : 1;
   const skillSplit = plan.skill ? 0.75 : 1;
   const injF = 1 - 0.65 * Math.max(injuredFrac, mc.lines.filter(l => l.status === 'injured').length / Math.max(1, mc.lines.length));
-  if (base > 0) {
-    const gap = p.pot - ovrF();
-    const gapF = gap > 0 ? clamp(gap / 12, 0.04, 1.15) : 0.02;
-    let T = GROWTH_K * base * I.growth * B.growth * p.traits.prof * (0.8 + 0.4 * share) * extra * skillSplit * injF * gapF * (p.buff.growth || 1);
-    if (m === 0) T *= 1.4;
-    const focus = plan.focus.length ? plan.focus : [];
-    const rest = keys.filter(k => !focus.includes(k));
-    const rw = rest.reduce((s, k) => s + Math.max(0.05, w[k]), 0);
-    const oNow = ovrF();
-    for (const k of keys) {
+  // 신체·기술 능력치는 노화 시점이 다름 (선수별 숨은 특성 「신체 노화」)
+  const ag = ensureAging();
+  const baseOf = k => (PHYS_ATTRS.includes(k) ? ag.physBase : ag.techBase);
+  const gap = p.pot - ovrF();
+  const gapF = gap > 0 ? clamp(gap / 12, 0.04, 1.15) : 0.02;
+  const Tmul = GROWTH_K * I.growth * B.growth * p.traits.prof * (0.8 + 0.4 * share) * extra * skillSplit * injF * gapF * (p.buff.growth || 1) * (m === 0 ? 1.4 : 1);
+  const focus = plan.focus.length ? plan.focus : [];
+  const rest = keys.filter(k => !focus.includes(k));
+  const rw = rest.reduce((s2, k) => s2 + Math.max(0.05, w[k]), 0);
+  const oNow = ovrF();
+  const capK = Math.min(99, p.pot + 12);
+  for (const k of keys) {
+    const bk = baseOf(k);
+    if (bk > 0) {
       const sh = focus.includes(k) ? FOCUS_SHARE / focus.length : (focus.length ? 1 - FOCUS_SHARE : 1) * Math.max(0.05, w[k]) / rw;
-      const capK = Math.min(99, p.pot + 12);
       const over = p.attrs[k] - oNow - 8; // 오버롤보다 지나치게 높은 능력치는 성장 둔화
       const dim = over > 0 ? Math.exp(-over / 8) : 1;
-      p.attrs[k] = Math.min(capK, p.attrs[k] + T * sh * dim);
-    }
-  } else {
-    const D = -base * (1.25 - 0.15 * plan.intensity) * (2 - p.traits.prof);
-    for (const k of keys) {
-      const sh = (k === 'pac' || k === 'phy' || k === 'ref' || k === 'div') ? 0.26 : 0.12;
-      p.attrs[k] = Math.max(25, p.attrs[k] - D * sh * (plan.focus.includes(k) ? 0.35 : 1) * 2);
+      const vet = !PHYS_ATTRS.includes(k) && p.age >= 29 ? 1.3 : 1; // 노련미: 베테랑의 기술 성장
+      p.attrs[k] = Math.min(capK, p.attrs[k] + Tmul * bk * vet * sh * dim);
+    } else if (bk < 0) {
+      const phys = PHYS_ATTRS.includes(k);
+      const D = -bk * (1.25 - 0.15 * plan.intensity) * (2 - p.traits.prof) * (phys ? 0.34 * ag.rate : 0.2);
+      p.attrs[k] = Math.max(phys ? 32 : 30, p.attrs[k] - D * (plan.focus.includes(k) ? 0.35 : 1));
     }
   }
   // 스킬 수련
@@ -2222,6 +2236,10 @@ function offseason() {
   if (p.age === 18 && !p.revealed.growth) { p.revealed.growth = true; notes.push(`📋 스카우트 리포트: 성장 유형은 「${G[p.traits.growth]}」입니다.`); }
   if (p.age >= 25 && !p.revealed.pot25) { p.revealed.pot25 = true; p.revealed.stars = true; p.stars = clamp(Math.round((p.pot + normal() * 3 - 52) / 8.5 * 2) / 2, 1, 5); notes.push(`📋 스카우트 리포트: 잠재력 평가 ${'★'.repeat(Math.floor(p.stars))}${p.stars % 1 ? '☆' : ''} (${p.stars}/5)`); }
   if (p.age === 19 && !p.revealed.prof) { p.revealed.prof = true; notes.push(`📋 코치진 평가: 프로 의식 ${p.traits.prof >= 1.05 ? '매우 높음' : p.traits.prof >= 0.95 ? '보통' : '낮음'}.`); }
+  if (p.age >= 26 && !p.revealed.aging) {
+    const ag = ensureAging(); p.revealed.aging = true;
+    notes.push(`📋 메디컬 리포트: 신체 전성기는 만 ${ag.peak}세 무렵까지, 기술은 만 ${ag.techPeak}세 무렵까지 유지될 전망입니다. 신체 하락 속도: ${ag.rate <= 0.85 ? '완만' : ag.rate <= 1.15 ? '보통' : '빠름'}.`);
+  }
   if (p.age === 20 && !p.revealed.injury) { p.revealed.injury = true; notes.push(`📋 메디컬 리포트: 부상 체질 ${p.traits.injury <= 0.9 ? '강함 (부상이 적음)' : p.traits.injury <= 1.2 ? '보통' : '약함 (부상 주의)'}.`); }
   // 계약
   if (p.contract.type === 'loan' && p.loan) {
@@ -2250,7 +2268,7 @@ function offseason() {
   }
   // 은퇴 판단
   const o = ovr();
-  const forced = p.age >= 40 || (p.age >= 35 && o < 60) ? (p.age >= 40 ? '만 40세, 선수 생활을 마칠 시간입니다.' : '기량 하락으로 더 이상 프로 무대에서 뛰기 어렵습니다.') : '';
+  const forced = p.age >= 43 || (p.age >= 36 && o < 58) ? (p.age >= 43 ? `만 ${p.age}세, 선수 생활을 마칠 시간입니다.` : '기량 하락으로 더 이상 프로 무대에서 뛰기 어렵습니다.') : '';
   S.pending.off = { ballon, notes, enlist, canRetire: p.age >= 32 && !forced, forced, label: se.label };
   S.phase = 'offseason';
 }
@@ -2347,7 +2365,7 @@ var Engine = {
   get S() { return S; }, load(s) { S = s; }, genCandidates, newCareer, submitPlan, resolveMoment, matchDone, eventChoice, eventAck,
   windowChoice, seasonAck, tourNext, tourAck, offAction, defaultPlan, skillList, skillStatus, ovr, ovrF, overallOf, marketValue, cs,
   clubName, CLUBS, leagueOf, sortedTable, trainerCost, nutritionCost, actCost, monthlySalary, careerSummary, fmtMoney, fmtFee, potLabel,
-  attrKeys, group, cond, josa, TOURS, staffPreview, staffMonthCost, perksFrom, genPlayer, legacyPoints, autoRun, buyEquip, setStaff, bonuses, staffCost, facLevel, fac,
+  attrKeys, group, cond, josa, TOURS, ensureAging, staffPreview, staffMonthCost, perksFrom, genPlayer, legacyPoints, autoRun, buyEquip, setStaff, bonuses, staffCost, facLevel, fac,
 };
 /*NODE*/
 if (typeof module !== 'undefined') module.exports = Engine;
