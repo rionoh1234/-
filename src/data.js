@@ -273,9 +273,9 @@ const FLAG_CODE = {
  * 은퇴 시 레거시 포인트(LP)를 받아 다음 회차 선수를 강화합니다. cost[i] = (i+1)레벨로 올리는 비용
  */
 const LEGACY = [
-  { id: 'pot', name: '재능의 유전', icon: '🧬', max: 5, cost: [40, 80, 140, 220, 320], desc: l => `잠재력 최저치 +${3 * l}, 최고치 +${l}` },
+  { id: 'pot', name: '재능의 유전', icon: '🧬', max: 5, cost: [40, 80, 140, 220, 320], desc: l => `잠재력 최저치 +${5 * l}, 최고치 +${2 * l}` },
   { id: 'start', name: '엘리트 유스 출신', icon: '🎒', max: 5, cost: [30, 60, 100, 160, 240], desc: l => `시작 오버롤 +${l}` },
-  { id: 'growth', name: '훈련 노하우', icon: '📈', max: 5, cost: [50, 100, 170, 260, 380], desc: l => `능력치 성장 +${3 * l}%` },
+  { id: 'growth', name: '훈련 노하우', icon: '📈', max: 5, cost: [50, 100, 170, 260, 380], desc: l => `능력치 성장 +${6 * l}%` },
   { id: 'skill', name: '스킬 이해도', icon: '🧠', max: 5, cost: [30, 60, 100, 150, 220], desc: l => `스킬 수련 속도 +${8 * l}%` },
   { id: 'money', name: '가문의 후원', icon: '💰', max: 5, cost: [20, 40, 70, 110, 160], desc: l => `시작 자금 +${(500 * l).toLocaleString()}만 원` },
   { id: 'body', name: '타고난 몸', icon: '🛡️', max: 3, cost: [40, 90, 160], desc: l => `부상 위험 -${6 * l}%` },

@@ -140,12 +140,19 @@ function genCandidatesInner(pos, nat) {
   });
 }
 
+/* ---------- 저장 데이터 변환 ---------- */
+function migrateState() {
+  const pk = S && S.p && S.p.perk;
+  // 「훈련 노하우」 레벨당 +3% → +6% 변경 전에 만든 커리어도 새 수치로 맞춤
+  if (pk && !pk.g2) { pk.growth = Math.round((1 + 2 * ((pk.growth || 1) - 1)) * 100) / 100; pk.g2 = true; }
+}
+
 /* ---------- 레거시 ---------- */
 // levels: { pot: 2, start: 1, ... } → 이번 회차에 적용할 보너스
 function perksFrom(levels) {
   const l = id => Math.max(0, Math.min((LEGACY.find(x => x.id === id) || { max: 0 }).max, (levels || {})[id] || 0));
   return {
-    potMin: 60 + 3 * l('pot'), potMax: 90 + l('pot'), ovr: l('start'), growth: 1 + 0.03 * l('growth'), skill: 1 + 0.08 * l('skill'),
+    potMin: 60 + 5 * l('pot'), potMax: 90 + 2 * l('pot'), ovr: l('start'), growth: 1 + 0.06 * l('growth'), skill: 1 + 0.08 * l('skill'),
     money: 500 * l('money'), injury: 1 - 0.06 * l('body'), wf: l('wf'), scout: l('scout'), chooseType: l('type') > 0, startSkill: l('askill') > 0,
   };
 }
@@ -207,7 +214,7 @@ function newCareer(o) {
   };
   const pk = o.perks;
   if (pk) {
-    S.p.perk = { growth: pk.growth, skill: pk.skill, injury: pk.injury };
+    S.p.perk = { growth: pk.growth, skill: pk.skill, injury: pk.injury, g2: true };
     S.p.money += pk.money;
     if (pk.startSkill && o.startSkill && SKILLS[o.startSkill]) S.p.skills[o.startSkill] = 1;
     S.run = o.run || 1;
@@ -2263,7 +2270,7 @@ function offseason() {
   // 잠재력 변동
   if (p.age <= 22 && t.apps) {
     const share = se.possible ? se.mins / se.possible : 0;
-    const d = clamp((t.rs / t.apps - 7.1) * 0.6 + (share - 0.6) * 0.8, -1.5, 0.6);
+    const d = clamp((t.rs / t.apps - 6.8) * 0.6 + (share - 0.5) * 0.8, -0.8, 0.8);
     p.pot = clamp(p.pot + d, 50, 97);
   }
   p.pot = Math.max(p.pot, ovrF());
@@ -2402,7 +2409,7 @@ function potLabel() {
 }
 
 var Engine = {
-  get S() { return S; }, load(s) { S = s; }, genCandidates, newCareer, submitPlan, resolveMoment, matchDone, eventChoice, eventAck,
+  get S() { return S; }, load(s) { S = s; migrateState(); }, genCandidates, newCareer, submitPlan, resolveMoment, matchDone, eventChoice, eventAck,
   windowChoice, seasonAck, tourNext, tourAck, tourJoin, tourDecline, tourAuto, setNtDecline, offAction, defaultPlan, skillList, skillStatus, ovr, ovrF, overallOf, marketValue, cs,
   clubName, CLUBS, leagueOf, sortedTable, trainerCost, nutritionCost, actCost, monthlySalary, careerSummary, fmtMoney, fmtFee, potLabel,
   attrKeys, group, cond, josa, TOURS, ensureAging, staffPreview, staffMonthCost, perksFrom, genPlayer, legacyPoints, autoRun, buyEquip, setStaff, bonuses, staffCost, facLevel, fac,
