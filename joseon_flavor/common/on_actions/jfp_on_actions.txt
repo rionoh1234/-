@@ -1,0 +1,42 @@
+# 조선 고봉밥 - 온액션 연결
+# 바닐라 온액션에는 on_actions = { } 로 하위 액션만 추가합니다 (덮어쓰기 방지).
+
+on_monthly_pulse_country = {
+	on_actions = {
+		jfp_monthly_pulse
+	}
+}
+
+on_yearly_pulse_country = {
+	on_actions = {
+		jfp_yearly_culture
+	}
+}
+
+# 매월: 조선 초기화 + 연대기 이벤트 + 저널 활성화 판정
+jfp_monthly_pulse = {
+	trigger = {
+		jfp_is_joseon = yes
+	}
+	effect = {
+		jfp_initialize = yes
+		jfp_monthly_timeline = yes
+	}
+}
+
+# 매년: 문화·민간 무작위 이벤트 (약 35% 확률)
+jfp_yearly_culture = {
+	trigger = {
+		jfp_is_joseon = yes
+	}
+	random_events = {
+		65 = 0
+		5 = jfp_culture.20
+		5 = jfp_culture.21
+		5 = jfp_culture.22
+		5 = jfp_culture.23
+		5 = jfp_culture.24
+		5 = jfp_culture.25
+		5 = jfp_culture.26
+	}
+}

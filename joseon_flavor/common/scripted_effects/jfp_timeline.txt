@@ -1,0 +1,394 @@
+# 조선 고봉밥 - 연대기
+# 매월 한 번 조선(ROOT) 스코프에서 실행됩니다.
+# 각 사건은 jfp_done_* 변수로 한 번만 발생합니다.
+
+# 게임 시작(또는 중간 적용) 시 1회 초기화
+jfp_initialize = {
+	if = {
+		limit = { NOT = { has_variable = jfp_initialized } }
+		set_variable = jfp_initialized
+		set_variable = { name = jfp_royal_authority value = 0 }
+		set_variable = { name = jfp_samjeong_reform value = 0 }
+		set_variable = { name = jfp_seohak_stance value = 0 }
+		if = {
+			limit = { game_date < 1863.1.1 }
+			add_journal_entry = { type = je_jfp_sedo_politics }
+			add_journal_entry = { type = je_jfp_samjeong }
+		}
+		if = {
+			limit = { game_date < 1866.1.1 }
+			add_journal_entry = { type = je_jfp_seohak }
+		}
+	}
+}
+
+jfp_monthly_timeline = {
+	#################################
+	# 1836~1850년대
+	#################################
+	# 1836.4 다산 정약용 서거
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_dasan }
+			game_date >= 1836.4.1
+			game_date < 1840.1.1
+		}
+		set_variable = jfp_done_dasan
+		trigger_event = { id = jfp_culture.1 popup = yes }
+	}
+	# 1836.9 최한기 『기측체의』
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_choihangi }
+			game_date >= 1836.9.1
+			game_date < 1845.1.1
+		}
+		set_variable = jfp_done_choihangi
+		trigger_event = { id = jfp_culture.2 }
+	}
+	# 1837.1 프랑스 신부 잠입
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_french_priests }
+			has_journal_entry = je_jfp_seohak
+			game_date >= 1837.1.1
+		}
+		set_variable = jfp_done_french_priests
+		trigger_event = { id = jfp_seohak.1 }
+	}
+	# 1839.5 기해박해
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_gihae }
+			has_journal_entry = je_jfp_seohak
+			game_date >= 1839.5.1
+		}
+		set_variable = jfp_done_gihae
+		trigger_event = { id = jfp_seohak.2 popup = yes }
+	}
+	# 1841.3 아편전쟁 소식
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_opium_news }
+			game_date >= 1841.3.1
+			game_date < 1850.1.1
+		}
+		set_variable = jfp_done_opium_news
+		trigger_event = { id = jfp_culture.3 }
+	}
+	# 1844.6 추사 김정희 「세한도」
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_sehando }
+			game_date >= 1844.6.1
+			game_date < 1855.1.1
+		}
+		set_variable = jfp_done_sehando
+		trigger_event = { id = jfp_culture.4 }
+	}
+	# 1845.7 영국 군함 사마랑호
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_samarang }
+			game_date >= 1845.7.1
+			game_date < 1855.1.1
+		}
+		set_variable = jfp_done_samarang
+		trigger_event = { id = jfp_culture.5 }
+	}
+	# 1846.9 김대건 신부
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_kimdaegeon }
+			has_journal_entry = je_jfp_seohak
+			game_date >= 1846.9.1
+		}
+		set_variable = jfp_done_kimdaegeon
+		trigger_event = { id = jfp_seohak.3 popup = yes }
+	}
+	# 1849.7 강화도령 (철종 즉위)
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_ganghwa_doryeong }
+			has_journal_entry = je_jfp_sedo_politics
+			game_date >= 1849.7.1
+		}
+		set_variable = jfp_done_ganghwa_doryeong
+		trigger_event = { id = jfp_sedo.7 popup = yes }
+	}
+
+	#################################
+	# 1850~1863년
+	#################################
+	# 1859.9 괴질(콜레라) 대유행
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_cholera }
+			game_date >= 1859.9.1
+			game_date < 1866.1.1
+		}
+		set_variable = jfp_done_cholera
+		trigger_event = { id = jfp_culture.6 popup = yes }
+	}
+	# 1860.11 북경 함락 소식
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_beijing_news }
+			game_date >= 1860.11.1
+			game_date < 1866.1.1
+		}
+		set_variable = jfp_done_beijing_news
+		trigger_event = { id = jfp_culture.7 }
+	}
+	# 1861.6 김정호 「대동여지도」
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_daedong }
+			game_date >= 1861.6.1
+			game_date < 1875.1.1
+		}
+		set_variable = jfp_done_daedong
+		trigger_event = { id = jfp_culture.8 }
+	}
+	# 1862.3 임술농민봉기 (진주민란)
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_imsul }
+			has_journal_entry = je_jfp_samjeong
+			game_date >= 1862.3.1
+		}
+		set_variable = jfp_done_imsul
+		trigger_event = { id = jfp_samjeong.6 popup = yes }
+	}
+
+	#################################
+	# 1864~1875년: 흥선대원군과 양요
+	#################################
+	# 1864.1 흥선대원군 집권
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_daewongun }
+			game_date >= 1864.1.1
+			game_date < 1880.1.1
+			jfp_joseon_sovereign = yes
+			country_has_monarchy_law = yes
+		}
+		set_variable = jfp_done_daewongun
+		trigger_event = { id = jfp_dwg.1 popup = yes }
+	}
+	# 1865.6 신재효의 판소리 정리
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_pansori }
+			game_date >= 1865.6.1
+			game_date < 1880.1.1
+		}
+		set_variable = jfp_done_pansori
+		trigger_event = { id = jfp_culture.9 }
+	}
+	# 1866.2 병인박해
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_byeongin_persecution }
+			game_date >= 1866.2.1
+			game_date < 1872.1.1
+			NOT = { has_law_or_variant = law_type:law_freedom_of_conscience }
+		}
+		set_variable = jfp_done_byeongin_persecution
+		trigger_event = { id = jfp_seohak.4 popup = yes }
+	}
+	# 1866.6 양요 저널 개시 (쇄국 유지 시)
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_yangyo_start }
+			game_date >= 1866.6.1
+			game_date < 1876.1.1
+			jfp_joseon_sovereign = yes
+			has_law_or_variant = law_type:law_isolationism
+		}
+		set_variable = jfp_done_yangyo_start
+		add_journal_entry = { type = je_jfp_yangyo }
+	}
+	# 1866.8 제너럴셔먼호
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_sherman }
+			has_journal_entry = je_jfp_yangyo
+			game_date >= 1866.8.1
+		}
+		set_variable = jfp_done_sherman
+		trigger_event = { id = jfp_yangyo.1 popup = yes }
+	}
+	# 1866.10 병인양요
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_byeongin_yangyo }
+			has_journal_entry = je_jfp_yangyo
+			game_date >= 1866.10.1
+			has_variable = jfp_french_provoked
+		}
+		set_variable = jfp_done_byeongin_yangyo
+		trigger_event = { id = jfp_yangyo.2 popup = yes }
+	}
+	# 1868.5 오페르트 도굴 사건
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_oppert }
+			has_journal_entry = je_jfp_yangyo
+			game_date >= 1868.5.1
+		}
+		set_variable = jfp_done_oppert
+		trigger_event = { id = jfp_yangyo.3 }
+	}
+	# 1871.6 신미양요
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_sinmi }
+			has_journal_entry = je_jfp_yangyo
+			game_date >= 1871.6.1
+		}
+		set_variable = jfp_done_sinmi
+		trigger_event = { id = jfp_yangyo.4 popup = yes }
+	}
+
+	#################################
+	# 1876~1895년: 개항과 개화
+	#################################
+	# 1876.2 개항 (강화도 조약 또는 자주적 개국)
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_gaehang }
+			jfp_joseon_sovereign = yes
+			OR = {
+				game_date >= 1876.2.1
+				AND = {
+					game_date >= 1866.1.1
+					NOT = { has_law_or_variant = law_type:law_isolationism }
+				}
+			}
+		}
+		set_variable = jfp_done_gaehang
+		if = {
+			limit = { has_law_or_variant = law_type:law_isolationism }
+			trigger_event = { id = jfp_gaehwa.1 popup = yes }
+		}
+		else = {
+			trigger_event = { id = jfp_gaehwa.2 popup = yes }
+		}
+	}
+	# 1880.6 수신사 파견
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_susinsa }
+			has_journal_entry = je_jfp_gaehwa
+			game_date >= 1880.6.1
+		}
+		set_variable = jfp_done_susinsa
+		trigger_event = { id = jfp_gaehwa.3 }
+	}
+	# 1881.3 영남만인소
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_maninso }
+			has_journal_entry = je_jfp_gaehwa
+			game_date >= 1881.3.1
+		}
+		set_variable = jfp_done_maninso
+		trigger_event = { id = jfp_gaehwa.4 popup = yes }
+	}
+	# 1882.7 임오군란 (별기군이 있을 때)
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_imo }
+			has_journal_entry = je_jfp_gaehwa
+			has_variable = jfp_byeolgigun_founded
+			game_date >= 1882.7.1
+		}
+		set_variable = jfp_done_imo
+		trigger_event = { id = jfp_gaehwa.5 popup = yes }
+	}
+	# 1884.12 갑신정변
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_gapsin }
+			has_journal_entry = je_jfp_gaehwa
+			game_date >= 1884.12.1
+		}
+		set_variable = jfp_done_gapsin
+		trigger_event = { id = jfp_gaehwa.6 popup = yes }
+	}
+	# 1885.4 거문도 사건
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_geomundo }
+			has_journal_entry = je_jfp_gaehwa
+			game_date >= 1885.4.1
+		}
+		set_variable = jfp_done_geomundo
+		trigger_event = { id = jfp_gaehwa.7 }
+	}
+	# 1889.10 방곡령
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_banggok }
+			has_journal_entry = je_jfp_gaehwa
+			game_date >= 1889.10.1
+		}
+		set_variable = jfp_done_banggok
+		trigger_event = { id = jfp_gaehwa.8 }
+	}
+	# 1894.4 이제마 『동의수세보원』
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_sasang }
+			game_date >= 1894.4.1
+			game_date < 1910.1.1
+		}
+		set_variable = jfp_done_sasang
+		trigger_event = { id = jfp_culture.10 }
+	}
+
+	#################################
+	# 대한제국 선포 이후: 광무개혁
+	# (바닐라 결정 '대한제국 선포'가 korean_empire_taken 변수를 남김)
+	#################################
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_gwangmu }
+			has_variable = korean_empire_taken
+			jfp_joseon_sovereign = yes
+		}
+		set_variable = jfp_done_gwangmu
+		trigger_event = { id = jfp_gwangmu.1 popup = yes }
+	}
+	# 독립협회 (광무개혁 중)
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_dokrip }
+			has_journal_entry = je_jfp_gwangmu
+			has_variable = jfp_gwangmu_months
+			var:jfp_gwangmu_months >= 12
+		}
+		set_variable = jfp_done_dokrip
+		trigger_event = { id = jfp_gwangmu.2 popup = yes }
+	}
+	# 대한국 국제 반포
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_gukje }
+			has_journal_entry = je_jfp_gwangmu
+			has_variable = jfp_gwangmu_months
+			var:jfp_gwangmu_months >= 24
+		}
+		set_variable = jfp_done_gukje
+		trigger_event = { id = jfp_gwangmu.3 popup = yes }
+	}
+	if = {
+		limit = { has_journal_entry = je_jfp_gwangmu }
+		if = {
+			limit = { NOT = { has_variable = jfp_gwangmu_months } }
+			set_variable = { name = jfp_gwangmu_months value = 0 }
+		}
+		change_variable = { name = jfp_gwangmu_months add = 1 }
+	}
+}

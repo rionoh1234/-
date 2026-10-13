@@ -1,0 +1,190 @@
+namespace = jfp_yangyo
+
+# 양요: 서양의 도전
+
+# 제너럴셔먼호 사건 (1866)
+jfp_yangyo.1 = {
+	type = country_event
+	placement = root
+	title = jfp_yangyo.1.t
+	desc = jfp_yangyo.1.d
+	flavor = jfp_yangyo.1.f
+	event_image = { video = "unspecific_steam_ship" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_fire.dds"
+	duration = 3
+
+	option = {
+		name = jfp_yangyo.1.a
+		default_option = yes
+		set_variable = jfp_us_provoked
+		add_modifier = { name = jfp_foreign_victory days = short_modifier_time }
+		jfp_ig_up = { IG = ig_armed_forces }
+		if = {
+			limit = { exists = c:USA }
+			change_relations = { country = c:USA value = -20 }
+		}
+	}
+	option = {
+		name = jfp_yangyo.1.b
+		jfp_ig_down = { IG = ig_devout }
+		jfp_ig_up = { IG = ig_intelligentsia }
+	}
+}
+
+# 병인양요 (1866)
+jfp_yangyo.2 = {
+	type = country_event
+	placement = root
+	title = jfp_yangyo.2.t
+	desc = jfp_yangyo.2.d
+	flavor = jfp_yangyo.2.f
+	event_image = { video = "unspecific_naval_battle" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+	duration = 3
+
+	option = {
+		name = jfp_yangyo.2.a
+		default_option = yes
+		if = {
+			limit = {
+				OR = {
+					has_modifier = jfp_coastal_defense
+					has_modifier = jfp_tiger_hunters
+				}
+			}
+			random_list = {
+				80 = {
+					set_variable = jfp_byeongin_won
+					add_modifier = { name = jfp_foreign_victory days = normal_modifier_time }
+					jfp_ig_up = { IG = ig_armed_forces }
+				}
+				20 = {
+					add_modifier = { name = jfp_foreign_humiliation days = normal_modifier_time }
+				}
+			}
+		}
+		else = {
+			random_list = {
+				55 = {
+					set_variable = jfp_byeongin_won
+					add_modifier = { name = jfp_foreign_victory days = normal_modifier_time }
+					jfp_ig_up = { IG = ig_armed_forces }
+				}
+				45 = {
+					add_modifier = { name = jfp_foreign_humiliation days = normal_modifier_time }
+				}
+			}
+		}
+	}
+	option = {
+		name = jfp_yangyo.2.b
+		add_modifier = { name = jfp_foreign_humiliation days = short_modifier_time }
+		jfp_ig_down_large = { IG = ig_devout }
+		if = {
+			limit = { exists = c:FRA }
+			change_relations = { country = c:FRA value = 30 }
+		}
+	}
+}
+
+# 오페르트 남연군 묘 도굴 사건 (1868)
+jfp_yangyo.3 = {
+	type = country_event
+	placement = root
+	title = jfp_yangyo.3.t
+	desc = jfp_yangyo.3.d
+	flavor = jfp_yangyo.3.f
+	event_image = { video = "asia_westerners_arriving" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_skull.dds"
+	duration = 3
+
+	option = {
+		name = jfp_yangyo.3.a
+		default_option = yes
+		jfp_ig_up_large = { IG = ig_devout }
+		jfp_ig_down = { IG = ig_intelligentsia }
+		jfp_seohak_persecute = yes
+	}
+	option = {
+		name = jfp_yangyo.3.b
+		jfp_ig_up = { IG = ig_intelligentsia }
+		jfp_ig_down = { IG = ig_devout }
+	}
+}
+
+# 신미양요 (1871)
+jfp_yangyo.4 = {
+	type = country_event
+	placement = root
+	title = jfp_yangyo.4.t
+	desc = jfp_yangyo.4.d
+	flavor = jfp_yangyo.4.f
+	event_image = { video = "europenorthamerica_before_the_battle" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+	duration = 3
+
+	option = {
+		name = jfp_yangyo.4.a
+		default_option = yes
+		set_variable = jfp_sinmi_resolved
+		random_list = {
+			60 = {
+				add_modifier = { name = jfp_foreign_victory days = normal_modifier_time }
+				add_modifier = { name = jfp_tiger_hunters days = normal_modifier_time }
+			}
+			40 = {
+				add_modifier = { name = jfp_foreign_humiliation days = short_modifier_time }
+				jfp_ig_up = { IG = ig_armed_forces }
+			}
+		}
+		if = {
+			limit = { exists = c:USA }
+			change_relations = { country = c:USA value = -20 }
+		}
+	}
+	option = {
+		name = jfp_yangyo.4.b
+		set_variable = jfp_sinmi_resolved
+		activate_law = law_type:law_mercantilism
+		add_modifier = { name = jfp_opened_ports days = normal_modifier_time }
+		jfp_ig_down_large = { IG = ig_devout }
+		jfp_ig_up = { IG = ig_intelligentsia }
+		if = {
+			limit = { exists = c:USA }
+			change_relations = { country = c:USA value = 30 }
+		}
+	}
+}
+
+# 저널 종결
+jfp_yangyo.9 = {
+	type = country_event
+	placement = root
+	title = jfp_yangyo.9.t
+	desc = jfp_yangyo.9.d
+	flavor = jfp_yangyo.9.f
+	event_image = { video = "asia_westerners_arriving" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+	duration = 3
+
+	option = {
+		name = jfp_yangyo.9.a
+		default_option = yes
+		trigger = {
+			has_law_or_variant = law_type:law_isolationism
+		}
+		jfp_ig_up = { IG = ig_devout }
+	}
+	option = {
+		name = jfp_yangyo.9.b
+		trigger = {
+			NOT = { has_law_or_variant = law_type:law_isolationism }
+		}
+		jfp_ig_up = { IG = ig_intelligentsia }
+	}
+}

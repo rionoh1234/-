@@ -1,0 +1,371 @@
+namespace = jfp_gaehwa
+
+# 개항과 개화
+
+# 강화도 조약 (1876, 쇄국 유지 상태에서)
+jfp_gaehwa.1 = {
+	type = country_event
+	placement = root
+	title = jfp_gaehwa.1.t
+	desc = jfp_gaehwa.1.d
+	flavor = jfp_gaehwa.1.f
+	event_image = { video = "unspecific_signed_contract" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_trade.dds"
+	duration = 3
+
+	option = {
+		name = jfp_gaehwa.1.a
+		default_option = yes
+		activate_law = law_type:law_mercantilism
+		add_modifier = { name = jfp_unequal_treaty days = normal_modifier_time }
+		add_modifier = { name = jfp_opened_ports days = normal_modifier_time }
+		add_journal_entry = { type = je_jfp_gaehwa }
+		if = {
+			limit = { exists = c:JAP }
+			change_relations = { country = c:JAP value = 20 }
+		}
+	}
+	option = {
+		name = jfp_gaehwa.1.b
+		add_modifier = { name = jfp_wijeong_cheoksa days = normal_modifier_time }
+		jfp_ig_up_large = { IG = ig_devout }
+		add_journal_entry = { type = je_jfp_gaehwa }
+		if = {
+			limit = { exists = c:JAP }
+			change_relations = { country = c:JAP value = -30 }
+		}
+	}
+}
+
+# 자주적 개국 (이미 쇄국을 폐지한 경우)
+jfp_gaehwa.2 = {
+	type = country_event
+	placement = root
+	title = jfp_gaehwa.2.t
+	desc = jfp_gaehwa.2.d
+	flavor = jfp_gaehwa.2.f
+	event_image = { video = "asia_westerners_arriving" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+	duration = 3
+
+	option = {
+		name = jfp_gaehwa.2.a
+		default_option = yes
+		add_modifier = { name = jfp_opened_ports days = normal_modifier_time }
+		add_journal_entry = { type = je_jfp_gaehwa }
+		jfp_ig_up = { IG = ig_intelligentsia }
+	}
+}
+
+# 수신사 파견 (1880)
+jfp_gaehwa.3 = {
+	type = country_event
+	placement = root
+	title = jfp_gaehwa.3.t
+	desc = jfp_gaehwa.3.d
+	flavor = jfp_gaehwa.3.f
+	event_image = { video = "unspecific_steam_ship" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+	duration = 3
+
+	option = {
+		name = jfp_gaehwa.3.a
+		default_option = yes
+		jfp_pay_small = yes
+		jfp_gaehwa_up = yes
+		add_modifier = { name = jfp_gaehwa_faction days = normal_modifier_time }
+	}
+	option = {
+		name = jfp_gaehwa.3.b
+		jfp_ig_up = { IG = ig_devout }
+	}
+}
+
+# 영남만인소 (1881)
+jfp_gaehwa.4 = {
+	type = country_event
+	placement = root
+	title = jfp_gaehwa.4.t
+	desc = jfp_gaehwa.4.d
+	flavor = jfp_gaehwa.4.f
+	event_image = { video = "asia_confucianism_shinto" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+	duration = 3
+
+	option = {
+		name = jfp_gaehwa.4.a
+		default_option = yes
+		jfp_gaehwa_up = yes
+		jfp_ig_down_large = { IG = ig_devout }
+	}
+	option = {
+		name = jfp_gaehwa.4.b
+		jfp_gaehwa_down = yes
+		jfp_ig_up = { IG = ig_devout }
+		add_modifier = { name = jfp_wijeong_cheoksa days = normal_modifier_time }
+	}
+}
+
+# 임오군란 (1882)
+jfp_gaehwa.5 = {
+	type = country_event
+	placement = root
+	title = jfp_gaehwa.5.t
+	desc = jfp_gaehwa.5.d
+	flavor = jfp_gaehwa.5.f
+	event_image = { video = "africa_soldiers_breaking_protest" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+	duration = 3
+
+	option = {
+		name = jfp_gaehwa.5.a
+		default_option = yes
+		jfp_pay_medium = yes
+		jfp_ig_up = { IG = ig_armed_forces }
+	}
+	option = {
+		name = jfp_gaehwa.5.b
+		add_modifier = { name = jfp_imo_mutiny_aftermath days = normal_modifier_time }
+		jfp_ig_down = { IG = ig_armed_forces }
+		if = {
+			limit = { exists = c:CHI }
+			change_relations = { country = c:CHI value = 20 }
+		}
+	}
+	option = {
+		name = jfp_gaehwa.5.c
+		jfp_gaehwa_down = yes
+		jfp_gaehwa_down = yes
+		jfp_ig_up = { IG = ig_devout }
+		jfp_ig_up = { IG = ig_armed_forces }
+	}
+}
+
+# 갑신정변 (1884)
+jfp_gaehwa.6 = {
+	type = country_event
+	placement = root
+	title = jfp_gaehwa.6.t
+	desc = jfp_gaehwa.6.d
+	flavor = jfp_gaehwa.6.f
+	event_image = { video = "southamerica_public_figure_assassination" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_fire.dds"
+	duration = 3
+
+	option = {
+		name = jfp_gaehwa.6.a
+		trigger = {
+			has_variable = jfp_gaehwa
+			var:jfp_gaehwa >= 50
+		}
+		show_as_unavailable = { always = yes }
+		random_list = {
+			40 = {
+				add_modifier = { name = jfp_gapsin_success days = normal_modifier_time }
+				jfp_gaehwa_up_large = yes
+				create_character = {
+					first_name = jfp_name_okgyun
+					last_name = jfp_name_kim
+					birth_date = 1851.2.23
+					ig_leader = yes
+					interest_group = ig_intelligentsia
+					ideology = ideology_reformer
+					traits = { ambitious reckless }
+				}
+			}
+			60 = {
+				add_modifier = { name = jfp_gapsin_failed days = normal_modifier_time }
+				jfp_gaehwa_down = yes
+			}
+		}
+	}
+	option = {
+		name = jfp_gaehwa.6.b
+		default_option = yes
+		add_modifier = { name = jfp_gapsin_failed days = normal_modifier_time }
+		jfp_ig_up = { IG = ig_landowners }
+		jfp_ig_up = { IG = ig_devout }
+	}
+}
+
+# 거문도 사건 (1885)
+jfp_gaehwa.7 = {
+	type = country_event
+	placement = root
+	title = jfp_gaehwa.7.t
+	desc = jfp_gaehwa.7.d
+	flavor = jfp_gaehwa.7.f
+	event_image = { video = "unspecific_naval_battle" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+	duration = 3
+
+	option = {
+		name = jfp_gaehwa.7.a
+		default_option = yes
+		jfp_ig_up = { IG = ig_armed_forces }
+		if = {
+			limit = { exists = c:GBR }
+			change_relations = { country = c:GBR value = -15 }
+		}
+	}
+	option = {
+		name = jfp_gaehwa.7.b
+		add_modifier = { name = jfp_foreign_humiliation days = short_modifier_time }
+		if = {
+			limit = { exists = c:GBR }
+			change_relations = { country = c:GBR value = 15 }
+		}
+	}
+}
+
+# 방곡령 (1889)
+jfp_gaehwa.8 = {
+	type = country_event
+	placement = root
+	title = jfp_gaehwa.8.t
+	desc = jfp_gaehwa.8.d
+	flavor = jfp_gaehwa.8.f
+	event_image = { video = "asia_farmers_market" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_trade.dds"
+	duration = 3
+
+	option = {
+		name = jfp_gaehwa.8.a
+		default_option = yes
+		add_modifier = { name = jfp_grain_export_ban days = short_modifier_time }
+		jfp_ig_up = { IG = ig_rural_folk }
+		if = {
+			limit = { exists = c:JAP }
+			change_relations = { country = c:JAP value = -15 }
+		}
+	}
+	option = {
+		name = jfp_gaehwa.8.b
+		jfp_gain_small = yes
+		jfp_ig_up = { IG = ig_petty_bourgeoisie }
+		jfp_ig_down = { IG = ig_rural_folk }
+	}
+}
+
+# 외국 서적의 번역
+jfp_gaehwa.10 = {
+	type = country_event
+	placement = root
+	title = jfp_gaehwa.10.t
+	desc = jfp_gaehwa.10.d
+	flavor = jfp_gaehwa.10.f
+	event_image = { video = "europenorthamerica_art_gallery" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+	option = {
+		name = jfp_gaehwa.10.a
+		default_option = yes
+		jfp_pay_small = yes
+		jfp_gaehwa_up = yes
+	}
+	option = {
+		name = jfp_gaehwa.10.b
+		jfp_ig_up = { IG = ig_devout }
+	}
+}
+
+# 위정척사 상소
+jfp_gaehwa.11 = {
+	type = country_event
+	placement = root
+	title = jfp_gaehwa.11.t
+	desc = jfp_gaehwa.11.d
+	flavor = jfp_gaehwa.11.f
+	event_image = { video = "asia_confucianism_shinto" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+	option = {
+		name = jfp_gaehwa.11.a
+		jfp_gaehwa_down = yes
+		jfp_ig_up_large = { IG = ig_devout }
+	}
+	option = {
+		name = jfp_gaehwa.11.b
+		default_option = yes
+		jfp_ig_down = { IG = ig_devout }
+	}
+}
+
+# 외국 상인의 진출
+jfp_gaehwa.12 = {
+	type = country_event
+	placement = root
+	title = jfp_gaehwa.12.t
+	desc = jfp_gaehwa.12.d
+	flavor = jfp_gaehwa.12.f
+	event_image = { video = "middleeast_middleclass_cafe" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_trade.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+	option = {
+		name = jfp_gaehwa.12.a
+		default_option = yes
+		jfp_ig_up = { IG = ig_petty_bourgeoisie }
+		jfp_ig_up = { IG = ig_rural_folk }
+	}
+	option = {
+		name = jfp_gaehwa.12.b
+		jfp_gain_small = yes
+		jfp_gaehwa_up = yes
+		jfp_ig_down = { IG = ig_petty_bourgeoisie }
+	}
+}
+
+# 저널 완료: 개화 완수
+jfp_gaehwa.20 = {
+	type = country_event
+	placement = root
+	title = jfp_gaehwa.20.t
+	desc = jfp_gaehwa.20.d
+	flavor = jfp_gaehwa.20.f
+	event_image = { video = "unspecific_trains" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_industry.dds"
+	duration = 3
+
+	option = {
+		name = jfp_gaehwa.20.a
+		default_option = yes
+		add_modifier = { name = jfp_gaehwa_success days = very_long_modifier_time }
+	}
+}
+
+# 저널 실패: 국권의 위기
+jfp_gaehwa.21 = {
+	type = country_event
+	placement = root
+	title = jfp_gaehwa.21.t
+	desc = jfp_gaehwa.21.d
+	flavor = jfp_gaehwa.21.f
+	event_image = { video = "unspecific_devastation" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_skull.dds"
+	duration = 3
+
+	option = {
+		name = jfp_gaehwa.21.a
+		default_option = yes
+		add_radicals = { value = medium_radicals }
+	}
+}

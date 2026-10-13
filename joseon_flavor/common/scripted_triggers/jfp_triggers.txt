@@ -1,0 +1,13 @@
+# 조선 고봉밥 - 스크립트 트리거
+
+# 현재 스코프 국가가 조선(KOR)인가
+jfp_is_joseon = {
+	exists = c:KOR
+	this = c:KOR
+}
+
+# 조선이 독립국으로서 개혁을 추진할 수 있는가
+jfp_joseon_sovereign = {
+	jfp_is_joseon = yes
+	is_subject = no
+}

@@ -1,0 +1,209 @@
+namespace = jfp_dwg
+
+# 흥선대원군의 섭정
+
+# 흥선대원군 집권 (1864)
+jfp_dwg.1 = {
+	type = country_event
+	placement = root
+	title = jfp_dwg.1.t
+	desc = jfp_dwg.1.d
+	flavor = jfp_dwg.1.f
+	event_image = { video = "unspecific_ruler_speaking_to_people" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+	duration = 3
+
+	option = {
+		name = jfp_dwg.1.a
+		default_option = yes
+		create_character = {
+			first_name = jfp_name_haeung
+			last_name = jfp_name_yi
+			birth_date = 1820.12.21
+			ig_leader = yes
+			interest_group = ig_landowners
+			ideology = ideology_royalist
+			traits = { imperious ambitious }
+		}
+		add_journal_entry = { type = je_jfp_daewongun }
+		if = {
+			limit = { has_modifier = jfp_royal_authority_restored }
+			set_variable = { name = jfp_daewongun_reform value = 10 }
+		}
+	}
+	option = {
+		name = jfp_dwg.1.b
+		jfp_ig_up = { IG = ig_landowners }
+	}
+}
+
+# 원납전
+jfp_dwg.2 = {
+	type = country_event
+	placement = root
+	title = jfp_dwg.2.t
+	desc = jfp_dwg.2.d
+	flavor = jfp_dwg.2.f
+	event_image = { video = "europenorthamerica_rich_and_poor" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_trade.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+	option = {
+		name = jfp_dwg.2.a
+		default_option = yes
+		jfp_gain_medium = yes
+		jfp_ig_down = { IG = ig_landowners }
+		add_radicals = { value = small_radicals strata = middle }
+	}
+	option = {
+		name = jfp_dwg.2.b
+		jfp_ig_up = { IG = ig_landowners }
+	}
+}
+
+# 유생들의 복합상소
+jfp_dwg.3 = {
+	type = country_event
+	placement = root
+	title = jfp_dwg.3.t
+	desc = jfp_dwg.3.d
+	flavor = jfp_dwg.3.f
+	event_image = { video = "asia_confucianism_shinto" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+	trigger = {
+		has_variable = jfp_dec_seowon_taken
+	}
+
+	option = {
+		name = jfp_dwg.3.a
+		default_option = yes
+		jfp_daewongun_up_small = yes
+		jfp_ig_down = { IG = ig_devout }
+	}
+	option = {
+		name = jfp_dwg.3.b
+		jfp_ig_up = { IG = ig_devout }
+	}
+}
+
+# 경복궁 공사장 화재
+jfp_dwg.4 = {
+	type = country_event
+	placement = root
+	title = jfp_dwg.4.t
+	desc = jfp_dwg.4.d
+	flavor = jfp_dwg.4.f
+	event_image = { video = "unspecific_fire" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_fire.dds"
+	duration = 3
+
+	trigger = {
+		has_variable = jfp_dec_gyeongbokgung_taken
+		NOT = { has_variable = jfp_done_gyeongbok_fire }
+	}
+	immediate = {
+		set_variable = jfp_done_gyeongbok_fire
+	}
+
+	option = {
+		name = jfp_dwg.4.a
+		default_option = yes
+		jfp_pay_small = yes
+		add_radicals = { value = small_radicals strata = lower }
+	}
+	option = {
+		name = jfp_dwg.4.b
+		remove_modifier = jfp_gyeongbokgung_construction
+		add_modifier = { name = jfp_daewongun_overreach days = short_modifier_time }
+	}
+}
+
+# 포수 모집
+jfp_dwg.5 = {
+	type = country_event
+	placement = root
+	title = jfp_dwg.5.t
+	desc = jfp_dwg.5.d
+	flavor = jfp_dwg.5.f
+	event_image = { video = "europenorthamerica_before_the_battle" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+	duration = 3
+
+	trigger = {
+		NOT = { has_modifier = jfp_tiger_hunters }
+	}
+
+	option = {
+		name = jfp_dwg.5.a
+		default_option = yes
+		jfp_pay_small = yes
+		add_modifier = { name = jfp_tiger_hunters days = normal_modifier_time }
+		jfp_ig_up = { IG = ig_armed_forces }
+	}
+	option = {
+		name = jfp_dwg.5.b
+		jfp_ig_up = { IG = ig_rural_folk }
+	}
+}
+
+# 저널 완료: 대원군 개혁 완수
+jfp_dwg.10 = {
+	type = country_event
+	placement = root
+	title = jfp_dwg.10.t
+	desc = jfp_dwg.10.d
+	flavor = jfp_dwg.10.f
+	event_image = { video = "unspecific_military_parade" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+	duration = 3
+
+	option = {
+		name = jfp_dwg.10.a
+		default_option = yes
+		add_modifier = { name = jfp_daewongun_reforms_complete days = very_long_modifier_time }
+	}
+}
+
+# 저널 만료: 대원군 하야 (1873)
+jfp_dwg.11 = {
+	type = country_event
+	placement = root
+	title = jfp_dwg.11.t
+	desc = jfp_dwg.11.d
+	flavor = jfp_dwg.11.f
+	event_image = { video = "asia_politician_parliament_motion" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+	duration = 3
+
+	immediate = {
+		if = {
+			limit = {
+				has_variable = jfp_daewongun_reform
+				var:jfp_daewongun_reform < 60
+			}
+			add_modifier = { name = jfp_daewongun_overreach days = normal_modifier_time }
+		}
+	}
+
+	option = {
+		name = jfp_dwg.11.a
+		default_option = yes
+		jfp_ig_up = { IG = ig_devout }
+	}
+	option = {
+		name = jfp_dwg.11.b
+		jfp_ig_up = { IG = ig_landowners }
+		jfp_ig_stronger = { IG = ig_landowners }
+	}
+}

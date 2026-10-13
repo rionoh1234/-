@@ -1,0 +1,594 @@
+# 조선 고봉밥 - 결정
+# 비용은 바닐라의 GDP 비례 금액(money_amount_multiplier_*)을 사용합니다.
+
+#################################
+# 세도정치
+#################################
+jfp_dec_amhaeng_eosa = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_sedo_politics
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_cooldown
+			NOT = { has_variable = jfp_cd_amhaeng }
+		}
+	}
+	when_taken = {
+		jfp_pay_small = yes
+		jfp_royal_authority_up_small = yes
+		add_modifier = { name = jfp_amhaeng_eosa days = short_modifier_time }
+		jfp_ig_down = { IG = ig_landowners }
+		set_variable = { name = jfp_cd_amhaeng days = 730 }
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_gyujanggak = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_sedo_politics
+		NOT = { has_variable = jfp_dec_gyujanggak_taken }
+	}
+	possible = {
+		has_technology_researched = rationalism
+	}
+	when_taken = {
+		set_variable = jfp_dec_gyujanggak_taken
+		jfp_pay_medium = yes
+		jfp_royal_authority_up = yes
+		add_modifier = { name = jfp_gyujanggak_scholars days = long_modifier_time }
+		jfp_ig_up = { IG = ig_intelligentsia }
+		jfp_ig_down = { IG = ig_landowners }
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_purge_inlaws = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_sedo_politics
+		NOT = { has_variable = jfp_dec_purge_inlaws_taken }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_royal_authority_50
+			has_variable = jfp_royal_authority
+			var:jfp_royal_authority >= 50
+		}
+	}
+	when_taken = {
+		set_variable = jfp_dec_purge_inlaws_taken
+		jfp_royal_authority_up_large = yes
+		jfp_ig_down_large = { IG = ig_landowners }
+		jfp_ig_weaker = { IG = ig_landowners }
+		add_radicals = { value = medium_radicals strata = upper }
+	}
+	ai_chance = { value = 5 }
+}
+
+#################################
+# 삼정의 문란
+#################################
+jfp_dec_samjeong_ijeongcheong = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_samjeong
+		NOT = { has_variable = jfp_dec_ijeongcheong_taken }
+	}
+	possible = {
+		game_date >= 1850.1.1
+	}
+	when_taken = {
+		set_variable = jfp_dec_ijeongcheong_taken
+		jfp_pay_large = yes
+		jfp_samjeong_up_large = yes
+		jfp_ig_down = { IG = ig_landowners }
+		jfp_ig_up = { IG = ig_rural_folk }
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_hwangok_relief = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_samjeong
+		NOT = { has_variable = jfp_dec_hwangok_taken }
+	}
+	possible = {
+		always = yes
+	}
+	when_taken = {
+		set_variable = jfp_dec_hwangok_taken
+		jfp_pay_medium = yes
+		jfp_samjeong_up = yes
+		add_loyalists = { value = small_radicals strata = lower }
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_land_survey = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_samjeong
+		NOT = { has_variable = jfp_dec_land_survey_taken }
+	}
+	possible = {
+		has_technology_researched = centralization
+	}
+	when_taken = {
+		set_variable = jfp_dec_land_survey_taken
+		jfp_pay_medium = yes
+		jfp_samjeong_up = yes
+		add_modifier = { name = jfp_land_survey days = long_modifier_time }
+		jfp_ig_down = { IG = ig_landowners }
+	}
+	ai_chance = { value = 10 }
+}
+
+#################################
+# 흥선대원군
+#################################
+jfp_dec_seowon = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_daewongun
+		NOT = { has_variable = jfp_dec_seowon_taken }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_dwg_reform }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_dwg_reform days = 365 }
+		set_variable = jfp_dec_seowon_taken
+		jfp_daewongun_up = yes
+		add_modifier = { name = jfp_seowon_abolished days = very_long_modifier_time }
+		jfp_ig_down_large = { IG = ig_devout }
+		jfp_ig_down = { IG = ig_landowners }
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_gyeongbokgung = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_daewongun
+		NOT = { has_variable = jfp_dec_gyeongbokgung_taken }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_dwg_reform }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_dwg_reform days = 365 }
+		set_variable = jfp_dec_gyeongbokgung_taken
+		jfp_pay_large = yes
+		jfp_daewongun_up = yes
+		add_modifier = { name = jfp_gyeongbokgung_construction days = short_modifier_time }
+		add_modifier = { name = jfp_gyeongbokgung_restored days = very_long_modifier_time }
+		add_radicals = { value = small_radicals strata = lower }
+	}
+	ai_chance = { value = 8 }
+}
+
+jfp_dec_hopo = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_daewongun
+		NOT = { has_variable = jfp_dec_hopo_taken }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_dwg_reform }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_dwg_reform days = 365 }
+		set_variable = jfp_dec_hopo_taken
+		jfp_daewongun_up = yes
+		add_modifier = { name = jfp_hopo_system days = very_long_modifier_time }
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_sachang = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_daewongun
+		NOT = { has_variable = jfp_dec_sachang_taken }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_dwg_reform }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_dwg_reform days = 365 }
+		set_variable = jfp_dec_sachang_taken
+		jfp_pay_small = yes
+		jfp_daewongun_up = yes
+		add_modifier = { name = jfp_sachang_system days = very_long_modifier_time }
+		if = {
+			limit = { has_journal_entry = je_jfp_samjeong }
+			jfp_samjeong_up = yes
+		}
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_uijeongbu = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_daewongun
+		NOT = { has_variable = jfp_dec_uijeongbu_taken }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_dwg_reform }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_dwg_reform days = 365 }
+		set_variable = jfp_dec_uijeongbu_taken
+		jfp_daewongun_up = yes
+		add_modifier = { name = jfp_uijeongbu_restored days = very_long_modifier_time }
+		jfp_ig_down = { IG = ig_landowners }
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_dangbaekjeon = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_daewongun
+		NOT = { has_variable = jfp_dec_dangbaekjeon_taken }
+	}
+	possible = {
+		always = yes
+	}
+	when_taken = {
+		set_variable = jfp_dec_dangbaekjeon_taken
+		jfp_gain_medium = yes
+		add_modifier = { name = jfp_dangbaekjeon_inflation days = normal_modifier_time }
+		jfp_ig_down = { IG = ig_petty_bourgeoisie }
+	}
+	ai_chance = { value = 5 }
+}
+
+#################################
+# 양요와 해방(海防)
+#################################
+jfp_dec_coastal_forts = {
+	is_shown = {
+		jfp_is_joseon = yes
+		OR = {
+			has_journal_entry = je_jfp_yangyo
+			has_journal_entry = je_jfp_daewongun
+		}
+		NOT = { has_variable = jfp_dec_coastal_forts_taken }
+	}
+	possible = {
+		always = yes
+	}
+	when_taken = {
+		set_variable = jfp_dec_coastal_forts_taken
+		jfp_pay_medium = yes
+		add_modifier = { name = jfp_coastal_defense days = very_long_modifier_time }
+		jfp_ig_up = { IG = ig_armed_forces }
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_cheokhwabi = {
+	is_shown = {
+		jfp_is_joseon = yes
+		NOT = { has_variable = jfp_dec_cheokhwabi_taken }
+		OR = {
+			has_variable = jfp_sinmi_resolved
+			has_variable = jfp_byeongin_won
+		}
+	}
+	possible = {
+		has_law_or_variant = law_type:law_isolationism
+	}
+	when_taken = {
+		set_variable = jfp_dec_cheokhwabi_taken
+		add_modifier = { name = jfp_cheokhwabi days = very_long_modifier_time }
+		jfp_ig_up = { IG = ig_devout }
+		jfp_ig_down = { IG = ig_intelligentsia }
+	}
+	ai_chance = { value = 10 }
+}
+
+#################################
+# 개화
+#################################
+jfp_dec_tongni_amun = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_gaehwa
+		NOT = { has_variable = jfp_dec_tongni_taken }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_gaehwa_reform }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_gaehwa_reform days = 365 }
+		set_variable = jfp_dec_tongni_taken
+		jfp_pay_small = yes
+		jfp_gaehwa_up_large = yes
+		add_modifier = { name = jfp_tongni_amun days = very_long_modifier_time }
+		jfp_ig_down = { IG = ig_devout }
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_byeolgigun = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_gaehwa
+		NOT = { has_variable = jfp_byeolgigun_founded }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_gaehwa_reform }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_gaehwa_reform days = 365 }
+		set_variable = jfp_byeolgigun_founded
+		jfp_pay_medium = yes
+		jfp_gaehwa_up = yes
+		add_modifier = { name = jfp_byeolgigun days = very_long_modifier_time }
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_bakmunguk = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_gaehwa
+		NOT = { has_variable = jfp_dec_bakmunguk_taken }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_gaehwa_reform }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_gaehwa_reform days = 365 }
+		set_variable = jfp_dec_bakmunguk_taken
+		jfp_pay_small = yes
+		jfp_gaehwa_up = yes
+		add_modifier = { name = jfp_hanseong_sunbo days = very_long_modifier_time }
+		jfp_ig_up = { IG = ig_intelligentsia }
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_gigichang = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_gaehwa
+		NOT = { has_variable = jfp_dec_gigichang_taken }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_gaehwa_reform }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_gaehwa_reform days = 365 }
+		set_variable = jfp_dec_gigichang_taken
+		jfp_pay_medium = yes
+		jfp_gaehwa_up = yes
+		add_modifier = { name = jfp_gigichang days = very_long_modifier_time }
+		jfp_ig_up = { IG = ig_armed_forces }
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_jeonhwanguk = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_gaehwa
+		NOT = { has_variable = jfp_dec_jeonhwanguk_taken }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_gaehwa_reform }
+		}
+		has_technology_researched = currency_standards
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_gaehwa_reform days = 365 }
+		set_variable = jfp_dec_jeonhwanguk_taken
+		jfp_pay_small = yes
+		jfp_gaehwa_up = yes
+		add_modifier = { name = jfp_jeonhwanguk days = very_long_modifier_time }
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_yugyeong = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_gaehwa
+		NOT = { has_variable = jfp_dec_yugyeong_taken }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_gaehwa_reform }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_gaehwa_reform days = 365 }
+		set_variable = jfp_dec_yugyeong_taken
+		jfp_pay_medium = yes
+		jfp_gaehwa_up = yes
+		add_modifier = { name = jfp_yugyeong_gongwon days = very_long_modifier_time }
+		jfp_ig_up = { IG = ig_intelligentsia }
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_wonsan_school = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_gaehwa
+		NOT = { has_variable = jfp_dec_wonsan_taken }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_gaehwa_reform }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_gaehwa_reform days = 365 }
+		set_variable = jfp_dec_wonsan_taken
+		jfp_pay_small = yes
+		jfp_gaehwa_up = yes
+		add_modifier = { name = jfp_wonsan_school days = very_long_modifier_time }
+		jfp_ig_up = { IG = ig_petty_bourgeoisie }
+	}
+	ai_chance = { value = 10 }
+}
+
+#################################
+# 광무개혁
+#################################
+jfp_dec_yangjeon_jigye = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_gwangmu
+		NOT = { has_variable = jfp_dec_yangjeon_taken }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_gwangmu_reform }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_gwangmu_reform days = 365 }
+		set_variable = jfp_dec_yangjeon_taken
+		jfp_pay_medium = yes
+		jfp_gwangmu_up = yes
+		add_modifier = { name = jfp_yangjeon_jigye days = very_long_modifier_time }
+		jfp_ig_down = { IG = ig_landowners }
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_wonsubu = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_gwangmu
+		NOT = { has_variable = jfp_dec_wonsubu_taken }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_gwangmu_reform }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_gwangmu_reform days = 365 }
+		set_variable = jfp_dec_wonsubu_taken
+		jfp_pay_medium = yes
+		jfp_gwangmu_up = yes
+		add_modifier = { name = jfp_wonsubu days = very_long_modifier_time }
+		jfp_ig_up = { IG = ig_armed_forces }
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_hanseong_electric = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_gwangmu
+		NOT = { has_variable = jfp_dec_electric_taken }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_gwangmu_reform }
+		}
+		has_technology_researched = electrical_generation
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_gwangmu_reform days = 365 }
+		set_variable = jfp_dec_electric_taken
+		jfp_pay_large = yes
+		jfp_gwangmu_up = yes
+		add_modifier = { name = jfp_hanseong_electric days = very_long_modifier_time }
+		jfp_ig_up = { IG = ig_industrialists }
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_gyeongin_railway = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_gwangmu
+		NOT = { has_variable = jfp_dec_railway_taken }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_gwangmu_reform }
+		}
+		has_technology_researched = railways
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_gwangmu_reform days = 365 }
+		set_variable = jfp_dec_railway_taken
+		jfp_pay_large = yes
+		jfp_gwangmu_up = yes
+		add_modifier = { name = jfp_gyeongin_railway days = very_long_modifier_time }
+		jfp_ig_up = { IG = ig_industrialists }
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_cheonil_bank = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_gwangmu
+		NOT = { has_variable = jfp_dec_bank_taken }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_gwangmu_reform }
+		}
+		has_technology_researched = banking
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_gwangmu_reform days = 365 }
+		set_variable = jfp_dec_bank_taken
+		jfp_pay_medium = yes
+		jfp_gwangmu_up = yes
+		add_modifier = { name = jfp_daehan_cheonil_bank days = very_long_modifier_time }
+		jfp_ig_up = { IG = ig_petty_bourgeoisie }
+	}
+	ai_chance = { value = 10 }
+}

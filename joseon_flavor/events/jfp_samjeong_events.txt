@@ -1,0 +1,193 @@
+namespace = jfp_samjeong
+
+# 삼정의 문란 저널 이벤트
+
+# 환곡의 고리대
+jfp_samjeong.1 = {
+	type = country_event
+	placement = root
+	title = jfp_samjeong.1.t
+	desc = jfp_samjeong.1.d
+	flavor = jfp_samjeong.1.f
+	event_image = { video = "asia_farmers_market" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_trade.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+	option = {
+		name = jfp_samjeong.1.a
+		default_option = yes
+		jfp_pay_small = yes
+		jfp_samjeong_up = yes
+		add_loyalists = { value = small_radicals strata = lower }
+	}
+	option = {
+		name = jfp_samjeong.1.b
+		jfp_gain_small = yes
+		add_modifier = { name = jfp_hwangok_usury days = short_modifier_time }
+	}
+}
+
+# 백골징포와 황구첨정
+jfp_samjeong.2 = {
+	type = country_event
+	placement = root
+	title = jfp_samjeong.2.t
+	desc = jfp_samjeong.2.d
+	flavor = jfp_samjeong.2.f
+	event_image = { video = "asia_poor_people_moving" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+	option = {
+		name = jfp_samjeong.2.a
+		default_option = yes
+		jfp_pay_small = yes
+		jfp_samjeong_up = yes
+		jfp_ig_down = { IG = ig_landowners }
+	}
+	option = {
+		name = jfp_samjeong.2.b
+		add_modifier = { name = jfp_gunpo_abuse days = short_modifier_time }
+		add_radicals = { value = small_radicals strata = lower }
+	}
+}
+
+# 은결
+jfp_samjeong.3 = {
+	type = country_event
+	placement = root
+	title = jfp_samjeong.3.t
+	desc = jfp_samjeong.3.d
+	flavor = jfp_samjeong.3.f
+	event_image = { video = "africa_prosperous_farm" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+	option = {
+		name = jfp_samjeong.3.a
+		default_option = yes
+		jfp_samjeong_up = yes
+		jfp_ig_down_large = { IG = ig_landowners }
+	}
+	option = {
+		name = jfp_samjeong.3.b
+		add_modifier = { name = jfp_hidden_fields days = normal_modifier_time }
+		jfp_ig_up = { IG = ig_landowners }
+	}
+}
+
+# 흉년
+jfp_samjeong.4 = {
+	type = country_event
+	placement = root
+	title = jfp_samjeong.4.t
+	desc = jfp_samjeong.4.d
+	flavor = jfp_samjeong.4.f
+	event_image = { video = "asia_dead_cattle_poor_harvest" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_skull.dds"
+	duration = 3
+	cooldown = { days = long_modifier_time }
+
+	option = {
+		name = jfp_samjeong.4.a
+		default_option = yes
+		jfp_pay_medium = yes
+		add_modifier = { name = jfp_famine_relief days = short_modifier_time }
+		add_loyalists = { value = small_radicals strata = lower }
+	}
+	option = {
+		name = jfp_samjeong.4.b
+		add_modifier = { name = jfp_famine days = short_modifier_time }
+		add_radicals = { value = medium_radicals strata = lower }
+	}
+}
+
+# 탐관오리
+jfp_samjeong.5 = {
+	type = country_event
+	placement = root
+	title = jfp_samjeong.5.t
+	desc = jfp_samjeong.5.d
+	flavor = jfp_samjeong.5.f
+	event_image = { video = "middleeast_courtroom_upheaval" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+	option = {
+		name = jfp_samjeong.5.a
+		default_option = yes
+		jfp_samjeong_up = yes
+		jfp_ig_down = { IG = ig_landowners }
+	}
+	option = {
+		name = jfp_samjeong.5.b
+		jfp_gain_small = yes
+		jfp_samjeong_down = yes
+	}
+}
+
+# 임술농민봉기 (1862)
+jfp_samjeong.6 = {
+	type = country_event
+	placement = root
+	title = jfp_samjeong.6.t
+	desc = jfp_samjeong.6.d
+	flavor = jfp_samjeong.6.f
+	event_image = { video = "africa_public_protest" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+	duration = 3
+
+	option = {
+		name = jfp_samjeong.6.a
+		trigger = {
+			NOT = { has_variable = jfp_dec_ijeongcheong_taken }
+		}
+		set_variable = jfp_dec_ijeongcheong_taken
+		jfp_pay_medium = yes
+		jfp_samjeong_up_large = yes
+		add_loyalists = { value = small_radicals strata = lower }
+		jfp_ig_down = { IG = ig_landowners }
+	}
+	option = {
+		name = jfp_samjeong.6.b
+		default_option = yes
+		jfp_samjeong_up = yes
+		add_modifier = { name = jfp_peasant_uprising days = short_modifier_time }
+		add_radicals = { value = small_radicals strata = lower }
+	}
+	option = {
+		name = jfp_samjeong.6.c
+		jfp_ig_up = { IG = ig_armed_forces }
+		add_modifier = { name = jfp_peasant_uprising days = normal_modifier_time }
+		add_radicals = { value = medium_radicals strata = lower }
+	}
+}
+
+# 저널 완료: 삼정 이정
+jfp_samjeong.7 = {
+	type = country_event
+	placement = root
+	title = jfp_samjeong.7.t
+	desc = jfp_samjeong.7.d
+	flavor = jfp_samjeong.7.f
+	event_image = { video = "africa_prosperous_farm" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+	duration = 3
+
+	option = {
+		name = jfp_samjeong.7.a
+		default_option = yes
+		add_modifier = { name = jfp_samjeong_reformed days = very_long_modifier_time }
+	}
+}

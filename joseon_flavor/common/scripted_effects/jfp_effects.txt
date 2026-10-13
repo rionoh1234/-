@@ -1,0 +1,156 @@
+# 조선 고봉밥 - 스크립트 효과
+# 진행도 변수는 0~100 범위로 고정합니다.
+
+jfp_royal_authority_up_small = {
+	custom_tooltip = {
+		text = jfp_tt_royal_authority_up_small
+		change_variable = { name = jfp_royal_authority add = 5 }
+		clamp_variable = { name = jfp_royal_authority min = 0 max = 100 }
+	}
+}
+jfp_royal_authority_up = {
+	custom_tooltip = {
+		text = jfp_tt_royal_authority_up
+		change_variable = { name = jfp_royal_authority add = 10 }
+		clamp_variable = { name = jfp_royal_authority min = 0 max = 100 }
+	}
+}
+jfp_royal_authority_up_large = {
+	custom_tooltip = {
+		text = jfp_tt_royal_authority_up_large
+		change_variable = { name = jfp_royal_authority add = 20 }
+		clamp_variable = { name = jfp_royal_authority min = 0 max = 100 }
+	}
+}
+jfp_royal_authority_down = {
+	custom_tooltip = {
+		text = jfp_tt_royal_authority_down
+		change_variable = { name = jfp_royal_authority subtract = 10 }
+		clamp_variable = { name = jfp_royal_authority min = 0 max = 100 }
+	}
+}
+
+jfp_samjeong_up = {
+	custom_tooltip = {
+		text = jfp_tt_samjeong_up
+		change_variable = { name = jfp_samjeong_reform add = 10 }
+		clamp_variable = { name = jfp_samjeong_reform min = 0 max = 100 }
+	}
+}
+jfp_samjeong_up_large = {
+	custom_tooltip = {
+		text = jfp_tt_samjeong_up_large
+		change_variable = { name = jfp_samjeong_reform add = 25 }
+		clamp_variable = { name = jfp_samjeong_reform min = 0 max = 100 }
+	}
+}
+jfp_samjeong_down = {
+	custom_tooltip = {
+		text = jfp_tt_samjeong_down
+		change_variable = { name = jfp_samjeong_reform subtract = 10 }
+		clamp_variable = { name = jfp_samjeong_reform min = 0 max = 100 }
+	}
+}
+
+jfp_daewongun_up = {
+	custom_tooltip = {
+		text = jfp_tt_daewongun_up
+		change_variable = { name = jfp_daewongun_reform add = 20 }
+		clamp_variable = { name = jfp_daewongun_reform min = 0 max = 100 }
+	}
+}
+jfp_daewongun_up_small = {
+	custom_tooltip = {
+		text = jfp_tt_daewongun_up_small
+		change_variable = { name = jfp_daewongun_reform add = 10 }
+		clamp_variable = { name = jfp_daewongun_reform min = 0 max = 100 }
+	}
+}
+
+jfp_gaehwa_up = {
+	custom_tooltip = {
+		text = jfp_tt_gaehwa_up
+		change_variable = { name = jfp_gaehwa add = 10 }
+		clamp_variable = { name = jfp_gaehwa min = 0 max = 100 }
+	}
+}
+jfp_gaehwa_up_large = {
+	custom_tooltip = {
+		text = jfp_tt_gaehwa_up_large
+		change_variable = { name = jfp_gaehwa add = 20 }
+		clamp_variable = { name = jfp_gaehwa min = 0 max = 100 }
+	}
+}
+jfp_gaehwa_down = {
+	custom_tooltip = {
+		text = jfp_tt_gaehwa_down
+		change_variable = { name = jfp_gaehwa subtract = 10 }
+		clamp_variable = { name = jfp_gaehwa min = 0 max = 100 }
+	}
+}
+
+jfp_gwangmu_up = {
+	custom_tooltip = {
+		text = jfp_tt_gwangmu_up
+		change_variable = { name = jfp_gwangmu add = 20 }
+		clamp_variable = { name = jfp_gwangmu min = 0 max = 100 }
+	}
+}
+jfp_gwangmu_up_small = {
+	custom_tooltip = {
+		text = jfp_tt_gwangmu_up_small
+		change_variable = { name = jfp_gwangmu add = 10 }
+		clamp_variable = { name = jfp_gwangmu min = 0 max = 100 }
+	}
+}
+
+# 서학 대응 성향: +면 박해, -면 관용
+jfp_seohak_persecute = {
+	custom_tooltip = {
+		text = jfp_tt_seohak_persecute
+		change_variable = { name = jfp_seohak_stance add = 1 }
+	}
+}
+jfp_seohak_tolerate = {
+	custom_tooltip = {
+		text = jfp_tt_seohak_tolerate
+		change_variable = { name = jfp_seohak_stance subtract = 1 }
+	}
+}
+
+# 이익집단 지지도 증감 (IG = ig_landowners 등)
+jfp_ig_up = {
+	ig:$IG$ ?= { add_modifier = { name = jfp_ig_approval_up days = normal_modifier_time is_decaying = yes } }
+}
+jfp_ig_up_large = {
+	ig:$IG$ ?= { add_modifier = { name = jfp_ig_approval_up_large days = normal_modifier_time is_decaying = yes } }
+}
+jfp_ig_down = {
+	ig:$IG$ ?= { add_modifier = { name = jfp_ig_approval_down days = normal_modifier_time is_decaying = yes } }
+}
+jfp_ig_down_large = {
+	ig:$IG$ ?= { add_modifier = { name = jfp_ig_approval_down_large days = normal_modifier_time is_decaying = yes } }
+}
+jfp_ig_stronger = {
+	ig:$IG$ ?= { add_modifier = { name = jfp_ig_strength_up days = normal_modifier_time } }
+}
+jfp_ig_weaker = {
+	ig:$IG$ ?= { add_modifier = { name = jfp_ig_strength_down days = normal_modifier_time } }
+}
+
+# 비용 지출 (GDP 비례, 바닐라 스케일 사용)
+jfp_pay_small = {
+	add_treasury = { value = money_amount_multiplier_small multiply = -1 }
+}
+jfp_pay_medium = {
+	add_treasury = { value = money_amount_multiplier_medium multiply = -1 }
+}
+jfp_pay_large = {
+	add_treasury = { value = money_amount_multiplier_large multiply = -1 }
+}
+jfp_gain_small = {
+	add_treasury = money_amount_multiplier_small
+}
+jfp_gain_medium = {
+	add_treasury = money_amount_multiplier_medium
+}

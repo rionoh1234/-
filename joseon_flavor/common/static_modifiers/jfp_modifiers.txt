@@ -1,0 +1,439 @@
+# 조선 고봉밥 - 정적 수정자
+# 수치는 모두 v0.1 잠정값입니다. 밸런스 조정 시 이 파일만 고치면 됩니다.
+
+#################################
+# 공용: 이익집단 지지도 증감
+#################################
+jfp_ig_approval_up = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_positive.dds"
+	interest_group_approval_add = 2
+}
+jfp_ig_approval_up_large = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_positive.dds"
+	interest_group_approval_add = 4
+}
+jfp_ig_approval_down = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_negative.dds"
+	interest_group_approval_add = -2
+}
+jfp_ig_approval_down_large = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_negative.dds"
+	interest_group_approval_add = -4
+}
+jfp_ig_strength_up = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_fist_positive.dds"
+	interest_group_pol_str_mult = 0.15
+}
+jfp_ig_strength_down = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_fist_negative.dds"
+	interest_group_pol_str_mult = -0.15
+}
+
+#################################
+# 세도정치
+#################################
+jfp_sedo_dominance = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_documents_negative.dds"
+	country_authority_mult = -0.10
+	country_bureaucracy_mult = -0.05
+	interest_group_ig_landowners_pol_str_mult = 0.20
+}
+jfp_sale_of_offices = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_negative.dds"
+	state_tax_collection_mult = -0.05
+	country_legitimacy_base_add = -3
+}
+jfp_sale_of_offices_profit = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_positive.dds"
+	country_bureaucracy_mult = -0.05
+	country_legitimacy_base_add = -2
+}
+jfp_amhaeng_eosa = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_documents_positive.dds"
+	state_tax_collection_mult = 0.05
+	country_legitimacy_base_add = 2
+}
+jfp_gyujanggak_scholars = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_lightbulb_positive.dds"
+	country_weekly_innovation_add = 1
+	country_bureaucracy_mult = 0.03
+}
+jfp_royal_authority_restored = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_positive.dds"
+	country_authority_mult = 0.10
+	country_legitimacy_base_add = 5
+	country_bureaucracy_mult = 0.05
+}
+jfp_sedo_entrenched = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_negative.dds"
+	country_authority_mult = -0.05
+	country_legitimacy_base_add = -5
+	interest_group_ig_landowners_pol_str_mult = 0.10
+}
+jfp_royal_wedding = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_positive.dds"
+	country_legitimacy_base_add = 3
+}
+
+#################################
+# 삼정문란
+#################################
+jfp_samjeong_corruption = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_negative.dds"
+	state_tax_collection_mult = -0.10
+	state_lower_strata_standard_of_living_add = -0.5
+	country_radicals_from_legitimacy_mult = 0.10
+}
+jfp_hwangok_usury = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_negative.dds"
+	state_lower_strata_standard_of_living_add = -0.5
+}
+jfp_gunpo_abuse = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_rifle_negative.dds"
+	state_conscription_rate_add = -0.005
+	state_lower_strata_standard_of_living_add = -0.3
+}
+jfp_hidden_fields = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_documents_negative.dds"
+	state_tax_capacity_add = -2
+}
+jfp_land_survey = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_documents_positive.dds"
+	state_tax_collection_mult = 0.05
+}
+jfp_peasant_uprising = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_fist_negative.dds"
+	state_turmoil_effects_mult = 0.15
+	country_legitimacy_base_add = -5
+}
+jfp_samjeong_reformed = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_positive.dds"
+	state_tax_collection_mult = 0.10
+	state_lower_strata_standard_of_living_add = 0.5
+	country_radicals_from_legitimacy_mult = -0.10
+}
+jfp_famine_relief = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_positive.dds"
+	state_lower_strata_standard_of_living_add = 0.5
+	state_mortality_mult = -0.05
+}
+jfp_famine = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_fire_negative.dds"
+	state_mortality_mult = 0.10
+	state_birth_rate_mult = -0.05
+}
+
+#################################
+# 서학과 천주교
+#################################
+jfp_seohak_persecution = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_fist_negative.dds"
+	interest_group_ig_devout_pol_str_mult = 0.10
+	country_weekly_innovation_mult = -0.05
+}
+jfp_seohak_tolerance = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_lightbulb_positive.dds"
+	country_tech_spread_mult = 0.05
+	interest_group_ig_intelligentsia_pol_str_mult = 0.10
+}
+jfp_martyr_memory = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_negative.dds"
+	country_legitimacy_base_add = -2
+}
+jfp_western_learning = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_lightbulb_positive.dds"
+	country_weekly_innovation_add = 2
+	country_tech_spread_mult = 0.10
+}
+jfp_orthodoxy_upheld = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_positive.dds"
+	country_legitimacy_base_add = 5
+	interest_group_ig_devout_approval_add = 2
+	country_tech_spread_mult = -0.05
+}
+
+#################################
+# 흥선대원군
+#################################
+jfp_daewongun_regency = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_positive.dds"
+	country_authority_mult = 0.10
+	country_law_enactment_success_add = 0.05
+}
+jfp_seowon_abolished = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_documents_positive.dds"
+	country_bureaucracy_mult = 0.05
+	state_tax_capacity_add = 2
+	interest_group_ig_devout_pol_str_mult = -0.10
+}
+jfp_gyeongbokgung_construction = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_negative.dds"
+	state_lower_strata_standard_of_living_add = -0.5
+	country_max_weekly_construction_progress_add = -1
+}
+jfp_gyeongbokgung_restored = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_positive.dds"
+	country_prestige_mult = 0.10
+	country_legitimacy_base_add = 5
+}
+jfp_dangbaekjeon_inflation = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_negative.dds"
+	state_standard_of_living_add = -0.5
+	country_loan_interest_rate_mult = 0.10
+}
+jfp_hopo_system = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_positive.dds"
+	state_tax_collection_mult = 0.05
+	interest_group_ig_landowners_approval_add = -2
+	interest_group_ig_rural_folk_approval_add = 2
+}
+jfp_sachang_system = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_positive.dds"
+	state_lower_strata_standard_of_living_add = 0.3
+	state_mortality_mult = -0.03
+}
+jfp_daewongun_reforms_complete = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_positive.dds"
+	country_authority_mult = 0.10
+	country_bureaucracy_mult = 0.05
+	state_tax_collection_mult = 0.05
+}
+jfp_daewongun_overreach = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_negative.dds"
+	country_legitimacy_base_add = -5
+	interest_group_ig_landowners_approval_add = -2
+}
+
+#################################
+# 양요와 쇄국
+#################################
+jfp_coastal_defense = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_rifle_positive.dds"
+	unit_defense_mult = 0.10
+	unit_morale_recovery_mult = 0.05
+}
+jfp_tiger_hunters = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_rifle_positive.dds"
+	unit_defense_add = 2
+	state_conscription_rate_add = 0.005
+}
+jfp_foreign_victory = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_positive.dds"
+	country_prestige_mult = 0.10
+	country_legitimacy_base_add = 5
+}
+jfp_foreign_humiliation = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_negative.dds"
+	country_prestige_mult = -0.10
+	country_legitimacy_base_add = -5
+}
+jfp_cheokhwabi = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_positive.dds"
+	country_legitimacy_base_add = 3
+	interest_group_ig_devout_approval_add = 2
+	country_tech_spread_mult = -0.10
+}
+jfp_opened_ports = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_positive.dds"
+	country_tech_spread_mult = 0.10
+	building_port_throughput_add = 0.10
+}
+jfp_unequal_treaty = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_documents_negative.dds"
+	country_prestige_mult = -0.10
+	state_tax_collection_mult = -0.05
+}
+
+#################################
+# 개화
+#################################
+jfp_gaehwa_faction = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_lightbulb_positive.dds"
+	interest_group_ig_intelligentsia_pol_str_mult = 0.15
+	country_tech_spread_mult = 0.05
+}
+jfp_wijeong_cheoksa = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_negative.dds"
+	interest_group_ig_devout_pol_str_mult = 0.15
+	country_law_enactment_success_add = -0.05
+}
+jfp_tongni_amun = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_documents_positive.dds"
+	country_bureaucracy_mult = 0.05
+	country_law_enactment_success_add = 0.05
+}
+jfp_byeolgigun = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_rifle_positive.dds"
+	unit_offense_mult = 0.05
+	building_training_rate_mult = 0.10
+}
+jfp_imo_mutiny_aftermath = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_rifle_negative.dds"
+	unit_morale_recovery_mult = -0.10
+	country_legitimacy_base_add = -5
+}
+jfp_hanseong_sunbo = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_documents_positive.dds"
+	state_education_access_add = 0.02
+	country_weekly_innovation_add = 1
+}
+jfp_gigichang = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds"
+	building_arms_industry_throughput_add = 0.10
+	country_military_tech_research_speed_mult = 0.05
+}
+jfp_jeonhwanguk = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_positive.dds"
+	country_loan_interest_rate_mult = -0.10
+	state_tax_collection_mult = 0.03
+}
+jfp_yugyeong_gongwon = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_lightbulb_positive.dds"
+	state_education_access_add = 0.03
+	country_society_tech_research_speed_mult = 0.05
+}
+jfp_wonsan_school = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_lightbulb_positive.dds"
+	state_education_access_add = 0.02
+}
+jfp_gapsin_failed = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_fist_negative.dds"
+	interest_group_ig_intelligentsia_pol_str_mult = -0.20
+	country_legitimacy_base_add = -3
+}
+jfp_gapsin_success = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_fist_positive.dds"
+	interest_group_ig_intelligentsia_pol_str_mult = 0.20
+	country_law_enactment_success_add = 0.10
+	country_legitimacy_base_add = -5
+}
+jfp_grain_export_ban = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_positive.dds"
+	state_lower_strata_standard_of_living_add = 0.3
+	country_prestige_mult = -0.05
+}
+jfp_gaehwa_success = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds"
+	country_tech_spread_mult = 0.15
+	country_bureaucracy_mult = 0.05
+	country_weekly_innovation_mult = 0.10
+}
+
+#################################
+# 광무개혁
+#################################
+jfp_gwangmu_reforms = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds"
+	country_authority_mult = 0.05
+	country_production_tech_research_speed_mult = 0.05
+}
+jfp_yangjeon_jigye = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_documents_positive.dds"
+	state_tax_capacity_add = 3
+	state_tax_collection_mult = 0.05
+}
+jfp_wonsubu = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_rifle_positive.dds"
+	unit_offense_mult = 0.05
+	unit_defense_mult = 0.05
+	military_formation_mobilization_speed_mult = 0.10
+}
+jfp_hanseong_electric = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds"
+	building_power_plant_throughput_add = 0.10
+	state_infrastructure_mult = 0.05
+}
+jfp_gyeongin_railway = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds"
+	building_railway_throughput_add = 0.10
+	state_infrastructure_add = 5
+}
+jfp_independence_club = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_lightbulb_positive.dds"
+	interest_group_ig_intelligentsia_pol_str_mult = 0.15
+	state_education_access_add = 0.02
+}
+jfp_independence_club_suppressed = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_fist_negative.dds"
+	country_authority_mult = 0.05
+	interest_group_ig_intelligentsia_approval_add = -3
+}
+jfp_daehan_cheonil_bank = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_positive.dds"
+	country_loan_interest_rate_mult = -0.10
+}
+jfp_gwangmu_success = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_positive.dds"
+	country_prestige_mult = 0.10
+	country_authority_mult = 0.10
+	building_group_bg_manufacturing_throughput_add = 0.05
+}
+
+#################################
+# 문화·학문
+#################################
+jfp_silhak_legacy = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_lightbulb_positive.dds"
+	country_weekly_innovation_add = 1
+	country_society_tech_research_speed_mult = 0.05
+}
+jfp_gicheuk_cheui = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_lightbulb_positive.dds"
+	country_tech_spread_mult = 0.05
+}
+jfp_chusa_style = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_positive.dds"
+	country_prestige_mult = 0.03
+	interest_group_ig_landowners_approval_add = 1
+}
+jfp_daedong_yeojido = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_documents_positive.dds"
+	state_infrastructure_add = 2
+	unit_defense_add = 1
+}
+jfp_pansori_flourishing = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_positive.dds"
+	state_lower_strata_standard_of_living_add = 0.2
+	building_group_bg_arts_throughput_add = 0.10
+}
+jfp_talchum = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_positive.dds"
+	state_radicals_from_political_movements_mult = -0.05
+}
+jfp_jeonggamnok_rumors = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_fist_negative.dds"
+	state_radicals_from_political_movements_mult = 0.10
+	country_legitimacy_base_add = -2
+}
+jfp_sasang_medicine = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_positive.dds"
+	state_mortality_mult = -0.05
+}
+jfp_cholera = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_fire_negative.dds"
+	state_mortality_mult = 0.15
+}
+jfp_minhwa = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_positive.dds"
+	state_middle_strata_standard_of_living_add = 0.2
+}
+jfp_hangul_novels = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_documents_positive.dds"
+	state_education_access_add = 0.01
+	state_lower_strata_standard_of_living_add = 0.1
+}
+
+#################################
+# 추가: 결정 전용
+#################################
+jfp_uijeongbu_restored = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_documents_positive.dds"
+	country_bureaucracy_mult = 0.05
+	country_authority_mult = 0.05
+}
+jfp_daehan_gukje = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_positive.dds"
+	country_authority_mult = 0.10
+	country_legitimacy_base_add = 3
+	interest_group_ig_intelligentsia_approval_add = -2
+}

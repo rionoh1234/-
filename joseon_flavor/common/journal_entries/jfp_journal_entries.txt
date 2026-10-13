@@ -1,0 +1,389 @@
+# 조선 고봉밥 - 저널
+# 진행도 저널은 0~100 변수를 사용하며, 100에 도달하면 완료됩니다.
+
+#################################
+# 1. 세도정치
+#################################
+je_jfp_sedo_politics = {
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+	group = je_group_historical_content
+
+	immediate = {
+		if = {
+			limit = { NOT = { has_variable = jfp_royal_authority } }
+			set_variable = { name = jfp_royal_authority value = 0 }
+		}
+	}
+
+	modifiers_while_active = {
+		jfp_sedo_dominance
+	}
+
+	current_value = {
+		value = 0
+		if = {
+			limit = { has_variable = jfp_royal_authority }
+			value = var:jfp_royal_authority
+		}
+	}
+	goal_add_value = {
+		add = 100
+	}
+	progressbar = yes
+
+	complete = {
+		scope:journal_entry = { is_goal_complete = yes }
+	}
+	on_complete = {
+		trigger_event = { id = jfp_sedo.10 popup = yes }
+	}
+
+	# 약 28년 (1836 → 1864, 고종 즉위 무렵)
+	timeout = 10220
+	on_timeout = {
+		trigger_event = { id = jfp_sedo.11 popup = yes }
+	}
+
+	invalid = {
+		NOT = { jfp_is_joseon = yes }
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			300 = 0
+			6 = jfp_sedo.1
+			6 = jfp_sedo.2
+			5 = jfp_sedo.3
+			5 = jfp_sedo.4
+			3 = jfp_sedo.5
+			4 = jfp_sedo.6
+		}
+	}
+
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	weight = 100
+}
+
+#################################
+# 2. 삼정의 문란
+#################################
+je_jfp_samjeong = {
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+	group = je_group_historical_content
+
+	immediate = {
+		if = {
+			limit = { NOT = { has_variable = jfp_samjeong_reform } }
+			set_variable = { name = jfp_samjeong_reform value = 0 }
+		}
+	}
+
+	modifiers_while_active = {
+		jfp_samjeong_corruption
+	}
+
+	current_value = {
+		value = 0
+		if = {
+			limit = { has_variable = jfp_samjeong_reform }
+			value = var:jfp_samjeong_reform
+		}
+	}
+	goal_add_value = {
+		add = 100
+	}
+	progressbar = yes
+
+	complete = {
+		scope:journal_entry = { is_goal_complete = yes }
+	}
+	on_complete = {
+		trigger_event = { id = jfp_samjeong.7 popup = yes }
+	}
+
+	invalid = {
+		NOT = { jfp_is_joseon = yes }
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			300 = 0
+			6 = jfp_samjeong.1
+			6 = jfp_samjeong.2
+			5 = jfp_samjeong.3
+			4 = jfp_samjeong.4
+			5 = jfp_samjeong.5
+		}
+	}
+
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	weight = 100
+}
+
+#################################
+# 3. 서학과 천주교
+#################################
+je_jfp_seohak = {
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+	group = je_group_historical_content
+
+	immediate = {
+		if = {
+			limit = { NOT = { has_variable = jfp_seohak_stance } }
+			set_variable = { name = jfp_seohak_stance value = 0 }
+		}
+	}
+
+	complete = {
+		OR = {
+			custom_tooltip = {
+				text = jfp_tt_seohak_resolved_persecute
+				has_variable = jfp_seohak_stance
+				var:jfp_seohak_stance >= 3
+			}
+			custom_tooltip = {
+				text = jfp_tt_seohak_resolved_tolerate
+				has_variable = jfp_seohak_stance
+				var:jfp_seohak_stance <= -3
+			}
+			has_law_or_variant = law_type:law_freedom_of_conscience
+		}
+	}
+	on_complete = {
+		trigger_event = { id = jfp_seohak.9 popup = yes }
+	}
+
+	# 약 34년 (~1870)
+	timeout = 12410
+	on_timeout = {
+		trigger_event = { id = jfp_seohak.9 popup = yes }
+	}
+
+	invalid = {
+		NOT = { jfp_is_joseon = yes }
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			300 = 0
+			5 = jfp_seohak.5
+			5 = jfp_seohak.6
+		}
+	}
+
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	weight = 100
+}
+
+#################################
+# 4. 흥선대원군의 섭정
+#################################
+je_jfp_daewongun = {
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+	group = je_group_historical_content
+
+	immediate = {
+		if = {
+			limit = { NOT = { has_variable = jfp_daewongun_reform } }
+			set_variable = { name = jfp_daewongun_reform value = 0 }
+		}
+	}
+
+	modifiers_while_active = {
+		jfp_daewongun_regency
+	}
+
+	current_value = {
+		value = 0
+		if = {
+			limit = { has_variable = jfp_daewongun_reform }
+			value = var:jfp_daewongun_reform
+		}
+	}
+	goal_add_value = {
+		add = 100
+	}
+	progressbar = yes
+
+	complete = {
+		scope:journal_entry = { is_goal_complete = yes }
+	}
+	on_complete = {
+		trigger_event = { id = jfp_dwg.10 popup = yes }
+	}
+
+	# 약 10년 (1864 → 1873 하야)
+	timeout = 3650
+	on_timeout = {
+		trigger_event = { id = jfp_dwg.11 popup = yes }
+	}
+
+	invalid = {
+		NOT = { jfp_is_joseon = yes }
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			200 = 0
+			6 = jfp_dwg.2
+			5 = jfp_dwg.3
+			5 = jfp_dwg.4
+			4 = jfp_dwg.5
+		}
+	}
+
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	weight = 100
+}
+
+#################################
+# 5. 양요: 서양의 도전
+#################################
+je_jfp_yangyo = {
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+	group = je_group_historical_content
+
+	complete = {
+		OR = {
+			custom_tooltip = {
+				text = jfp_tt_yangyo_sinmi_done
+				has_variable = jfp_sinmi_resolved
+			}
+			NOT = { has_law_or_variant = law_type:law_isolationism }
+		}
+	}
+	on_complete = {
+		trigger_event = { id = jfp_yangyo.9 popup = yes }
+	}
+
+	invalid = {
+		NOT = { jfp_is_joseon = yes }
+	}
+
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	weight = 100
+}
+
+#################################
+# 6. 개항과 개화
+#################################
+je_jfp_gaehwa = {
+	icon = "gfx/interface/icons/event_icons/event_industry.dds"
+	group = je_group_historical_content
+
+	immediate = {
+		if = {
+			limit = { NOT = { has_variable = jfp_gaehwa } }
+			set_variable = { name = jfp_gaehwa value = 0 }
+		}
+	}
+
+	current_value = {
+		value = 0
+		if = {
+			limit = { has_variable = jfp_gaehwa }
+			value = var:jfp_gaehwa
+		}
+	}
+	goal_add_value = {
+		add = 100
+	}
+	progressbar = yes
+
+	complete = {
+		scope:journal_entry = { is_goal_complete = yes }
+	}
+	on_complete = {
+		trigger_event = { id = jfp_gaehwa.20 popup = yes }
+	}
+
+	fail = {
+		is_subject = yes
+	}
+	on_fail = {
+		trigger_event = { id = jfp_gaehwa.21 popup = yes }
+	}
+
+	invalid = {
+		NOT = { jfp_is_joseon = yes }
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			300 = 0
+			5 = jfp_gaehwa.10
+			5 = jfp_gaehwa.11
+			5 = jfp_gaehwa.12
+		}
+	}
+
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	weight = 100
+}
+
+#################################
+# 7. 광무개혁
+#################################
+je_jfp_gwangmu = {
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+	group = je_group_historical_content
+
+	immediate = {
+		if = {
+			limit = { NOT = { has_variable = jfp_gwangmu } }
+			set_variable = { name = jfp_gwangmu value = 0 }
+		}
+	}
+
+	modifiers_while_active = {
+		jfp_gwangmu_reforms
+	}
+
+	current_value = {
+		value = 0
+		if = {
+			limit = { has_variable = jfp_gwangmu }
+			value = var:jfp_gwangmu
+		}
+	}
+	goal_add_value = {
+		add = 100
+	}
+	progressbar = yes
+
+	complete = {
+		scope:journal_entry = { is_goal_complete = yes }
+	}
+	on_complete = {
+		trigger_event = { id = jfp_gwangmu.10 popup = yes }
+	}
+
+	fail = {
+		is_subject = yes
+	}
+	on_fail = {
+		trigger_event = { id = jfp_gwangmu.11 popup = yes }
+	}
+
+	invalid = {
+		NOT = { jfp_is_joseon = yes }
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			300 = 0
+			5 = jfp_gwangmu.4
+			5 = jfp_gwangmu.5
+		}
+	}
+
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	weight = 100
+}

@@ -1,0 +1,252 @@
+namespace = jfp_sedo
+
+# 세도정치 저널 무작위/연대기 이벤트
+
+# 매관매직
+jfp_sedo.1 = {
+	type = country_event
+	placement = root
+	title = jfp_sedo.1.t
+	desc = jfp_sedo.1.d
+	flavor = jfp_sedo.1.f
+	event_image = { video = "asia_politician_parliament_motion" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+	option = {
+		name = jfp_sedo.1.a
+		jfp_gain_small = yes
+		add_modifier = { name = jfp_sale_of_offices_profit days = short_modifier_time }
+		jfp_royal_authority_down = yes
+		jfp_ig_up = { IG = ig_landowners }
+	}
+	option = {
+		name = jfp_sedo.1.b
+		default_option = yes
+		jfp_royal_authority_up_small = yes
+		jfp_ig_down = { IG = ig_landowners }
+	}
+	option = {
+		name = jfp_sedo.1.c
+		add_modifier = { name = jfp_sale_of_offices days = short_modifier_time }
+	}
+}
+
+# 외척의 인사 전횡
+jfp_sedo.2 = {
+	type = country_event
+	placement = root
+	title = jfp_sedo.2.t
+	desc = jfp_sedo.2.d
+	flavor = jfp_sedo.2.f
+	event_image = { video = "asia_confucianism_shinto" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+	option = {
+		name = jfp_sedo.2.a
+		default_option = yes
+		jfp_ig_up = { IG = ig_landowners }
+		jfp_royal_authority_down = yes
+	}
+	option = {
+		name = jfp_sedo.2.b
+		jfp_royal_authority_up = yes
+		jfp_ig_down_large = { IG = ig_landowners }
+	}
+}
+
+# 암행어사 출두
+jfp_sedo.3 = {
+	type = country_event
+	placement = root
+	title = jfp_sedo.3.t
+	desc = jfp_sedo.3.d
+	flavor = jfp_sedo.3.f
+	event_image = { video = "middleeast_courtroom_upheaval" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+	option = {
+		name = jfp_sedo.3.a
+		default_option = yes
+		jfp_royal_authority_up_small = yes
+		if = {
+			limit = { has_journal_entry = je_jfp_samjeong }
+			jfp_samjeong_up = yes
+		}
+		jfp_ig_down = { IG = ig_landowners }
+	}
+	option = {
+		name = jfp_sedo.3.b
+		jfp_ig_up = { IG = ig_landowners }
+		add_radicals = { value = small_radicals strata = lower }
+	}
+}
+
+# 초계문신
+jfp_sedo.4 = {
+	type = country_event
+	placement = root
+	title = jfp_sedo.4.t
+	desc = jfp_sedo.4.d
+	flavor = jfp_sedo.4.f
+	event_image = { video = "asia_confucianism_shinto" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+	duration = 3
+	cooldown = { days = long_modifier_time }
+
+	option = {
+		name = jfp_sedo.4.a
+		default_option = yes
+		jfp_pay_small = yes
+		jfp_royal_authority_up_small = yes
+		jfp_ig_up = { IG = ig_intelligentsia }
+	}
+	option = {
+		name = jfp_sedo.4.b
+		jfp_ig_up = { IG = ig_landowners }
+	}
+}
+
+# 국혼 (왕비 간택)
+jfp_sedo.5 = {
+	type = country_event
+	placement = root
+	title = jfp_sedo.5.t
+	desc = jfp_sedo.5.d
+	flavor = jfp_sedo.5.f
+	event_image = { video = "southamerica_aristocrats" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+	duration = 3
+
+	trigger = {
+		NOT = { has_variable = jfp_done_royal_wedding }
+	}
+	immediate = {
+		set_variable = jfp_done_royal_wedding
+	}
+
+	option = {
+		name = jfp_sedo.5.a
+		default_option = yes
+		add_modifier = { name = jfp_royal_wedding days = normal_modifier_time }
+		jfp_ig_up_large = { IG = ig_landowners }
+		jfp_royal_authority_down = yes
+	}
+	option = {
+		name = jfp_sedo.5.b
+		add_modifier = { name = jfp_royal_wedding days = normal_modifier_time }
+		jfp_royal_authority_up_small = yes
+	}
+	option = {
+		name = jfp_sedo.5.c
+		jfp_royal_authority_up = yes
+		jfp_ig_down_large = { IG = ig_landowners }
+	}
+}
+
+# 왕의 병환
+jfp_sedo.6 = {
+	type = country_event
+	placement = root
+	title = jfp_sedo.6.t
+	desc = jfp_sedo.6.d
+	flavor = jfp_sedo.6.f
+	event_image = { video = "unspecific_sick_in_hospital" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_skull.dds"
+	duration = 3
+	cooldown = { days = long_modifier_time }
+
+	option = {
+		name = jfp_sedo.6.a
+		default_option = yes
+		jfp_pay_small = yes
+		add_loyalists = { value = small_radicals }
+	}
+	option = {
+		name = jfp_sedo.6.b
+		jfp_royal_authority_down = yes
+		jfp_ig_up = { IG = ig_landowners }
+	}
+}
+
+# 강화도령 (1849, 철종 즉위)
+jfp_sedo.7 = {
+	type = country_event
+	placement = root
+	title = jfp_sedo.7.t
+	desc = jfp_sedo.7.d
+	flavor = jfp_sedo.7.f
+	event_image = { video = "asia_poor_people_moving" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+	duration = 3
+
+	option = {
+		name = jfp_sedo.7.a
+		default_option = yes
+		jfp_royal_authority_down = yes
+		jfp_royal_authority_down = yes
+		jfp_ig_up_large = { IG = ig_landowners }
+	}
+	option = {
+		name = jfp_sedo.7.b
+		trigger = {
+			has_variable = jfp_royal_authority
+			var:jfp_royal_authority >= 40
+		}
+		show_as_unavailable = { always = yes }
+		jfp_royal_authority_up = yes
+		jfp_ig_down_large = { IG = ig_landowners }
+		add_radicals = { value = small_radicals strata = upper }
+	}
+}
+
+# 저널 완료: 왕권 회복
+jfp_sedo.10 = {
+	type = country_event
+	placement = root
+	title = jfp_sedo.10.t
+	desc = jfp_sedo.10.d
+	flavor = jfp_sedo.10.f
+	event_image = { video = "unspecific_ruler_speaking_to_people" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+	duration = 3
+
+	option = {
+		name = jfp_sedo.10.a
+		default_option = yes
+		add_modifier = { name = jfp_royal_authority_restored days = very_long_modifier_time }
+		jfp_ig_weaker = { IG = ig_landowners }
+	}
+}
+
+# 저널 만료: 세도의 고착
+jfp_sedo.11 = {
+	type = country_event
+	placement = root
+	title = jfp_sedo.11.t
+	desc = jfp_sedo.11.d
+	flavor = jfp_sedo.11.f
+	event_image = { video = "asia_politician_parliament_motion" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+	duration = 3
+
+	option = {
+		name = jfp_sedo.11.a
+		default_option = yes
+		add_modifier = { name = jfp_sedo_entrenched days = normal_modifier_time }
+	}
+}
