@@ -1,0 +1,150 @@
+# 조선 고봉밥 - 대업(大業) 캠페인 수정자
+# 역경(진행 중 불이익)과 보상(단계 완료 시 영구 효과). 수치는 v0.2 잠정값입니다.
+# 보상은 never_fire_again_modifier_time(약 200년) 동안 유지되어 사실상 영구입니다.
+
+#################################
+# 역경: 각 단계 진행 중 상시 적용
+#################################
+jfp_trial_qing_suzerainty = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_negative.dds"
+	country_prestige_mult = -0.10
+	country_liberty_desire_add = 0.10
+}
+jfp_trial_foreign_creditors = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_negative.dds"
+	country_loan_interest_rate_mult = 0.15
+}
+jfp_trial_northern_expedition = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_rifle_negative.dds"
+	state_conscription_rate_add = 0.01
+	state_standard_of_living_add = -0.5
+}
+jfp_trial_containment = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_negative.dds"
+	country_infamy_generation_mult = 0.25
+	country_influence_mult = -0.10
+}
+jfp_trial_burden_of_hegemon = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_negative.dds"
+	state_radicals_from_political_movements_mult = 0.10
+	country_bureaucracy_mult = -0.05
+}
+
+#################################
+# 역경 이벤트의 일시적 불이익
+#################################
+jfp_trial_tribute_burden = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_negative.dds"
+	state_tax_collection_mult = -0.10
+}
+jfp_trial_envoy_humiliation = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_negative.dds"
+	country_legitimacy_base_add = -5
+	country_prestige_mult = -0.05
+}
+jfp_trial_sadae_faction = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_documents_negative.dds"
+	country_law_enactment_success_add = -0.10
+}
+jfp_trial_concessions = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_negative.dds"
+	state_tax_capacity_add = -3
+	building_group_bg_mining_throughput_add = -0.10
+}
+jfp_trial_war_debt = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_negative.dds"
+	country_loan_interest_rate_mult = 0.20
+	state_tax_collection_mult = -0.05
+}
+jfp_trial_bandits = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_fist_negative.dds"
+	state_turmoil_effects_mult = 0.20
+	state_infrastructure_mult = -0.10
+}
+jfp_trial_intervention_yielded = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_negative.dds"
+	country_prestige_mult = -0.20
+	country_legitimacy_base_add = -10
+}
+jfp_trial_expedition_fatigue = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_rifle_negative.dds"
+	unit_morale_recovery_mult = -0.15
+	state_radicals_from_political_movements_mult = 0.10
+}
+jfp_trial_member_unrest = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_fist_negative.dds"
+	power_bloc_cohesion_mult = -0.20
+}
+
+#################################
+# 결단의 일시적 이익 (역경을 정면 돌파했을 때)
+#################################
+jfp_trial_defiance = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_positive.dds"
+	country_legitimacy_base_add = 5
+	unit_morale_recovery_mult = 0.10
+}
+jfp_trial_national_resolve = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_fist_positive.dds"
+	state_conscription_rate_add = 0.01
+	unit_defense_mult = 0.10
+}
+
+#################################
+# 보상: 단계 완료 시 영구 적용
+#################################
+# 1단계 자주독립
+jfp_reward_jaju = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_positive.dds"
+	country_prestige_mult = 0.20
+	country_legitimacy_base_add = 10
+	country_authority_mult = 0.15
+	unit_morale_recovery_mult = 0.10
+}
+# 2단계 부국강병
+jfp_reward_bugguk = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds"
+	country_tech_spread_mult = 0.20
+	country_weekly_innovation_mult = 0.20
+	country_bureaucracy_mult = 0.15
+	state_construction_mult = 0.15
+	unit_offense_mult = 0.10
+	unit_defense_mult = 0.10
+}
+# 3단계 고토 회복
+jfp_reward_goto = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_positive.dds"
+	country_authority_mult = 0.15
+	country_legitimacy_base_add = 10
+	state_assimilation_mult = 0.50
+	state_incorporation_speed_mult = 0.50
+	state_conscription_rate_add = 0.01
+}
+# 4단계 동아시아의 패자
+jfp_reward_hegemony = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_positive.dds"
+	country_prestige_mult = 0.25
+	country_influence_mult = 0.25
+	country_improve_relations_speed_mult = 0.25
+	unit_offense_mult = 0.10
+	unit_experience_gain_mult = 0.25
+}
+# 5단계 대동아 공영권 (최종)
+jfp_reward_daedonga = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_positive.dds"
+	country_prestige_mult = 0.50
+	country_influence_mult = 0.50
+	country_authority_mult = 0.25
+	country_bureaucracy_mult = 0.25
+	country_tech_spread_mult = 0.25
+	building_throughput_add = 0.10
+	unit_offense_mult = 0.15
+	unit_defense_mult = 0.15
+	country_legitimacy_base_add = 15
+}
+# 5단계 완료 시 세력권 자체에 적용
+jfp_reward_daedonga_bloc = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_positive.dds"
+	power_bloc_cohesion_mult = 0.50
+	power_bloc_mandate_progress_mult = 0.50
+}

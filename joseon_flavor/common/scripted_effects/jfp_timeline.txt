@@ -24,6 +24,16 @@ jfp_initialize = {
 
 jfp_monthly_timeline = {
 	#################################
+	# 대업 캠페인 시작 (게임 시작 또는 중간 적용 시 1회)
+	#################################
+	if = {
+		limit = { NOT = { has_variable = jfp_campaign_initialized } }
+		set_variable = jfp_campaign_initialized
+		add_journal_entry = { type = je_jfp_daeup_1 }
+		trigger_event = { id = jfp_daeup.10 popup = yes }
+	}
+
+	#################################
 	# 1836~1850년대
 	#################################
 	# 1836.4 다산 정약용 서거

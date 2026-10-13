@@ -46,6 +46,8 @@ STRUCTURAL = {
     "first_name", "last_name", "birth_date", "ig_leader", "interest_group", "ideology", "traits",
     "save_scope_as", "on_created", "technology", "progress", "IG", "yes", "no", "always",
     "NOT", "OR", "AND", "NOR", "NAND", "if", "else_if", "else",
+    # 값 링크 (트리거 목록이 아닌 event_targets에 있으며 비교에 사용)
+    "gdp",
 }
 
 LOC_LINE_RE = re.compile(r'^\s+([A-Za-z0-9_.\-]+):\d*\s+"(.*)"\s*$')
@@ -208,6 +210,8 @@ def main():
         if key == "custom_tooltip" and isinstance(val, str):
             loc_needed.add(val)
         if key in ("first_name", "last_name") and parent == "create_character":
+            loc_needed.add(val)
+        if key == "name" and parent == "create_power_bloc":
             loc_needed.add(val)
         # 바닐라 키워드 확인
         if keywords is not None and parents:

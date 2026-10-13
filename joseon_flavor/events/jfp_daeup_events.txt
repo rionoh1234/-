@@ -1,0 +1,533 @@
+namespace = jfp_daeup
+
+# 대업(大業) 캠페인: 1~5 단계 완료, 10 도입부, 101~503 단계별 역경
+
+jfp_daeup.10 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.10.t
+	desc = jfp_daeup.10.d
+	flavor = jfp_daeup.10.f
+	event_image = { video = "asia_confucianism_shinto" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+	duration = 3
+
+
+	option = {
+		name = jfp_daeup.10.a
+		default_option = yes
+		add_modifier = { name = jfp_trial_defiance days = short_modifier_time }
+	}
+}
+
+jfp_daeup.1 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.1.t
+	desc = jfp_daeup.1.d
+	flavor = jfp_daeup.1.f
+	event_image = { video = "unspecific_military_parade" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+	duration = 3
+
+
+	option = {
+		name = jfp_daeup.1.a
+		default_option = yes
+		add_modifier = { name = jfp_reward_jaju days = never_fire_again_modifier_time }
+		add_journal_entry = { type = je_jfp_daeup_2 }
+	}
+}
+
+jfp_daeup.2 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.2.t
+	desc = jfp_daeup.2.d
+	flavor = jfp_daeup.2.f
+	event_image = { video = "unspecific_trains" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_industry.dds"
+	duration = 3
+
+
+	option = {
+		name = jfp_daeup.2.a
+		default_option = yes
+		add_modifier = { name = jfp_reward_bugguk days = never_fire_again_modifier_time }
+		custom_tooltip = jfp_tt_claims_manchuria
+		hidden_effect = { every_state_region_in_manchuria_old = { add_claim = root } }
+		add_journal_entry = { type = je_jfp_daeup_3 }
+	}
+}
+
+jfp_daeup.3 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.3.t
+	desc = jfp_daeup.3.d
+	flavor = jfp_daeup.3.f
+	event_image = { video = "europenorthamerica_before_the_battle" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+	duration = 3
+
+
+	option = {
+		name = jfp_daeup.3.a
+		default_option = yes
+		add_modifier = { name = jfp_reward_goto days = never_fire_again_modifier_time }
+		custom_tooltip = jfp_tt_homeland_manchuria
+		hidden_effect = { every_state_region_in_manchuria_old = { add_homeland = cu:korean } }
+		jfp_gain_medium = yes
+		add_journal_entry = { type = je_jfp_daeup_4 }
+	}
+}
+
+jfp_daeup.4 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.4.t
+	desc = jfp_daeup.4.d
+	flavor = jfp_daeup.4.f
+	event_image = { video = "unspecific_naval_battle" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+	duration = 3
+
+
+	option = {
+		name = jfp_daeup.4.a
+		default_option = yes
+		add_modifier = { name = jfp_reward_hegemony days = never_fire_again_modifier_time }
+		add_journal_entry = { type = je_jfp_daeup_5 }
+	}
+}
+
+jfp_daeup.5 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.5.t
+	desc = jfp_daeup.5.d
+	flavor = jfp_daeup.5.f
+	event_image = { video = "unspecific_world_fair" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+	duration = 3
+
+
+	option = {
+		name = jfp_daeup.5.a
+		default_option = yes
+		add_modifier = { name = jfp_reward_daedonga days = never_fire_again_modifier_time }
+		power_bloc ?= { add_modifier = { name = jfp_reward_daedonga_bloc days = never_fire_again_modifier_time } }
+		add_treasury = money_amount_multiplier_very_large
+		set_variable = jfp_daedonga_complete
+		jfp_ig_up_large = { IG = ig_armed_forces }
+	}
+	option = {
+		name = jfp_daeup.5.b
+		add_modifier = { name = jfp_reward_daedonga days = never_fire_again_modifier_time }
+		power_bloc ?= { add_modifier = { name = jfp_reward_daedonga_bloc days = never_fire_again_modifier_time } }
+		add_treasury = money_amount_multiplier_very_large
+		set_variable = jfp_daedonga_complete
+		jfp_ig_up_large = { IG = ig_intelligentsia }
+	}
+}
+
+jfp_daeup.101 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.101.t
+	desc = jfp_daeup.101.d
+	flavor = jfp_daeup.101.f
+	event_image = { video = "asia_politician_parliament_motion" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_trade.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+	trigger = {
+		is_subject = yes
+	}
+
+
+	option = {
+		name = jfp_daeup.101.a
+		default_option = yes
+		add_modifier = { name = jfp_trial_tribute_burden days = normal_modifier_time }
+	}
+	option = {
+		name = jfp_daeup.101.b
+		overlord = { save_scope_as = jfp_overlord_scope }
+		change_relations = { country = scope:jfp_overlord_scope value = -30 }
+		add_modifier = { name = jfp_trial_defiance days = short_modifier_time }
+		jfp_pay_small = yes
+	}
+}
+
+jfp_daeup.102 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.102.t
+	desc = jfp_daeup.102.d
+	flavor = jfp_daeup.102.f
+	event_image = { video = "asia_confucianism_shinto" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+	trigger = {
+		is_subject = yes
+	}
+
+
+	option = {
+		name = jfp_daeup.102.a
+		default_option = yes
+		add_modifier = { name = jfp_trial_envoy_humiliation days = short_modifier_time }
+	}
+	option = {
+		name = jfp_daeup.102.b
+		overlord = { save_scope_as = jfp_overlord_scope }
+		change_relations = { country = scope:jfp_overlord_scope value = -20 }
+		add_modifier = { name = jfp_trial_defiance days = short_modifier_time }
+		jfp_ig_down = { IG = ig_devout }
+	}
+}
+
+jfp_daeup.103 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.103.t
+	desc = jfp_daeup.103.d
+	flavor = jfp_daeup.103.f
+	event_image = { video = "asia_politician_parliament_motion" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+
+	option = {
+		name = jfp_daeup.103.a
+		default_option = yes
+		jfp_ig_down_large = { IG = ig_landowners }
+		add_radicals = { value = small_radicals strata = upper }
+	}
+	option = {
+		name = jfp_daeup.103.b
+		add_modifier = { name = jfp_trial_sadae_faction days = normal_modifier_time }
+	}
+}
+
+jfp_daeup.201 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.201.t
+	desc = jfp_daeup.201.d
+	flavor = jfp_daeup.201.f
+	event_image = { video = "europenorthamerica_capitalists_meeting" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_trade.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+
+	option = {
+		name = jfp_daeup.201.a
+		default_option = yes
+		jfp_gain_medium = yes
+		add_modifier = { name = jfp_trial_concessions days = normal_modifier_time }
+	}
+	option = {
+		name = jfp_daeup.201.b
+		jfp_pay_medium = yes
+		add_modifier = { name = jfp_trial_defiance days = short_modifier_time }
+	}
+}
+
+jfp_daeup.202 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.202.t
+	desc = jfp_daeup.202.d
+	flavor = jfp_daeup.202.f
+	event_image = { video = "unspecific_steam_ship" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+	trigger = {
+		exists = c:JAP
+	}
+
+
+	option = {
+		name = jfp_daeup.202.a
+		default_option = yes
+		jfp_pay_medium = yes
+		add_modifier = { name = jfp_coastal_defense days = normal_modifier_time }
+	}
+	option = {
+		name = jfp_daeup.202.b
+		change_relations = { country = c:JAP value = 20 }
+		add_modifier = { name = jfp_trial_envoy_humiliation days = short_modifier_time }
+	}
+}
+
+jfp_daeup.203 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.203.t
+	desc = jfp_daeup.203.d
+	flavor = jfp_daeup.203.f
+	event_image = { video = "europenorthamerica_london_center" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_trade.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+
+	option = {
+		name = jfp_daeup.203.a
+		default_option = yes
+		jfp_gain_medium = yes
+		add_modifier = { name = jfp_trial_war_debt days = normal_modifier_time }
+	}
+	option = {
+		name = jfp_daeup.203.b
+		add_modifier = { name = jfp_trial_tribute_burden days = short_modifier_time }
+		add_radicals = { value = small_radicals strata = lower }
+	}
+}
+
+jfp_daeup.301 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.301.t
+	desc = jfp_daeup.301.d
+	flavor = jfp_daeup.301.f
+	event_image = { video = "europenorthamerica_russian_serfs" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+	trigger = {
+		exists = c:RUS
+	}
+
+
+	option = {
+		name = jfp_daeup.301.a
+		default_option = yes
+		jfp_pay_medium = yes
+		add_modifier = { name = jfp_trial_national_resolve days = normal_modifier_time }
+	}
+	option = {
+		name = jfp_daeup.301.b
+		change_relations = { country = c:RUS value = 20 }
+		add_modifier = { name = jfp_trial_envoy_humiliation days = short_modifier_time }
+	}
+}
+
+jfp_daeup.302 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.302.t
+	desc = jfp_daeup.302.d
+	flavor = jfp_daeup.302.f
+	event_image = { video = "unspecific_signed_contract" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+
+	option = {
+		name = jfp_daeup.302.a
+		default_option = yes
+		add_modifier = { name = jfp_trial_intervention_yielded days = short_modifier_time }
+	}
+	option = {
+		name = jfp_daeup.302.b
+		add_modifier = { name = jfp_trial_expedition_fatigue days = normal_modifier_time }
+		add_modifier = { name = jfp_trial_defiance days = short_modifier_time }
+	}
+}
+
+jfp_daeup.303 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.303.t
+	desc = jfp_daeup.303.d
+	flavor = jfp_daeup.303.f
+	event_image = { video = "africa_desert_expedition" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_raiding.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+
+	option = {
+		name = jfp_daeup.303.a
+		default_option = yes
+		jfp_pay_small = yes
+		jfp_ig_up = { IG = ig_armed_forces }
+	}
+	option = {
+		name = jfp_daeup.303.b
+		add_modifier = { name = jfp_trial_bandits days = normal_modifier_time }
+	}
+}
+
+jfp_daeup.401 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.401.t
+	desc = jfp_daeup.401.d
+	flavor = jfp_daeup.401.f
+	event_image = { video = "unspecific_politicians_arguing" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+
+	option = {
+		name = jfp_daeup.401.a
+		default_option = yes
+		jfp_pay_large = yes
+		add_modifier = { name = jfp_trial_national_resolve days = normal_modifier_time }
+	}
+	option = {
+		name = jfp_daeup.401.b
+		add_modifier = { name = jfp_trial_intervention_yielded days = short_modifier_time }
+	}
+}
+
+jfp_daeup.402 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.402.t
+	desc = jfp_daeup.402.d
+	flavor = jfp_daeup.402.f
+	event_image = { video = "africa_soldiers_breaking_protest" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+
+	option = {
+		name = jfp_daeup.402.a
+		default_option = yes
+		add_modifier = { name = jfp_trial_expedition_fatigue days = normal_modifier_time }
+		add_radicals = { value = small_radicals }
+	}
+	option = {
+		name = jfp_daeup.402.b
+		jfp_ig_down_large = { IG = ig_armed_forces }
+		jfp_pay_medium = yes
+	}
+}
+
+jfp_daeup.403 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.403.t
+	desc = jfp_daeup.403.d
+	flavor = jfp_daeup.403.f
+	event_image = { video = "middleeast_battlefield_trenches" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+
+	option = {
+		name = jfp_daeup.403.a
+		default_option = yes
+		add_modifier = { name = jfp_trial_expedition_fatigue days = normal_modifier_time }
+	}
+	option = {
+		name = jfp_daeup.403.b
+		jfp_ig_down_large = { IG = ig_armed_forces }
+		add_loyalists = { value = small_radicals strata = lower }
+	}
+}
+
+jfp_daeup.501 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.501.t
+	desc = jfp_daeup.501.d
+	flavor = jfp_daeup.501.f
+	event_image = { video = "africa_public_protest" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+
+	option = {
+		name = jfp_daeup.501.a
+		default_option = yes
+		add_modifier = { name = jfp_trial_expedition_fatigue days = short_modifier_time }
+		power_bloc ?= { add_modifier = { name = jfp_trial_member_unrest days = short_modifier_time } }
+	}
+	option = {
+		name = jfp_daeup.501.b
+		jfp_pay_large = yes
+	}
+}
+
+jfp_daeup.502 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.502.t
+	desc = jfp_daeup.502.d
+	flavor = jfp_daeup.502.f
+	event_image = { video = "unspecific_naval_battle" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+
+	option = {
+		name = jfp_daeup.502.a
+		default_option = yes
+		jfp_pay_large = yes
+		add_modifier = { name = jfp_trial_national_resolve days = normal_modifier_time }
+	}
+	option = {
+		name = jfp_daeup.502.b
+		add_modifier = { name = jfp_trial_intervention_yielded days = normal_modifier_time }
+	}
+}
+
+jfp_daeup.503 = {
+	type = country_event
+	placement = root
+	title = jfp_daeup.503.t
+	desc = jfp_daeup.503.d
+	flavor = jfp_daeup.503.f
+	event_image = { video = "europenorthamerica_rich_and_poor" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_trade.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+
+	option = {
+		name = jfp_daeup.503.a
+		default_option = yes
+		jfp_pay_large = yes
+	}
+	option = {
+		name = jfp_daeup.503.b
+		power_bloc ?= { add_modifier = { name = jfp_trial_member_unrest days = normal_modifier_time } }
+	}
+}

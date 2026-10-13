@@ -19,3 +19,43 @@ jfp_joseon_sovereign = {
 	jfp_is_joseon = yes
 	NOT = { jfp_joseon_lost_sovereignty = yes }
 }
+
+#################################
+# 대업 캠페인
+#################################
+
+# 한반도 전역을 조선(또는 그 속국)이 차지하고 있는가
+jfp_owns_korea = {
+	country_or_subject_owns_entire_state_region = STATE_SEOUL
+	country_or_subject_owns_entire_state_region = STATE_BUSAN
+	country_or_subject_owns_entire_state_region = STATE_YANGHO
+	country_or_subject_owns_entire_state_region = STATE_SARIWON
+	country_or_subject_owns_entire_state_region = STATE_PYONGYANG
+}
+
+# 만주 핵심부(성경·길림·흑룡강 남부)를 차지하고 있는가
+jfp_owns_manchuria_core = {
+	country_or_subject_owns_entire_state_region = STATE_SHENGJING
+	country_or_subject_owns_entire_state_region = STATE_SOUTHERN_MANCHURIA
+	country_or_subject_owns_entire_state_region = STATE_OUTER_MANCHURIA
+	country_or_subject_owns_entire_state_region = STATE_NORTHERN_MANCHURIA
+}
+
+# 국가 스코프: 조선(ROOT)의 공영권 안에 있는가
+# (조선 자신, 조선의 속국, 같은 세력권, 또는 분권 세력)
+jfp_in_daedonga = {
+	OR = {
+		this = root
+		is_subject_of = root
+		is_in_same_power_bloc = root
+		is_country_type = decentralized
+	}
+}
+
+# 국가 스코프: 조선(ROOT)에 굴복했는가 (존재하지 않아도 충족)
+jfp_yielded_to_joseon = {
+	OR = {
+		is_subject_of = root
+		is_in_same_power_bloc = root
+	}
+}

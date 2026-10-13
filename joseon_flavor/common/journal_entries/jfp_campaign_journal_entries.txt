@@ -1,0 +1,248 @@
+# 조선 고봉밥 - 대업(大業) 캠페인
+# 1 자주독립 → 2 부국강병 → 3 고토 회복 → 4 동아시아의 패자 → 5 대동아 공영권
+# 2~5단계 도중 자주권을 잃으면 되찾을 때까지 그 단계를 완료할 수 없습니다.
+
+#################################
+# 1. 자주독립
+#################################
+je_jfp_daeup_1 = {
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+	group = je_group_historical_content
+
+	modifiers_while_active = {
+		jfp_trial_qing_suzerainty
+	}
+
+	complete = {
+		is_subject = no
+	}
+	on_complete = {
+		trigger_event = { id = jfp_daeup.1 popup = yes }
+	}
+
+	invalid = {
+		NOT = { jfp_is_joseon = yes }
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			200 = 0
+			5 = jfp_daeup.101
+			5 = jfp_daeup.102
+			5 = jfp_daeup.103
+		}
+	}
+
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	weight = 200
+}
+
+#################################
+# 2. 부국강병
+#################################
+je_jfp_daeup_2 = {
+	icon = "gfx/interface/icons/event_icons/event_industry.dds"
+	group = je_group_historical_content
+
+	modifiers_while_active = {
+		jfp_trial_foreign_creditors
+	}
+
+	complete = {
+		custom_tooltip = {
+			text = jfp_tt_daeup_sovereign
+			NOT = { jfp_joseon_lost_sovereignty = yes }
+		}
+		is_country_type = recognized
+		country_rank >= rank_value:major_power
+		has_technology_researched = railways
+		has_technology_researched = nationalism
+		has_technology_researched = general_staff
+		custom_tooltip = {
+			text = jfp_tt_daeup_2_japan
+			OR = {
+				NOT = { exists = c:JAP }
+				c:JAP ?= {
+					gdp < root.gdp
+					army_power_projection < root.army_power_projection
+				}
+			}
+		}
+	}
+	on_complete = {
+		trigger_event = { id = jfp_daeup.2 popup = yes }
+	}
+
+	invalid = {
+		NOT = { jfp_is_joseon = yes }
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			200 = 0
+			5 = jfp_daeup.201
+			5 = jfp_daeup.202
+			5 = jfp_daeup.203
+		}
+	}
+
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	weight = 200
+}
+
+#################################
+# 3. 고토 회복
+#################################
+je_jfp_daeup_3 = {
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+	group = je_group_historical_content
+
+	modifiers_while_active = {
+		jfp_trial_northern_expedition
+	}
+
+	complete = {
+		custom_tooltip = {
+			text = jfp_tt_daeup_sovereign
+			NOT = { jfp_joseon_lost_sovereignty = yes }
+		}
+		custom_tooltip = {
+			text = jfp_tt_daeup_3_korea
+			jfp_owns_korea = yes
+		}
+		custom_tooltip = {
+			text = jfp_tt_daeup_3_manchuria
+			jfp_owns_manchuria_core = yes
+		}
+	}
+	on_complete = {
+		trigger_event = { id = jfp_daeup.3 popup = yes }
+	}
+
+	invalid = {
+		NOT = { jfp_is_joseon = yes }
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			200 = 0
+			5 = jfp_daeup.301
+			5 = jfp_daeup.302
+			5 = jfp_daeup.303
+		}
+	}
+
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	weight = 200
+}
+
+#################################
+# 4. 동아시아의 패자
+#################################
+je_jfp_daeup_4 = {
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+	group = je_group_historical_content
+
+	modifiers_while_active = {
+		jfp_trial_containment
+	}
+
+	complete = {
+		custom_tooltip = {
+			text = jfp_tt_daeup_sovereign
+			NOT = { jfp_joseon_lost_sovereignty = yes }
+		}
+		country_rank >= rank_value:great_power
+		is_power_bloc_leader = yes
+		custom_tooltip = {
+			text = jfp_tt_daeup_4_china
+			OR = {
+				NOT = { exists = c:CHI }
+				c:CHI ?= { jfp_yielded_to_joseon = yes }
+			}
+		}
+		custom_tooltip = {
+			text = jfp_tt_daeup_4_japan
+			OR = {
+				NOT = { exists = c:JAP }
+				c:JAP ?= { jfp_yielded_to_joseon = yes }
+			}
+		}
+	}
+	on_complete = {
+		trigger_event = { id = jfp_daeup.4 popup = yes }
+	}
+
+	invalid = {
+		NOT = { jfp_is_joseon = yes }
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			200 = 0
+			5 = jfp_daeup.401
+			5 = jfp_daeup.402
+			5 = jfp_daeup.403
+		}
+	}
+
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	weight = 200
+}
+
+#################################
+# 5. 대동아 공영권
+#################################
+je_jfp_daeup_5 = {
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+	group = je_group_historical_content
+
+	modifiers_while_active = {
+		jfp_trial_burden_of_hegemon
+	}
+
+	complete = {
+		custom_tooltip = {
+			text = jfp_tt_daeup_sovereign
+			NOT = { jfp_joseon_lost_sovereignty = yes }
+		}
+		is_power_bloc_leader = yes
+		country_rank >= rank_value:great_power
+		custom_tooltip = {
+			text = jfp_tt_daeup_5_east_asia
+			NOT = { any_country_in_east_asia = { NOT = { jfp_in_daedonga = yes } } }
+		}
+		custom_tooltip = {
+			text = jfp_tt_daeup_5_south_east_asia
+			NOT = { any_country_in_south_east_asia = { NOT = { jfp_in_daedonga = yes } } }
+		}
+		custom_tooltip = {
+			text = jfp_tt_daeup_5_no_foreign_states
+			NOT = { any_state_in_east_asia = { owner = { NOT = { jfp_in_daedonga = yes } } } }
+		}
+	}
+	on_complete = {
+		trigger_event = { id = jfp_daeup.5 popup = yes }
+	}
+
+	invalid = {
+		NOT = { jfp_is_joseon = yes }
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			200 = 0
+			5 = jfp_daeup.501
+			5 = jfp_daeup.502
+			5 = jfp_daeup.503
+		}
+	}
+
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	weight = 200
+}

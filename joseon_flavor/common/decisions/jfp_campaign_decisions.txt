@@ -1,0 +1,51 @@
+# 조선 고봉밥 - 대업 캠페인 결정
+# AI는 이 결정을 사용하지 않습니다 (플레이어 전용 도전).
+
+# 1단계: 종주국에 맞서 자주를 선언 (독립 외교 분쟁 개시)
+jfp_dec_declare_independence = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_daeup_1
+		is_subject = yes
+	}
+	possible = {
+		is_at_war = no
+		custom_tooltip = {
+			text = jfp_tt_independence_cooldown
+			NOT = { has_variable = jfp_cd_independence }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_independence days = 1825 }
+		add_modifier = { name = jfp_trial_national_resolve days = short_modifier_time }
+		overlord = { save_scope_as = jfp_overlord_scope }
+		create_diplomatic_play = {
+			target_country = scope:jfp_overlord_scope
+			type = dp_independence
+		}
+	}
+	ai_chance = { value = 0 }
+}
+
+# 4단계: 대동아 공영권 결성 (세력권 창설)
+jfp_dec_found_daedonga = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_daeup_4
+		is_in_power_bloc = no
+	}
+	possible = {
+		country_rank >= rank_value:great_power
+		is_subject = no
+	}
+	when_taken = {
+		create_power_bloc = {
+			name = jfp_pb_daedonga
+			map_color = hsv{ 0.98 0.70 0.75 }
+			identity = identity_sovereign_empire
+			principle = principle_vassalization_1
+		}
+		add_modifier = { name = jfp_trial_defiance days = normal_modifier_time }
+	}
+	ai_chance = { value = 0 }
+}
