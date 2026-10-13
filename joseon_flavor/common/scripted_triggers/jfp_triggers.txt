@@ -6,8 +6,16 @@ jfp_is_joseon = {
 	this = c:KOR
 }
 
-# 조선이 독립국으로서 개혁을 추진할 수 있는가
+# 자주권을 잃었는가
+# 청과의 전통적 조공 관계(tributary)는 자주권 상실로 보지 않습니다.
+# (바닐라 시작 시 조선의 종속 여부와 관계없이 동작하도록 함)
+jfp_joseon_lost_sovereignty = {
+	is_subject = yes
+	NOT = { is_subject_type = subject_type_tributary }
+}
+
+# 조선이 자주국으로서 개혁을 추진할 수 있는가
 jfp_joseon_sovereign = {
 	jfp_is_joseon = yes
-	is_subject = no
+	NOT = { jfp_joseon_lost_sovereignty = yes }
 }

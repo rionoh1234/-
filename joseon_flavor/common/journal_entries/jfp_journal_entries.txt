@@ -303,7 +303,7 @@ je_jfp_gaehwa = {
 	}
 
 	fail = {
-		is_subject = yes
+		jfp_joseon_lost_sovereignty = yes
 	}
 	on_fail = {
 		trigger_event = { id = jfp_gaehwa.21 popup = yes }
@@ -365,7 +365,7 @@ je_jfp_gwangmu = {
 	}
 
 	fail = {
-		is_subject = yes
+		jfp_joseon_lost_sovereignty = yes
 	}
 	on_fail = {
 		trigger_event = { id = jfp_gwangmu.11 popup = yes }
