@@ -1,0 +1,299 @@
+# 조선 고봉밥 - 의정부 인사 / 류큐·대만 / 일본 개항 / 만주 경영 결정
+
+jfp_dec_cab_pm = {
+	is_shown = {
+		jfp_is_joseon = yes
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_cab_cooldown
+			NOT = { has_variable = jfp_cd_cab_pm }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_cab_pm days = 1095 }
+		trigger_event = { id = jfp_cab.1 popup = yes }
+	}
+	ai_chance = { value = 2 }
+}
+
+jfp_dec_cab_finance = {
+	is_shown = {
+		jfp_is_joseon = yes
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_cab_cooldown
+			NOT = { has_variable = jfp_cd_cab_finance }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_cab_finance days = 1095 }
+		trigger_event = { id = jfp_cab.2 popup = yes }
+	}
+	ai_chance = { value = 2 }
+}
+
+jfp_dec_cab_army = {
+	is_shown = {
+		jfp_is_joseon = yes
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_cab_cooldown
+			NOT = { has_variable = jfp_cd_cab_army }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_cab_army days = 1095 }
+		trigger_event = { id = jfp_cab.3 popup = yes }
+	}
+	ai_chance = { value = 2 }
+}
+
+jfp_dec_cab_rites = {
+	is_shown = {
+		jfp_is_joseon = yes
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_cab_cooldown
+			NOT = { has_variable = jfp_cd_cab_rites }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_cab_rites days = 1095 }
+		trigger_event = { id = jfp_cab.4 popup = yes }
+	}
+	ai_chance = { value = 2 }
+}
+
+jfp_dec_cab_works = {
+	is_shown = {
+		jfp_is_joseon = yes
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_cab_cooldown
+			NOT = { has_variable = jfp_cd_cab_works }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_cab_works days = 1095 }
+		trigger_event = { id = jfp_cab.5 popup = yes }
+	}
+	ai_chance = { value = 2 }
+}
+
+jfp_dec_ryukyu_tributary = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_ryukyu
+	}
+	possible = {
+		is_at_war = no
+		is_subject = no
+		c:RYU ?= { is_subject = no }
+		custom_tooltip = {
+			text = jfp_tt_play_cooldown
+			NOT = { has_variable = jfp_cd_ryukyu_play }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_ryukyu_play days = 1825 }
+		create_diplomatic_play = {
+			target_country = c:RYU
+			type = dp_make_tributary
+		}
+	}
+	ai_chance = { value = 0 }
+}
+
+jfp_dec_formosa_expedition = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_formosa
+	}
+	possible = {
+		is_at_war = no
+		s:STATE_FORMOSA = { any_scope_state = { NOT = { owner = root } } }
+		custom_tooltip = {
+			text = jfp_tt_play_cooldown
+			NOT = { has_variable = jfp_cd_formosa_play }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_formosa_play days = 1825 }
+		s:STATE_FORMOSA = {
+			random_scope_state = {
+				limit = { NOT = { owner = root } }
+				save_scope_as = jfp_target_state
+				owner = { save_scope_as = jfp_target_owner }
+			}
+		}
+		if = {
+			limit = { exists = scope:jfp_target_owner }
+			create_diplomatic_play = {
+				target_country = scope:jfp_target_owner
+				type = dp_conquer_state
+				target_state = scope:jfp_target_state
+			}
+		}
+	}
+	ai_chance = { value = 0 }
+}
+
+jfp_dec_japan_port = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_japan_port
+	}
+	possible = {
+		is_at_war = no
+		c:JAP ?= { is_subject = no }
+		s:STATE_KYUSHU = { any_scope_state = { owner = c:JAP } }
+		custom_tooltip = {
+			text = jfp_tt_play_cooldown
+			NOT = { has_variable = jfp_cd_japan_play }
+		}
+	}
+	when_taken = {
+		set_variable = { name = jfp_cd_japan_play days = 1825 }
+		s:STATE_KYUSHU = {
+			random_scope_state = {
+				limit = { owner = c:JAP }
+				save_scope_as = jfp_target_state
+			}
+		}
+		if = {
+			limit = { exists = scope:jfp_target_state }
+			create_diplomatic_play = {
+				target_country = c:JAP
+				type = dp_take_treaty_port
+				target_state = scope:jfp_target_state
+			}
+		}
+	}
+	ai_chance = { value = 0 }
+}
+
+jfp_dec_manchuria_migration = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_manchuria_dev
+		NOT = { has_variable = jfp_dec_manchuria_migration_taken }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_manchuria_dev }
+		}
+	}
+	when_taken = {
+		set_variable = jfp_dec_manchuria_migration_taken
+		set_variable = { name = jfp_cd_manchuria_dev days = 365 }
+		jfp_pay_medium = yes
+		custom_tooltip = jfp_tt_manchuria_states
+		every_state_in_manchuria_old = {
+			limit = { owner = root }
+			add_modifier = { name = jfp_manchuria_migration days = very_long_modifier_time }
+		}
+		custom_tooltip = {
+			text = jfp_tt_manchuria_dev_up
+			change_variable = { name = jfp_manchuria_dev add = 25 }
+			clamp_variable = { name = jfp_manchuria_dev min = 0 max = 100 }
+		}
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_manchuria_tunjeon = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_manchuria_dev
+		NOT = { has_variable = jfp_dec_manchuria_tunjeon_taken }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_manchuria_dev }
+		}
+	}
+	when_taken = {
+		set_variable = jfp_dec_manchuria_tunjeon_taken
+		set_variable = { name = jfp_cd_manchuria_dev days = 365 }
+		jfp_pay_medium = yes
+		custom_tooltip = jfp_tt_manchuria_states
+		every_state_in_manchuria_old = {
+			limit = { owner = root }
+			add_modifier = { name = jfp_manchuria_tunjeon days = very_long_modifier_time }
+		}
+		custom_tooltip = {
+			text = jfp_tt_manchuria_dev_up
+			change_variable = { name = jfp_manchuria_dev add = 25 }
+			clamp_variable = { name = jfp_manchuria_dev min = 0 max = 100 }
+		}
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_manchuria_railway = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_manchuria_dev
+		NOT = { has_variable = jfp_dec_manchuria_railway_taken }
+	}
+	possible = {
+		has_technology_researched = railways
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_manchuria_dev }
+		}
+	}
+	when_taken = {
+		set_variable = jfp_dec_manchuria_railway_taken
+		set_variable = { name = jfp_cd_manchuria_dev days = 365 }
+		jfp_pay_large = yes
+		custom_tooltip = jfp_tt_manchuria_states
+		every_state_in_manchuria_old = {
+			limit = { owner = root }
+			add_modifier = { name = jfp_manchuria_railway days = very_long_modifier_time }
+		}
+		custom_tooltip = {
+			text = jfp_tt_manchuria_dev_up
+			change_variable = { name = jfp_manchuria_dev add = 25 }
+			clamp_variable = { name = jfp_manchuria_dev min = 0 max = 100 }
+		}
+	}
+	ai_chance = { value = 10 }
+}
+
+jfp_dec_manchuria_garrison = {
+	is_shown = {
+		jfp_is_joseon = yes
+		has_journal_entry = je_jfp_manchuria_dev
+		NOT = { has_variable = jfp_dec_manchuria_garrison_taken }
+	}
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_manchuria_dev }
+		}
+	}
+	when_taken = {
+		set_variable = jfp_dec_manchuria_garrison_taken
+		set_variable = { name = jfp_cd_manchuria_dev days = 365 }
+		jfp_pay_small = yes
+		custom_tooltip = jfp_tt_manchuria_states
+		every_state_in_manchuria_old = {
+			limit = { owner = root }
+			add_modifier = { name = jfp_manchuria_garrison days = very_long_modifier_time }
+		}
+		custom_tooltip = {
+			text = jfp_tt_manchuria_dev_up
+			change_variable = { name = jfp_manchuria_dev add = 25 }
+			clamp_variable = { name = jfp_manchuria_dev min = 0 max = 100 }
+		}
+	}
+	ai_chance = { value = 10 }
+}

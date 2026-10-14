@@ -216,7 +216,7 @@ def main():
         # 바닐라 키워드 확인
         if keywords is not None and parents:
             if (key not in keywords and key not in STRUCTURAL and key not in own
-                    and not key.startswith(("c:", "ig:", "var:", "scope:", "cu:", "law_type:"))
+                    and not key.startswith(("c:", "s:", "ig:", "var:", "scope:", "cu:", "law_type:"))
                     and not key.replace(".", "").isdigit()
                     and parent not in ("traits", "random_list", "modifiers_while_active", "random_events")
                     and not (parent and parent in modifiers)):

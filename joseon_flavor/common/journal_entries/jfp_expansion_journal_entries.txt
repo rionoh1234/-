@@ -1,0 +1,150 @@
+# 조선 고봉밥 - 류큐 문제 / 대만 개척 / 일본 개항 / 만주 경영
+
+je_jfp_ryukyu = {
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+	group = je_group_foreign_affairs
+
+	modifiers_while_active = {
+		jfp_ryukyu_question
+	}
+
+	complete = {
+		OR = {
+			c:RYU ?= { is_subject_of = root }
+			country_or_subject_owns_entire_state_region = STATE_RYUKYU_ISLANDS
+		}
+	}
+	on_complete = {
+		trigger_event = { id = jfp_exp.2 popup = yes }
+	}
+
+	fail = {
+		NOT = { exists = c:RYU }
+		NOT = { country_or_subject_owns_entire_state_region = STATE_RYUKYU_ISLANDS }
+	}
+	on_fail = {
+		trigger_event = { id = jfp_exp.3 popup = yes }
+	}
+
+	invalid = {
+		NOT = { jfp_is_joseon = yes }
+	}
+
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	weight = 150
+}
+
+je_jfp_formosa = {
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+	group = je_group_foreign_affairs
+
+	modifiers_while_active = {
+		jfp_formosa_hardship
+	}
+
+	complete = {
+		country_or_subject_owns_entire_state_region = STATE_FORMOSA
+	}
+	on_complete = {
+		trigger_event = { id = jfp_exp.10 popup = yes }
+	}
+
+	invalid = {
+		NOT = { jfp_is_joseon = yes }
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			200 = 0
+			5 = jfp_exp.11
+		}
+	}
+
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	weight = 150
+}
+
+je_jfp_japan_port = {
+	icon = "gfx/interface/icons/event_icons/event_trade.dds"
+	group = je_group_foreign_affairs
+
+	modifiers_while_active = {
+		jfp_japan_trade_pressure
+	}
+
+	complete = {
+		OR = {
+			custom_tooltip = {
+				text = jfp_tt_japan_port_owned
+				any_state_in_japan = { owner = root }
+			}
+			c:JAP ?= { is_subject_of = root }
+		}
+	}
+	on_complete = {
+		trigger_event = { id = jfp_exp.21 popup = yes }
+	}
+
+	invalid = {
+		NOT = { jfp_is_joseon = yes }
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			200 = 0
+			5 = jfp_exp.22
+		}
+	}
+
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	weight = 150
+}
+
+je_jfp_manchuria_dev = {
+	icon = "gfx/interface/icons/event_icons/event_industry.dds"
+	group = je_group_internal_affairs
+
+	immediate = {
+		if = {
+			limit = { NOT = { has_variable = jfp_manchuria_dev } }
+			set_variable = { name = jfp_manchuria_dev value = 0 }
+		}
+	}
+
+	current_value = {
+		value = 0
+		if = {
+			limit = { has_variable = jfp_manchuria_dev }
+			value = var:jfp_manchuria_dev
+		}
+	}
+	goal_add_value = {
+		add = 100
+	}
+	progressbar = yes
+
+	complete = {
+		scope:journal_entry = { is_goal_complete = yes }
+	}
+	on_complete = {
+		trigger_event = { id = jfp_exp.31 popup = yes }
+	}
+
+	invalid = {
+		NOT = { jfp_is_joseon = yes }
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			200 = 0
+			5 = jfp_exp.32
+		}
+	}
+
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	weight = 150
+}

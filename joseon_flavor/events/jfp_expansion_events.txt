@@ -1,0 +1,236 @@
+namespace = jfp_exp
+
+# 1~3 류큐, 10~11 대만, 20~22 일본 개항, 30~32 만주 경영
+
+jfp_exp.1 = {
+	type = country_event
+	placement = root
+	title = jfp_exp.1.t
+	desc = jfp_exp.1.d
+	flavor = jfp_exp.1.f
+	event_image = { video = "asia_westerners_arriving" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+	duration = 3
+
+
+	option = {
+		name = jfp_exp.1.a
+		default_option = yes
+		custom_tooltip = jfp_tt_ryukyu_opened
+	}
+}
+
+jfp_exp.2 = {
+	type = country_event
+	placement = root
+	title = jfp_exp.2.t
+	desc = jfp_exp.2.d
+	flavor = jfp_exp.2.f
+	event_image = { video = "unspecific_signed_contract" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+	duration = 3
+
+
+	option = {
+		name = jfp_exp.2.a
+		default_option = yes
+		add_modifier = { name = jfp_ryukyu_tributary days = never_fire_again_modifier_time }
+		custom_tooltip = jfp_tt_claim_formosa
+		hidden_effect = { s:STATE_FORMOSA = { add_claim = root } }
+		add_journal_entry = { type = je_jfp_formosa }
+	}
+}
+
+jfp_exp.3 = {
+	type = country_event
+	placement = root
+	title = jfp_exp.3.t
+	desc = jfp_exp.3.d
+	flavor = jfp_exp.3.f
+	event_image = { video = "unspecific_signed_contract" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_skull.dds"
+	duration = 3
+
+
+	option = {
+		name = jfp_exp.3.a
+		default_option = yes
+		jfp_ig_down = { IG = ig_armed_forces }
+	}
+}
+
+jfp_exp.10 = {
+	type = country_event
+	placement = root
+	title = jfp_exp.10.t
+	desc = jfp_exp.10.d
+	flavor = jfp_exp.10.f
+	event_image = { video = "southamerica_factory_opening" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+	duration = 3
+
+
+	option = {
+		name = jfp_exp.10.a
+		default_option = yes
+		add_modifier = { name = jfp_formosa_settled days = never_fire_again_modifier_time }
+		jfp_gain_small = yes
+	}
+}
+
+jfp_exp.11 = {
+	type = country_event
+	placement = root
+	title = jfp_exp.11.t
+	desc = jfp_exp.11.d
+	flavor = jfp_exp.11.f
+	event_image = { video = "middleeast_jungle_expedition" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_skull.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+
+	option = {
+		name = jfp_exp.11.a
+		default_option = yes
+		jfp_pay_small = yes
+		jfp_ig_up = { IG = ig_armed_forces }
+	}
+	option = {
+		name = jfp_exp.11.b
+		add_modifier = { name = jfp_trial_expedition_fatigue days = short_modifier_time }
+	}
+}
+
+jfp_exp.20 = {
+	type = country_event
+	placement = root
+	title = jfp_exp.20.t
+	desc = jfp_exp.20.d
+	flavor = jfp_exp.20.f
+	event_image = { video = "unspecific_steam_ship" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_trade.dds"
+	duration = 3
+
+
+	option = {
+		name = jfp_exp.20.a
+		default_option = yes
+		custom_tooltip = jfp_tt_japan_opened
+	}
+}
+
+jfp_exp.21 = {
+	type = country_event
+	placement = root
+	title = jfp_exp.21.t
+	desc = jfp_exp.21.d
+	flavor = jfp_exp.21.f
+	event_image = { video = "unspecific_signed_contract" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+	duration = 3
+
+
+	option = {
+		name = jfp_exp.21.a
+		default_option = yes
+		add_modifier = { name = jfp_japan_opened days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_petty_bourgeoisie }
+	}
+}
+
+jfp_exp.22 = {
+	type = country_event
+	placement = root
+	title = jfp_exp.22.t
+	desc = jfp_exp.22.d
+	flavor = jfp_exp.22.f
+	event_image = { video = "asia_farmers_market" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_trade.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+
+	option = {
+		name = jfp_exp.22.a
+		default_option = yes
+		jfp_pay_small = yes
+		jfp_ig_up = { IG = ig_petty_bourgeoisie }
+	}
+	option = {
+		name = jfp_exp.22.b
+		if = { limit = { exists = c:JAP } change_relations = { country = c:JAP value = -20 } }
+		jfp_ig_up = { IG = ig_rural_folk }
+	}
+}
+
+jfp_exp.30 = {
+	type = country_event
+	placement = root
+	title = jfp_exp.30.t
+	desc = jfp_exp.30.d
+	flavor = jfp_exp.30.f
+	event_image = { video = "asia_poor_people_moving" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+	duration = 3
+
+
+	option = {
+		name = jfp_exp.30.a
+		default_option = yes
+		custom_tooltip = jfp_tt_manchuria_opened
+	}
+}
+
+jfp_exp.31 = {
+	type = country_event
+	placement = root
+	title = jfp_exp.31.t
+	desc = jfp_exp.31.d
+	flavor = jfp_exp.31.f
+	event_image = { video = "africa_prosperous_farm" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+	duration = 3
+
+
+	option = {
+		name = jfp_exp.31.a
+		default_option = yes
+		add_modifier = { name = jfp_manchuria_developed days = never_fire_again_modifier_time }
+	}
+}
+
+jfp_exp.32 = {
+	type = country_event
+	placement = root
+	title = jfp_exp.32.t
+	desc = jfp_exp.32.d
+	flavor = jfp_exp.32.f
+	event_image = { video = "asia_poor_people_moving" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+	duration = 3
+	cooldown = { days = normal_modifier_time }
+
+
+	option = {
+		name = jfp_exp.32.a
+		default_option = yes
+		jfp_ig_up = { IG = ig_rural_folk }
+		if = { limit = { exists = c:CHI } change_relations = { country = c:CHI value = -15 } }
+	}
+	option = {
+		name = jfp_exp.32.b
+		add_modifier = { name = jfp_trial_bandits days = short_modifier_time }
+	}
+}

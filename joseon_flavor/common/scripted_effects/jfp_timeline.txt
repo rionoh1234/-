@@ -34,6 +34,41 @@ jfp_monthly_timeline = {
 	}
 
 	#################################
+	# 류큐 문제 / 일본 개항 / 만주 경영 개시
+	#################################
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_ryukyu_open }
+			exists = c:RYU
+			is_subject = no
+			game_date >= 1850.1.1
+		}
+		set_variable = jfp_done_ryukyu_open
+		add_journal_entry = { type = je_jfp_ryukyu }
+		trigger_event = { id = jfp_exp.1 popup = yes }
+	}
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_japan_open }
+			exists = c:JAP
+			is_subject = no
+			is_country_type = recognized
+		}
+		set_variable = jfp_done_japan_open
+		add_journal_entry = { type = je_jfp_japan_port }
+		trigger_event = { id = jfp_exp.20 popup = yes }
+	}
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_done_manchuria_open }
+			any_state_in_manchuria_old = { owner = root }
+		}
+		set_variable = jfp_done_manchuria_open
+		add_journal_entry = { type = je_jfp_manchuria_dev }
+		trigger_event = { id = jfp_exp.30 popup = yes }
+	}
+
+	#################################
 	# 1836~1850년대
 	#################################
 	# 1836.4 다산 정약용 서거

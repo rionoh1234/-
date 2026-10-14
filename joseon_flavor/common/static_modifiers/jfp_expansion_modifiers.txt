@@ -1,0 +1,147 @@
+# 조선 고봉밥 - 의정부 인사 / 류큐·대만 / 일본 개항 / 만주 경영 수정자
+# 수치는 v0.4 잠정값입니다. 위신 계열은 쓰지 않습니다.
+
+#################################
+# 의정부 인사: 직책마다 하나만 적용 (보수 / 온건 / 개화)
+#################################
+# 영의정 (국정 총괄)
+jfp_cab_pm_conservative = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_documents_positive.dds"
+	country_legitimacy_base_add = 5
+	state_turmoil_effects_mult = -0.10
+}
+jfp_cab_pm_moderate = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_documents_positive.dds"
+	country_authority_mult = 0.05
+	country_bureaucracy_mult = 0.05
+}
+jfp_cab_pm_reform = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_documents_positive.dds"
+	country_law_enactment_success_add = 0.05
+	country_legitimacy_base_add = -3
+}
+# 호조판서 (재정)
+jfp_cab_finance_conservative = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_positive.dds"
+	state_tax_collection_mult = 0.05
+}
+jfp_cab_finance_moderate = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_positive.dds"
+	country_loan_interest_rate_mult = -0.10
+}
+jfp_cab_finance_reform = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_positive.dds"
+	state_tax_capacity_mult = 0.10
+}
+# 병조판서 (군사)
+jfp_cab_army_conservative = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_rifle_positive.dds"
+	state_conscription_rate_add = 0.01
+}
+jfp_cab_army_moderate = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_rifle_positive.dds"
+	unit_defense_mult = 0.05
+	unit_morale_recovery_mult = 0.05
+}
+jfp_cab_army_reform = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_rifle_positive.dds"
+	unit_offense_mult = 0.05
+	building_training_rate_mult = 0.10
+}
+# 예조판서 (교육·외교)
+jfp_cab_rites_conservative = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_positive.dds"
+	country_legitimacy_base_add = 2
+	interest_group_ig_devout_approval_add = 2
+}
+jfp_cab_rites_moderate = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_positive.dds"
+	country_influence_mult = 0.05
+	country_improve_relations_speed_mult = 0.10
+}
+jfp_cab_rites_reform = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_lightbulb_positive.dds"
+	state_education_access_add = 0.03
+}
+# 공조판서 (산업·건설)
+jfp_cab_works_conservative = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds"
+	building_group_bg_agriculture_throughput_add = 0.05
+}
+jfp_cab_works_moderate = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds"
+	state_construction_mult = 0.05
+}
+jfp_cab_works_reform = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds"
+	building_group_bg_manufacturing_throughput_add = 0.05
+}
+
+#################################
+# 류큐 문제 / 대만 개척
+#################################
+jfp_ryukyu_tributary = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_positive.dds"
+	building_port_throughput_add = 0.10
+	country_ryukyuan_cultural_acceptance_add = 20
+}
+jfp_ryukyu_question = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_negative.dds"
+	country_infamy_generation_mult = 0.10
+}
+jfp_formosa_settled = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds"
+	building_group_bg_plantations_throughput_add = 0.15
+	country_han_cultural_acceptance_add = 10
+	country_yuanzhumin_cultural_acceptance_add = 10
+}
+jfp_formosa_hardship = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_fire_negative.dds"
+	unit_morale_recovery_mult = -0.05
+}
+
+#################################
+# 일본 개항 (조약항)
+#################################
+jfp_japan_trade_pressure = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_negative.dds"
+	country_infamy_generation_mult = 0.10
+}
+jfp_japan_opened = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_coins_positive.dds"
+	building_port_throughput_add = 0.15
+	state_trade_capacity_mult = 0.10
+	country_japanese_cultural_acceptance_add = 10
+	country_tech_spread_mult = 0.10
+}
+
+#################################
+# 만주 경영: 주(州) 단위 효과 (조선이 차지한 만주의 주에 적용)
+#################################
+jfp_manchuria_migration = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_positive.dds"
+	state_migration_pull_mult = 0.25
+	state_birth_rate_mult = 0.05
+}
+jfp_manchuria_tunjeon = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds"
+	building_group_bg_agriculture_throughput_add = 0.15
+	building_group_bg_logging_throughput_add = 0.10
+}
+jfp_manchuria_railway = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds"
+	state_infrastructure_add = 10
+	building_group_bg_mining_throughput_add = 0.10
+}
+jfp_manchuria_garrison = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_rifle_positive.dds"
+	state_conscription_rate_add = 0.01
+	state_turmoil_effects_mult = -0.15
+}
+# 만주 경영 완료 (국가 단위)
+jfp_manchuria_developed = {
+	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_positive.dds"
+	country_manchu_cultural_acceptance_add = 20
+	state_assimilation_mult = 0.25
+	country_authority_mult = 0.05
+}

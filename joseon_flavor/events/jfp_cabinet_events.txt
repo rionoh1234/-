@@ -1,0 +1,188 @@
+namespace = jfp_cab
+
+# 의정부 인사: 1 영의정, 2 호조, 3 병조, 4 예조, 5 공조
+
+jfp_cab.1 = {
+	type = country_event
+	placement = root
+	title = jfp_cab.1.t
+	desc = jfp_cab.1.d
+	flavor = jfp_cab.1.f
+	event_image = { video = "asia_politician_parliament_motion" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+	duration = 3
+
+
+	option = {
+		name = jfp_cab.1.a
+		remove_modifier = jfp_cab_pm_moderate
+		remove_modifier = jfp_cab_pm_reform
+		add_modifier = { name = jfp_cab_pm_conservative days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_landowners }
+	}
+	option = {
+		name = jfp_cab.1.b
+		default_option = yes
+		remove_modifier = jfp_cab_pm_conservative
+		remove_modifier = jfp_cab_pm_reform
+		add_modifier = { name = jfp_cab_pm_moderate days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_petty_bourgeoisie }
+	}
+	option = {
+		name = jfp_cab.1.c
+		remove_modifier = jfp_cab_pm_conservative
+		remove_modifier = jfp_cab_pm_moderate
+		add_modifier = { name = jfp_cab_pm_reform days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_intelligentsia }
+		jfp_ig_down = { IG = ig_landowners }
+	}
+}
+
+jfp_cab.2 = {
+	type = country_event
+	placement = root
+	title = jfp_cab.2.t
+	desc = jfp_cab.2.d
+	flavor = jfp_cab.2.f
+	event_image = { video = "europenorthamerica_capitalists_meeting" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+	duration = 3
+
+
+	option = {
+		name = jfp_cab.2.a
+		remove_modifier = jfp_cab_finance_moderate
+		remove_modifier = jfp_cab_finance_reform
+		add_modifier = { name = jfp_cab_finance_conservative days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_landowners }
+	}
+	option = {
+		name = jfp_cab.2.b
+		default_option = yes
+		remove_modifier = jfp_cab_finance_conservative
+		remove_modifier = jfp_cab_finance_reform
+		add_modifier = { name = jfp_cab_finance_moderate days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_petty_bourgeoisie }
+	}
+	option = {
+		name = jfp_cab.2.c
+		remove_modifier = jfp_cab_finance_conservative
+		remove_modifier = jfp_cab_finance_moderate
+		add_modifier = { name = jfp_cab_finance_reform days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_industrialists }
+		jfp_ig_down = { IG = ig_landowners }
+	}
+}
+
+jfp_cab.3 = {
+	type = country_event
+	placement = root
+	title = jfp_cab.3.t
+	desc = jfp_cab.3.d
+	flavor = jfp_cab.3.f
+	event_image = { video = "unspecific_military_parade" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+	duration = 3
+
+
+	option = {
+		name = jfp_cab.3.a
+		remove_modifier = jfp_cab_army_moderate
+		remove_modifier = jfp_cab_army_reform
+		add_modifier = { name = jfp_cab_army_conservative days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_rural_folk }
+	}
+	option = {
+		name = jfp_cab.3.b
+		default_option = yes
+		remove_modifier = jfp_cab_army_conservative
+		remove_modifier = jfp_cab_army_reform
+		add_modifier = { name = jfp_cab_army_moderate days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_armed_forces }
+	}
+	option = {
+		name = jfp_cab.3.c
+		remove_modifier = jfp_cab_army_conservative
+		remove_modifier = jfp_cab_army_moderate
+		add_modifier = { name = jfp_cab_army_reform days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_industrialists }
+		jfp_ig_down = { IG = ig_rural_folk }
+	}
+}
+
+jfp_cab.4 = {
+	type = country_event
+	placement = root
+	title = jfp_cab.4.t
+	desc = jfp_cab.4.d
+	flavor = jfp_cab.4.f
+	event_image = { video = "asia_confucianism_shinto" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+	duration = 3
+
+
+	option = {
+		name = jfp_cab.4.a
+		remove_modifier = jfp_cab_rites_moderate
+		remove_modifier = jfp_cab_rites_reform
+		add_modifier = { name = jfp_cab_rites_conservative days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_devout }
+	}
+	option = {
+		name = jfp_cab.4.b
+		default_option = yes
+		remove_modifier = jfp_cab_rites_conservative
+		remove_modifier = jfp_cab_rites_reform
+		add_modifier = { name = jfp_cab_rites_moderate days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_landowners }
+	}
+	option = {
+		name = jfp_cab.4.c
+		remove_modifier = jfp_cab_rites_conservative
+		remove_modifier = jfp_cab_rites_moderate
+		add_modifier = { name = jfp_cab_rites_reform days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_intelligentsia }
+		jfp_ig_down = { IG = ig_devout }
+	}
+}
+
+jfp_cab.5 = {
+	type = country_event
+	placement = root
+	title = jfp_cab.5.t
+	desc = jfp_cab.5.d
+	flavor = jfp_cab.5.f
+	event_image = { video = "middleeast_engineer_blueprint" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+	duration = 3
+
+
+	option = {
+		name = jfp_cab.5.a
+		remove_modifier = jfp_cab_works_moderate
+		remove_modifier = jfp_cab_works_reform
+		add_modifier = { name = jfp_cab_works_conservative days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_rural_folk }
+	}
+	option = {
+		name = jfp_cab.5.b
+		default_option = yes
+		remove_modifier = jfp_cab_works_conservative
+		remove_modifier = jfp_cab_works_reform
+		add_modifier = { name = jfp_cab_works_moderate days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_petty_bourgeoisie }
+	}
+	option = {
+		name = jfp_cab.5.c
+		remove_modifier = jfp_cab_works_conservative
+		remove_modifier = jfp_cab_works_moderate
+		add_modifier = { name = jfp_cab_works_reform days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_industrialists }
+		jfp_ig_down = { IG = ig_rural_folk }
+	}
+}
