@@ -36,6 +36,7 @@ jfp_daeup.1 = {
 	option = {
 		name = jfp_daeup.1.a
 		default_option = yes
+		add_modifier = { name = jfp_reward_construction_boom_small days = long_modifier_time }
 		add_modifier = { name = jfp_reward_jaju days = never_fire_again_modifier_time }
 		add_journal_entry = { type = je_jfp_daeup_2 }
 	}
@@ -56,6 +57,7 @@ jfp_daeup.2 = {
 	option = {
 		name = jfp_daeup.2.a
 		default_option = yes
+		add_modifier = { name = jfp_reward_construction_boom days = long_modifier_time }
 		add_modifier = { name = jfp_reward_bugguk days = never_fire_again_modifier_time }
 		custom_tooltip = jfp_tt_claims_manchuria
 		hidden_effect = { every_state_region_in_manchuria_old = { add_claim = root } }
@@ -78,6 +80,7 @@ jfp_daeup.3 = {
 	option = {
 		name = jfp_daeup.3.a
 		default_option = yes
+		add_modifier = { name = jfp_reward_construction_boom_small days = long_modifier_time }
 		add_modifier = { name = jfp_reward_goto days = never_fire_again_modifier_time }
 		custom_tooltip = jfp_tt_homeland_manchuria
 		hidden_effect = { every_state_region_in_manchuria_old = { add_homeland = cu:korean } }
@@ -121,6 +124,7 @@ jfp_daeup.5 = {
 	option = {
 		name = jfp_daeup.5.a
 		default_option = yes
+		add_modifier = { name = jfp_reward_construction_boom days = long_modifier_time }
 		add_modifier = { name = jfp_reward_daedonga days = never_fire_again_modifier_time }
 		power_bloc ?= { add_modifier = { name = jfp_reward_daedonga_bloc days = never_fire_again_modifier_time } }
 		add_treasury = money_amount_multiplier_very_large
@@ -129,6 +133,7 @@ jfp_daeup.5 = {
 	}
 	option = {
 		name = jfp_daeup.5.b
+		add_modifier = { name = jfp_reward_construction_boom days = long_modifier_time }
 		add_modifier = { name = jfp_reward_daedonga days = never_fire_again_modifier_time }
 		power_bloc ?= { add_modifier = { name = jfp_reward_daedonga_bloc days = never_fire_again_modifier_time } }
 		add_treasury = money_amount_multiplier_very_large

@@ -173,7 +173,7 @@ jfp_gyeongbokgung_construction = {
 }
 jfp_gyeongbokgung_restored = {
 	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_positive.dds"
-	country_prestige_mult = 0.10
+	country_authority_mult = 0.05
 	country_legitimacy_base_add = 5
 }
 jfp_dangbaekjeon_inflation = {
@@ -219,12 +219,12 @@ jfp_tiger_hunters = {
 }
 jfp_foreign_victory = {
 	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_positive.dds"
-	country_prestige_mult = 0.10
+	unit_morale_recovery_mult = 0.10
 	country_legitimacy_base_add = 5
 }
 jfp_foreign_humiliation = {
 	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_negative.dds"
-	country_prestige_mult = -0.10
+	country_authority_mult = -0.05
 	country_legitimacy_base_add = -5
 }
 jfp_cheokhwabi = {
@@ -240,7 +240,7 @@ jfp_opened_ports = {
 }
 jfp_unequal_treaty = {
 	icon = "gfx/interface/icons/timed_modifier_icons/modifier_documents_negative.dds"
-	country_prestige_mult = -0.10
+	state_tax_capacity_add = -2
 	state_tax_collection_mult = -0.05
 }
 
@@ -310,7 +310,7 @@ jfp_gapsin_success = {
 jfp_grain_export_ban = {
 	icon = "gfx/interface/icons/timed_modifier_icons/modifier_flag_positive.dds"
 	state_lower_strata_standard_of_living_add = 0.3
-	country_prestige_mult = -0.05
+	building_port_throughput_add = -0.05
 }
 jfp_gaehwa_success = {
 	icon = "gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds"
@@ -364,7 +364,7 @@ jfp_daehan_cheonil_bank = {
 }
 jfp_gwangmu_success = {
 	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_positive.dds"
-	country_prestige_mult = 0.10
+	building_throughput_add = 0.03
 	country_authority_mult = 0.10
 	building_group_bg_manufacturing_throughput_add = 0.05
 }
@@ -383,7 +383,7 @@ jfp_gicheuk_cheui = {
 }
 jfp_chusa_style = {
 	icon = "gfx/interface/icons/timed_modifier_icons/modifier_statue_positive.dds"
-	country_prestige_mult = 0.03
+	country_weekly_innovation_add = 1
 	interest_group_ig_landowners_approval_add = 1
 }
 jfp_daedong_yeojido = {

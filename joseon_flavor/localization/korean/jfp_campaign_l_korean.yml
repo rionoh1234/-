@@ -36,7 +36,7 @@
 
  # ─────────────── 수정자: 역경 ───────────────
  jfp_trial_qing_suzerainty:0 "청의 종주권"
- jfp_trial_qing_suzerainty_desc:0 "청의 그늘 아래에서 조선의 위신은 낮고, 자주를 바라는 목소리는 높아진다."
+ jfp_trial_qing_suzerainty_desc:0 "해마다 바치는 공물이 재정을 축내고, 자주를 바라는 목소리는 높아진다."
  jfp_trial_foreign_creditors:0 "외국 채권자"
  jfp_trial_foreign_creditors_desc:0 "근대화 자금을 빌려준 외국 은행들이 높은 이자를 요구한다."
  jfp_trial_northern_expedition:0 "북벌 준비"
@@ -70,14 +70,18 @@
 
  # ─────────────── 수정자: 보상 ───────────────
  jfp_reward_jaju:0 "자주독립국"
- jfp_reward_jaju_desc:0 "수백 년 만에 종주국의 사슬을 끊고 온전한 자주국이 되었다."
+ jfp_reward_jaju_desc:0 "수백 년 만에 종주국의 사슬을 끊었다. 공물로 새던 재정이 국고로 돌아오고, 군대는 오직 이 나라를 위해 싸운다."
  jfp_reward_bugguk:0 "부국강병"
  jfp_reward_bugguk_desc:0 "나라는 부유해지고 군대는 강해졌다. 열강도 이제 조선을 무시하지 못한다."
  jfp_reward_goto:0 "고토 회복"
  jfp_reward_goto_desc:0 "고구려와 발해의 옛 땅이 다시 조선의 품으로 돌아왔다."
  jfp_reward_hegemony:0 "동아시아의 패자"
- jfp_reward_hegemony_desc:0 "청과 일본을 굴복시키고 동아시아 질서의 중심에 섰다."
+ jfp_reward_hegemony_desc:0 "청과 일본을 굴복시키고 동아시아 질서의 중심에 섰다. 속국들은 순종하고, 조선의 팽창을 문제 삼는 목소리는 잦아든다."
  jfp_reward_daedonga:0 "대동아 공영권의 맹주"
  jfp_reward_daedonga_desc:0 "조선이 동아시아와 동남아시아를 아우르는 공영권의 맹주가 되었다."
+ jfp_reward_construction_boom:0 "부흥의 열기"
+ jfp_reward_construction_boom_desc:0 "대업의 성취에 고무된 전국이 건설 사업에 뛰어들고 있다."
+ jfp_reward_construction_boom_small:0 "재건의 기운"
+ jfp_reward_construction_boom_small_desc:0 "새로운 출발을 맞아 곳곳에서 재건 공사가 시작되었다."
  jfp_reward_daedonga_bloc:0 "대동아의 결속"
  jfp_reward_daedonga_bloc_desc:0 "서양 열강을 몰아낸 공영권이 하나의 질서로 굳게 결속하였다."
