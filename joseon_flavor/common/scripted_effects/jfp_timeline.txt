@@ -33,6 +33,17 @@ jfp_monthly_timeline = {
 		trigger_event = { id = jfp_daeup.10 popup = yes }
 	}
 
+	if = {
+		limit = {
+			NOT = { has_variable = jfp_bugguk_opened }
+			has_journal_entry = je_jfp_daeup_2
+		}
+		set_variable = jfp_bugguk_opened
+		add_journal_entry = { type = je_jfp_bugguk_military }
+		add_journal_entry = { type = je_jfp_bugguk_economy }
+		add_journal_entry = { type = je_jfp_bugguk_society }
+	}
+
 	#################################
 	# 류큐 문제 / 일본 개항 / 만주 경영 개시
 	#################################

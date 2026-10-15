@@ -1,0 +1,263 @@
+# 조선 고봉밥 - 부국강병 분과 개혁 조치 버튼
+# 같은 분과 안에서는 1년에 한 번만 누를 수 있습니다.
+
+jfp_button_muwiyeong = {
+	name = jfp_button_muwiyeong
+	desc = jfp_button_muwiyeong_desc
+
+	visible = {
+		has_journal_entry = je_jfp_bugguk_military
+		NOT = { has_variable = jfp_bugguk_muwiyeong_done }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_bugguk_military }
+		}
+	}
+
+	effect = {
+		set_variable = jfp_bugguk_muwiyeong_done
+		set_variable = { name = jfp_cd_bugguk_military days = 365 }
+		jfp_pay_medium = yes
+		add_modifier = { name = jfp_bugguk_muwiyeong days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_armed_forces }
+	}
+
+	ai_chance = {
+		value = 10
+	}
+}
+
+jfp_button_military_academy = {
+	name = jfp_button_military_academy
+	desc = jfp_button_military_academy_desc
+
+	visible = {
+		has_journal_entry = je_jfp_bugguk_military
+		NOT = { has_variable = jfp_bugguk_academy_done }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_bugguk_military }
+		}
+	}
+
+	effect = {
+		set_variable = jfp_bugguk_academy_done
+		set_variable = { name = jfp_cd_bugguk_military days = 365 }
+		jfp_pay_medium = yes
+		add_modifier = { name = jfp_bugguk_military_academy days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_armed_forces }
+	}
+
+	ai_chance = {
+		value = 10
+	}
+}
+
+jfp_button_conscription_law = {
+	name = jfp_button_conscription_law
+	desc = jfp_button_conscription_law_desc
+
+	visible = {
+		has_journal_entry = je_jfp_bugguk_military
+		NOT = { has_variable = jfp_bugguk_conscription_done }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_bugguk_military }
+		}
+	}
+
+	effect = {
+		set_variable = jfp_bugguk_conscription_done
+		set_variable = { name = jfp_cd_bugguk_military days = 365 }
+		jfp_pay_small = yes
+		add_modifier = { name = jfp_bugguk_conscription_law days = never_fire_again_modifier_time }
+		jfp_ig_down = { IG = ig_rural_folk }
+	}
+
+	ai_chance = {
+		value = 10
+	}
+}
+
+jfp_button_weights_measures = {
+	name = jfp_button_weights_measures
+	desc = jfp_button_weights_measures_desc
+
+	visible = {
+		has_journal_entry = je_jfp_bugguk_economy
+		NOT = { has_variable = jfp_bugguk_weights_done }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_bugguk_economy }
+		}
+	}
+
+	effect = {
+		set_variable = jfp_bugguk_weights_done
+		set_variable = { name = jfp_cd_bugguk_economy days = 365 }
+		jfp_pay_small = yes
+		add_modifier = { name = jfp_bugguk_weights_measures days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_petty_bourgeoisie }
+	}
+
+	ai_chance = {
+		value = 10
+	}
+}
+
+jfp_button_national_bank = {
+	name = jfp_button_national_bank
+	desc = jfp_button_national_bank_desc
+
+	visible = {
+		has_journal_entry = je_jfp_bugguk_economy
+		NOT = { has_variable = jfp_bugguk_bank_done }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_bugguk_economy }
+		}
+	}
+
+	effect = {
+		set_variable = jfp_bugguk_bank_done
+		set_variable = { name = jfp_cd_bugguk_economy days = 365 }
+		jfp_pay_large = yes
+		add_modifier = { name = jfp_bugguk_national_bank days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_industrialists }
+	}
+
+	ai_chance = {
+		value = 10
+	}
+}
+
+jfp_button_company_charter = {
+	name = jfp_button_company_charter
+	desc = jfp_button_company_charter_desc
+
+	visible = {
+		has_journal_entry = je_jfp_bugguk_economy
+		NOT = { has_variable = jfp_bugguk_charter_done }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_bugguk_economy }
+		}
+	}
+
+	effect = {
+		set_variable = jfp_bugguk_charter_done
+		set_variable = { name = jfp_cd_bugguk_economy days = 365 }
+		jfp_pay_medium = yes
+		add_modifier = { name = jfp_bugguk_company_charter days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_industrialists }
+	}
+
+	ai_chance = {
+		value = 10
+	}
+}
+
+jfp_button_education_edict = {
+	name = jfp_button_education_edict
+	desc = jfp_button_education_edict_desc
+
+	visible = {
+		has_journal_entry = je_jfp_bugguk_society
+		NOT = { has_variable = jfp_bugguk_education_done }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_bugguk_society }
+		}
+	}
+
+	effect = {
+		set_variable = jfp_bugguk_education_done
+		set_variable = { name = jfp_cd_bugguk_society days = 365 }
+		jfp_pay_medium = yes
+		add_modifier = { name = jfp_bugguk_education_edict days = never_fire_again_modifier_time }
+		jfp_ig_up = { IG = ig_intelligentsia }
+	}
+
+	ai_chance = {
+		value = 10
+	}
+}
+
+jfp_button_abolish_status = {
+	name = jfp_button_abolish_status
+	desc = jfp_button_abolish_status_desc
+
+	visible = {
+		has_journal_entry = je_jfp_bugguk_society
+		NOT = { has_variable = jfp_bugguk_status_done }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_bugguk_society }
+		}
+	}
+
+	effect = {
+		set_variable = jfp_bugguk_status_done
+		set_variable = { name = jfp_cd_bugguk_society days = 365 }
+		jfp_pay_small = yes
+		add_modifier = { name = jfp_bugguk_abolish_slavery_status days = never_fire_again_modifier_time }
+		jfp_ig_down_large = { IG = ig_landowners }
+	}
+
+	ai_chance = {
+		value = 10
+	}
+}
+
+jfp_button_solar_calendar = {
+	name = jfp_button_solar_calendar
+	desc = jfp_button_solar_calendar_desc
+
+	visible = {
+		has_journal_entry = je_jfp_bugguk_society
+		NOT = { has_variable = jfp_bugguk_calendar_done }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = jfp_tt_reform_cooldown
+			NOT = { has_variable = jfp_cd_bugguk_society }
+		}
+	}
+
+	effect = {
+		set_variable = jfp_bugguk_calendar_done
+		set_variable = { name = jfp_cd_bugguk_society days = 365 }
+		jfp_pay_small = yes
+		add_modifier = { name = jfp_bugguk_solar_calendar days = never_fire_again_modifier_time }
+		jfp_ig_down = { IG = ig_devout }
+	}
+
+	ai_chance = {
+		value = 10
+	}
+}

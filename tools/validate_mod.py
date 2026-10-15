@@ -36,6 +36,8 @@ STRUCTURAL = {
     "is_shown_when_inactive", "possible",
     # 결정
     "is_shown", "when_taken",
+    # 스크립트 버튼
+    "visible", "scripted_button",
     # 온액션
     "on_actions", "events",
     # 정적 수정자
@@ -49,6 +51,9 @@ STRUCTURAL = {
     # 값 링크 (트리거 목록이 아닌 event_targets에 있으며 비교에 사용)
     "gdp",
 }
+
+# 이 모드가 참조하는 바닐라 저널 (정의되지 않아도 오류로 보지 않음)
+VANILLA_JES = {"je_warlord_china", "je_earn_recognition"}
 
 LOC_LINE_RE = re.compile(r'^\s+([A-Za-z0-9_.\-]+):\d*\s+"(.*)"\s*$')
 
@@ -174,10 +179,13 @@ def main():
         s_effects |= {k for k, _, v, _ in tree if isinstance(v, list)}
     for p, tree in in_dir("common/scripted_triggers").items():
         s_triggers |= {k for k, _, v, _ in tree if isinstance(v, list)}
+    buttons = set()
+    for p, tree in in_dir("common/scripted_buttons").items():
+        buttons |= {k for k, _, v, _ in tree if isinstance(v, list)}
     for p, tree in in_dir("common/on_actions").items():
         on_actions |= {k for k, _, v, _ in tree if isinstance(v, list)}
 
-    own = events | jes | decisions | modifiers | s_effects | s_triggers | on_actions
+    own = events | jes | decisions | modifiers | s_effects | s_triggers | on_actions | buttons
     loc_needed = set()
 
     def check(key, op, val, ln, parents, path):
@@ -190,9 +198,11 @@ def main():
         if parent == "random_events" and key.replace(".", "").isdigit() is False and key.isdigit():
             if val != "0" and val not in events:
                 errors.append(f"{path}:{ln}: 정의되지 않은 이벤트 '{val}'")
+        if key == "scripted_button" and val not in buttons:
+            errors.append(f"{path}:{ln}: 정의되지 않은 버튼 '{val}'")
         if key == "type" and parent == "add_journal_entry" and val not in jes:
             errors.append(f"{path}:{ln}: 정의되지 않은 저널 '{val}'")
-        if key in ("has_journal_entry",) and val not in jes:
+        if key in ("has_journal_entry",) and val not in jes and val not in VANILLA_JES:
             errors.append(f"{path}:{ln}: 정의되지 않은 저널 '{val}'")
         if key == "name" and parent in ("add_modifier",) and val not in modifiers:
             warnings.append(f"{path}:{ln}: 이 모드에 없는 수정자 '{val}' (바닐라 수정자인지 확인)")
@@ -216,7 +226,7 @@ def main():
         # 바닐라 키워드 확인
         if keywords is not None and parents:
             if (key not in keywords and key not in STRUCTURAL and key not in own
-                    and not key.startswith(("c:", "s:", "ig:", "var:", "scope:", "cu:", "law_type:"))
+                    and not key.startswith(("c:", "s:", "je:", "ig:", "var:", "scope:", "cu:", "law_type:"))
                     and not key.replace(".", "").isdigit()
                     and parent not in ("traits", "random_list", "modifiers_while_active", "random_events")
                     and not (parent and parent in modifiers)):
@@ -234,7 +244,7 @@ def main():
         loc_needed |= set(names)
     for j in jes:
         loc_needed |= {j, f"{j}_reason"}
-    for d in decisions:
+    for d in decisions | buttons:
         loc_needed |= {d, f"{d}_desc"}
     for m in modifiers:
         loc_needed |= {m, f"{m}_desc"}

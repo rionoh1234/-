@@ -1,0 +1,142 @@
+# 조선 고봉밥 - 부국강병 분과 개혁 (대업 2단계와 함께 열림)
+# 분과마다 개혁 조치 버튼 3개 + 객관적 조건을 충족해야 완료됩니다.
+# 완료할 때마다 바닐라 '열강의 인정' 저널 진행도가 오릅니다.
+
+je_jfp_bugguk_military = {
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+	group = je_group_historical_content
+
+	scripted_button = jfp_button_muwiyeong
+	scripted_button = jfp_button_military_academy
+	scripted_button = jfp_button_conscription_law
+
+	modifiers_while_active = {
+		jfp_bugguk_reform_burden
+	}
+
+	complete = {
+		custom_tooltip = {
+			text = jfp_tt_bugguk_military_actions
+			has_variable = jfp_bugguk_muwiyeong_done
+			has_variable = jfp_bugguk_academy_done
+			has_variable = jfp_bugguk_conscription_done
+		}
+		has_technology_researched = line_infantry
+		has_technology_researched = artillery
+		has_law_or_variant = law_type:law_professional_army
+		OR = {
+			has_law_or_variant = law_type:law_local_police
+			has_law_or_variant = law_type:law_dedicated_police
+			has_law_or_variant = law_type:law_militarized_police
+			has_law_or_variant = law_type:law_secret_police
+		}
+		custom_tooltip = {
+			text = jfp_tt_bugguk_arms_industry
+			any_scope_building = {
+				is_building_type = building_arms_industry
+				level >= 3
+			}
+		}
+	}
+	on_complete = {
+		trigger_event = { id = jfp_bugguk.1 popup = yes }
+	}
+
+	invalid = {
+		NOT = { jfp_is_joseon = yes }
+	}
+
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	weight = 180
+}
+
+je_jfp_bugguk_economy = {
+	icon = "gfx/interface/icons/event_icons/event_industry.dds"
+	group = je_group_historical_content
+
+	scripted_button = jfp_button_weights_measures
+	scripted_button = jfp_button_national_bank
+	scripted_button = jfp_button_company_charter
+
+	modifiers_while_active = {
+		jfp_bugguk_reform_burden
+	}
+
+	complete = {
+		custom_tooltip = {
+			text = jfp_tt_bugguk_economy_actions
+			has_variable = jfp_bugguk_weights_done
+			has_variable = jfp_bugguk_bank_done
+			has_variable = jfp_bugguk_charter_done
+		}
+		in_default = no
+		has_technology_researched = railways
+		has_technology_researched = banking
+		custom_tooltip = {
+			text = jfp_tt_bugguk_railways
+			any_scope_state = {
+				filter = { is_incorporated = yes }
+				has_building = building_railway
+				percent > 0.5
+			}
+		}
+	}
+	on_complete = {
+		trigger_event = { id = jfp_bugguk.2 popup = yes }
+	}
+
+	invalid = {
+		NOT = { jfp_is_joseon = yes }
+	}
+
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	weight = 180
+}
+
+je_jfp_bugguk_society = {
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+	group = je_group_historical_content
+
+	scripted_button = jfp_button_education_edict
+	scripted_button = jfp_button_abolish_status
+	scripted_button = jfp_button_solar_calendar
+
+	modifiers_while_active = {
+		jfp_bugguk_reform_burden
+	}
+
+	complete = {
+		custom_tooltip = {
+			text = jfp_tt_bugguk_society_actions
+			has_variable = jfp_bugguk_education_done
+			has_variable = jfp_bugguk_status_done
+			has_variable = jfp_bugguk_calendar_done
+		}
+		OR = {
+			has_law_or_variant = law_type:law_private_schools
+			has_law_or_variant = law_type:law_public_schools
+			has_law_or_variant = law_type:law_compulsory_primary_school
+		}
+		literacy_rate >= 0.40
+		custom_tooltip = {
+			text = jfp_tt_bugguk_university
+			any_scope_building = {
+				is_building_type = building_university
+				level >= 3
+			}
+		}
+	}
+	on_complete = {
+		trigger_event = { id = jfp_bugguk.3 popup = yes }
+	}
+
+	invalid = {
+		NOT = { jfp_is_joseon = yes }
+	}
+
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	weight = 180
+}

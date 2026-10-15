@@ -60,6 +60,11 @@ je_jfp_daeup_2 = {
 		has_technology_researched = nationalism
 		has_technology_researched = general_staff
 		custom_tooltip = {
+			text = jfp_tt_daeup_2_sectors
+			has_variable = jfp_bugguk_sectors
+			var:jfp_bugguk_sectors >= 2
+		}
+		custom_tooltip = {
 			text = jfp_tt_daeup_2_japan
 			OR = {
 				NOT = { exists = c:JAP }

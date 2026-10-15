@@ -39,6 +39,19 @@ jfp_daeup.1 = {
 		add_modifier = { name = jfp_reward_construction_boom_small days = long_modifier_time }
 		add_modifier = { name = jfp_reward_jaju days = never_fire_again_modifier_time }
 		add_journal_entry = { type = je_jfp_daeup_2 }
+		add_journal_entry = { type = je_jfp_bugguk_military }
+		add_journal_entry = { type = je_jfp_bugguk_economy }
+		add_journal_entry = { type = je_jfp_bugguk_society }
+		set_variable = jfp_bugguk_opened
+		custom_tooltip = jfp_tt_qing_unity_down
+		hidden_effect = {
+			c:CHI ?= {
+				if = {
+					limit = { has_journal_entry = je_warlord_china }
+					chi_remove_1_fragile_unity = yes
+				}
+			}
+		}
 	}
 }
 
@@ -86,6 +99,15 @@ jfp_daeup.3 = {
 		hidden_effect = { every_state_region_in_manchuria_old = { add_homeland = cu:korean } }
 		jfp_gain_medium = yes
 		add_journal_entry = { type = je_jfp_daeup_4 }
+		custom_tooltip = jfp_tt_qing_unity_down
+		hidden_effect = {
+			c:CHI ?= {
+				if = {
+					limit = { has_journal_entry = je_warlord_china }
+					chi_remove_1_fragile_unity = yes
+				}
+			}
+		}
 	}
 }
 

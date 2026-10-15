@@ -1,7 +1,7 @@
 {
 	"name" : "Joseon Flavor Pack (조선 고봉밥)",
 	"id" : "joseon_flavor_pack",
-	"version" : "0.4.0",
+	"version" : "0.5.0",
 	"supported_game_version" : "1.14.*",
 	"short_description" : "조선(KOR) 전용 역사 컨텐츠: 세도정치, 삼정문란, 서학, 흥선대원군, 양요, 개화, 광무개혁, 대업 캠페인(자주독립~대동아 공영권)",
 	"tags" : [

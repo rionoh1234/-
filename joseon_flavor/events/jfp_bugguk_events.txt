@@ -1,0 +1,75 @@
+namespace = jfp_bugguk
+
+# 부국강병 분과 완료: 1 군제, 2 경제, 3 사회
+
+jfp_bugguk.1 = {
+	type = country_event
+	placement = root
+	title = jfp_bugguk.1.t
+	desc = jfp_bugguk.1.d
+	flavor = jfp_bugguk.1.f
+	event_image = { video = "unspecific_military_parade" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+	duration = 3
+
+	option = {
+		name = jfp_bugguk.1.a
+		default_option = yes
+		add_modifier = { name = jfp_bugguk_military_done days = never_fire_again_modifier_time }
+		custom_tooltip = jfp_tt_bugguk_sector_count
+		change_variable = { name = jfp_bugguk_sectors add = 1 }
+		custom_tooltip = jfp_tt_bugguk_recognition
+		je:je_earn_recognition ?= {
+			add_progress = { value = 40 name = earn_recognition_progress_bar }
+		}
+	}
+}
+
+jfp_bugguk.2 = {
+	type = country_event
+	placement = root
+	title = jfp_bugguk.2.t
+	desc = jfp_bugguk.2.d
+	flavor = jfp_bugguk.2.f
+	event_image = { video = "unspecific_trains" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_industry.dds"
+	duration = 3
+
+	option = {
+		name = jfp_bugguk.2.a
+		default_option = yes
+		add_modifier = { name = jfp_bugguk_economy_done days = never_fire_again_modifier_time }
+		custom_tooltip = jfp_tt_bugguk_sector_count
+		change_variable = { name = jfp_bugguk_sectors add = 1 }
+		custom_tooltip = jfp_tt_bugguk_recognition
+		je:je_earn_recognition ?= {
+			add_progress = { value = 40 name = earn_recognition_progress_bar }
+		}
+	}
+}
+
+jfp_bugguk.3 = {
+	type = country_event
+	placement = root
+	title = jfp_bugguk.3.t
+	desc = jfp_bugguk.3.d
+	flavor = jfp_bugguk.3.f
+	event_image = { video = "europenorthamerica_art_gallery" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+	duration = 3
+
+	option = {
+		name = jfp_bugguk.3.a
+		default_option = yes
+		add_modifier = { name = jfp_bugguk_society_done days = never_fire_again_modifier_time }
+		custom_tooltip = jfp_tt_bugguk_sector_count
+		change_variable = { name = jfp_bugguk_sectors add = 1 }
+		custom_tooltip = jfp_tt_bugguk_recognition
+		je:je_earn_recognition ?= {
+			add_progress = { value = 40 name = earn_recognition_progress_bar }
+		}
+	}
+}
