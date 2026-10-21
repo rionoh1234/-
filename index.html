@@ -26,14 +26,17 @@
 <div class="box">
   <img src="img/icon-192.png" alt="">
   <h1>별무리 원정대</h1>
-  <p id="msg">원정대를 불러오는 중…</p>
-  <a id="go" href="https://claude.ai/artifact/ScJctky8n9vNw5CwXMe88P" hidden>게임 열기</a>
+  <p id="msg">Chrome 메뉴 ⋮ → <b style="color:#F7F3E8">홈 화면에 추가</b>를 누르면<br>이 아이콘으로 바로가기가 생깁니다.</p>
+  <a id="go" href="https://claude.ai/artifact/ScJctky8n9vNw5CwXMe88P">게임 열기</a>
 </div>
 <script>
-  // 홈 화면 바로가기용 런처: 아이콘·이름만 여기서 쓰고, 게임 본체(세이브 포함)는 claude.ai 아티팩트에서 실행된다.
+  // 홈 화면 바로가기용 런처. 브라우저에서 직접 열면 안내 화면(홈 화면 추가용), 홈 화면 아이콘으로 열면(?launch=1 또는 standalone) 바로 게임으로 이동.
   var GAME = 'https://claude.ai/artifact/ScJctky8n9vNw5CwXMe88P';
-  setTimeout(function () { location.replace(GAME); }, 250);
-  setTimeout(function () { document.getElementById('msg').textContent = '자동으로 열리지 않으면 아래 버튼을 눌러 주세요.'; document.getElementById('go').hidden = false; }, 2500);
+  var fromIcon = /[?&]launch=1/.test(location.search) || (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  if (fromIcon) {
+    document.getElementById('msg').textContent = '원정대를 불러오는 중…';
+    setTimeout(function () { location.replace(GAME); }, 200);
+  }
 </script>
 </body>
 </html>
