@@ -22,7 +22,7 @@ object Payload {
         return JSONObject().apply {
             put("secret", secret)
             put("source", "android-notification-listener")
-            put("event", "notification")
+            put("event", if (record.packageName == BuildConfig.APPLICATION_ID) "test" else "notification")
             put("id", record.id)
             put("dedupe_key", record.dedupeKey)
             put("package", record.packageName)

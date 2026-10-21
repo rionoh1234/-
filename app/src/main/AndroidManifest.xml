@@ -6,6 +6,16 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- 배터리 최적화 제외 요청(백그라운드 리스너 유지) -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- "테스트 알림 보내기" (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- 최근 알림을 보낸 앱의 이름을 표시하기 위한 패키지 가시성 (Android 11+) -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
 
     <application
         android:name=".App"

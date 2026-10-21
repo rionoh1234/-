@@ -11,12 +11,7 @@ object ListenerState {
     private val _connected = MutableStateFlow(false)
     val connected: StateFlow<Boolean> = _connected
 
-    /** 마지막으로 어떤 패키지의 알림을 봤는지(패키지명 확인용) */
-    private val _lastSeenPackage = MutableStateFlow<String?>(null)
-    val lastSeenPackage: StateFlow<String?> = _lastSeenPackage
-
     internal fun setConnected(value: Boolean) { _connected.value = value }
-    internal fun setLastSeenPackage(pkg: String) { _lastSeenPackage.value = pkg }
 
     /** 사용자가 "알림 접근 허용"을 켰는지 */
     fun isAccessGranted(context: Context): Boolean =

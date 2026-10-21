@@ -41,7 +41,11 @@ import androidx.compose.ui.unit.dp
 import com.rionoh.kakaobanklogger.forward.ForwardScheduler
 import com.rionoh.kakaobanklogger.forward.Payload
 import com.rionoh.kakaobanklogger.forward.WebhookClient
+import com.rionoh.kakaobanklogger.settings.RecentPackage
 import com.rionoh.kakaobanklogger.settings.SettingsStore
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.Card
+import androidx.compose.material3.HorizontalDivider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -59,15 +63,14 @@ fun SettingsScreen(onBack: () -> Unit) {
     var url by remember { mutableStateOf(settings.webhookUrl) }
     var secret by remember { mutableStateOf(settings.ensureSecret()) }
     var packages by remember { mutableStateOf(settings.packageFilter) }
-    var captureAll by remember { mutableStateOf(settings.captureAllPackages) }
     var testing by remember { mutableStateOf(false) }
+    val recent = remember { settings.recentPackages() }
 
     fun save() {
         settings.forwardEnabled = forwardEnabled
         settings.webhookUrl = url
         settings.webhookSecret = secret
         settings.packageFilter = packages.ifBlank { SettingsStore.DEFAULT_PACKAGES }
-        settings.captureAllPackages = captureAll
         if (forwardEnabled && settings.isWebhookConfigured()) ForwardScheduler.enqueueNow(context)
     }
 
@@ -158,16 +161,28 @@ fun SettingsScreen(onBack: () -> Unit) {
                 supportingText = { Text("카카오뱅크 기본값: ${SettingsStore.KAKAOBANK_PACKAGE}") },
                 modifier = Modifier.fillMaxWidth()
             )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Switch(checked = captureAll, onCheckedChange = { captureAll = it })
-                Spacer(Modifier.width(8.dp))
-                Column {
-                    Text("모든 앱 알림 수집 (디버그)")
-                    Text(
-                        "패키지명을 확인할 때만 잠시 켜세요. 다른 앱의 개인정보도 저장됩니다.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error
-                    )
+            Text("최근 알림을 보낸 앱 (탭하면 대상에 추가)", style = MaterialTheme.typography.labelLarge)
+            Text(
+                "앱 이름과 패키지명만 기록하며 알림 내용은 저장하지 않습니다. 카카오뱅크가 보이면 탭해서 패키지명을 확인·추가하세요.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (recent.isEmpty()) {
+                Text("아직 기록된 앱이 없습니다. 알림 접근을 허용한 뒤 알림이 오면 채워집니다.", style = MaterialTheme.typography.bodySmall)
+            } else {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column {
+                        recent.take(15).forEachIndexed { i, rp ->
+                            val selected = packages.split(',', '\n', ' ').map { it.trim() }.contains(rp.packageName)
+                            RecentPackageRow(rp, selected) {
+                                if (!selected) {
+                                    packages = (packages.trim().trimEnd(',') + ", " + rp.packageName).trim(',', ' ')
+                                    scope.launch { snackbar.showSnackbar("${rp.label} 추가됨. 저장을 눌러 적용하세요.") }
+                                }
+                            }
+                            if (i < recent.take(15).lastIndex) HorizontalDivider()
+                        }
+                    }
                 }
             }
             Button(onClick = {
@@ -184,5 +199,26 @@ fun SettingsScreen(onBack: () -> Unit) {
                 style = MaterialTheme.typography.bodySmall
             )
         }
+    }
+}
+
+@Composable
+private fun RecentPackageRow(rp: RecentPackage, selected: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(rp.label, style = MaterialTheme.typography.bodyMedium)
+            Text(rp.packageName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Text(
+            if (selected) "수집 중" else Format.shortTime(rp.lastSeen),
+            style = MaterialTheme.typography.labelSmall,
+            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }

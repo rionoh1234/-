@@ -45,13 +45,17 @@ class BankNotificationListener : NotificationListenerService() {
 
     private fun handle(sbn: StatusBarNotification) {
         val pkg = sbn.packageName ?: return
-        if (pkg == packageName) return // 자기 자신 제외
-        ListenerState.setLastSeenPackage(pkg)
-
-        val settings = SettingsStore(this)
-        if (!settings.shouldCapture(pkg)) return
-
         val n = sbn.notification ?: return
+        val settings = SettingsStore(this)
+
+        if (pkg == packageName) {
+            // 자기 앱 알림은 "테스트 알림" 채널만 수집한다
+            if (n.channelId != TestNotifier.CHANNEL_ID) return
+        } else {
+            settings.touchRecentPackage(pkg, appLabel(pkg))
+            if (!settings.shouldCapture(pkg)) return
+        }
+
         // 그룹 요약 알림은 실제 내용이 없으므로 제외
         if (n.flags and Notification.FLAG_GROUP_SUMMARY != 0) return
 
@@ -104,6 +108,10 @@ class BankNotificationListener : NotificationListenerService() {
         scope.cancel()
         super.onDestroy()
     }
+
+    private fun appLabel(pkg: String): String =
+        runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString() }
+            .getOrDefault(pkg)
 
     private fun dedupeKey(pkg: String, postTime: Long, vararg parts: String?): String {
         val raw = buildString {

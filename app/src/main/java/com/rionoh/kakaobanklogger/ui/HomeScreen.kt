@@ -1,5 +1,7 @@
 package com.rionoh.kakaobanklogger.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -48,12 +50,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.rionoh.kakaobanklogger.BuildConfig
 import com.rionoh.kakaobanklogger.data.AppDatabase
 import com.rionoh.kakaobanklogger.data.NotificationRecord
 import com.rionoh.kakaobanklogger.export.Exporter
 import com.rionoh.kakaobanklogger.forward.ForwardScheduler
 import com.rionoh.kakaobanklogger.parser.TxType
 import com.rionoh.kakaobanklogger.service.ListenerState
+import com.rionoh.kakaobanklogger.service.TestNotifier
 import com.rionoh.kakaobanklogger.settings.SettingsStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -71,13 +75,25 @@ fun HomeScreen(onOpenSettings: () -> Unit) {
     val records by dao.observeAll().collectAsStateWithLifecycle(initialValue = emptyList())
     val pendingCount by dao.observePendingCount().collectAsStateWithLifecycle(initialValue = 0)
     val connected by ListenerState.connected.collectAsStateWithLifecycle()
-    val lastSeenPackage by ListenerState.lastSeenPackage.collectAsStateWithLifecycle()
 
     var accessGranted by remember { mutableStateOf(ListenerState.isAccessGranted(context)) }
     var batteryIgnored by remember { mutableStateOf(SystemActions.isIgnoringBatteryOptimizations(context)) }
     var forwardEnabled by remember { mutableStateOf(settings.forwardEnabled) }
     var webhookConfigured by remember { mutableStateOf(settings.isWebhookConfigured()) }
-    var captureAll by remember { mutableStateOf(settings.captureAllPackages) }
+
+    fun sendTest() {
+        val ok = TestNotifier.send(context)
+        scope.launch {
+            snackbar.showSnackbar(
+                if (ok) "테스트 알림을 띄웠습니다. 잠시 후 목록에 '입금' 1건이 나타나야 합니다."
+                else "알림 표시 권한이 없어 테스트 알림을 띄울 수 없습니다."
+            )
+        }
+    }
+    val notifPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) sendTest()
+        else scope.launch { snackbar.showSnackbar("알림 표시 권한이 거부되었습니다.") }
+    }
 
     // 설정 화면/시스템 설정에서 돌아올 때 상태 갱신
     LifecycleResumeEffect(Unit) {
@@ -85,7 +101,6 @@ fun HomeScreen(onOpenSettings: () -> Unit) {
         batteryIgnored = SystemActions.isIgnoringBatteryOptimizations(context)
         forwardEnabled = settings.forwardEnabled
         webhookConfigured = settings.isWebhookConfigured()
-        captureAll = settings.captureAllPackages
         onPauseOrDispose { }
     }
 
@@ -162,8 +177,6 @@ fun HomeScreen(onOpenSettings: () -> Unit) {
                     webhookConfigured = webhookConfigured,
                     pendingCount = pendingCount,
                     totalCount = records.size,
-                    captureAll = captureAll,
-                    lastSeenPackage = lastSeenPackage,
                     onOpenAccess = { SystemActions.openNotificationAccessSettings(context) },
                     onRebind = {
                         SystemActions.requestRebind(context)
@@ -173,6 +186,10 @@ fun HomeScreen(onOpenSettings: () -> Unit) {
                     onForwardNow = {
                         ForwardScheduler.enqueueNow(context)
                         scope.launch { snackbar.showSnackbar("전송 작업을 요청했습니다") }
+                    },
+                    onSendTest = {
+                        if (TestNotifier.hasPermission(context)) sendTest()
+                        else notifPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
                     },
                     onOpenSettings = onOpenSettings
                 )
@@ -187,7 +204,7 @@ fun HomeScreen(onOpenSettings: () -> Unit) {
                 }
             }
             items(records, key = { it.id }) { r ->
-                RecordRow(r, showPackage = captureAll, onClick = { selected = r })
+                RecordRow(r, onClick = { selected = r })
                 HorizontalDivider()
             }
         }
@@ -240,12 +257,11 @@ private fun StatusCard(
     webhookConfigured: Boolean,
     pendingCount: Int,
     totalCount: Int,
-    captureAll: Boolean,
-    lastSeenPackage: String?,
     onOpenAccess: () -> Unit,
     onRebind: () -> Unit,
     onBattery: () -> Unit,
     onForwardNow: () -> Unit,
+    onSendTest: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
@@ -293,11 +309,12 @@ private fun StatusCard(
             }
 
             Text("총 수집 ${totalCount}건", style = MaterialTheme.typography.bodyMedium)
-            if (captureAll) {
+            if (accessGranted) {
+                OutlinedButton(onClick = onSendTest) { Text("테스트 알림 보내기") }
                 Text(
-                    "⚠ 모든 앱 알림 수집(디버그) 모드가 켜져 있습니다. 마지막 수신 패키지: ${lastSeenPackage ?: "-"}",
+                    "카카오뱅크 형식의 가짜 알림을 띄워 수집·전송 경로를 점검합니다. 시트에는 event=test 로 기록됩니다.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -318,7 +335,7 @@ private fun StatusLine(ok: Boolean, label: String) {
 }
 
 @Composable
-private fun RecordRow(r: NotificationRecord, showPackage: Boolean, onClick: () -> Unit) {
+private fun RecordRow(r: NotificationRecord, onClick: () -> Unit) {
     val type = TxType.fromName(r.txType)
     Column(
         modifier = Modifier
@@ -363,8 +380,8 @@ private fun RecordRow(r: NotificationRecord, showPackage: Boolean, onClick: () -
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        if (showPackage) {
-            Text(r.packageName, style = MaterialTheme.typography.labelSmall)
+        if (r.packageName == BuildConfig.APPLICATION_ID) {
+            Text("테스트 알림", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.tertiary)
         }
     }
 }
