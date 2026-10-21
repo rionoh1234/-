@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>별무리 원정대</title>
+<meta name="theme-color" content="#0A0D18">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="별무리">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="img/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="img/icon-512.png">
+<link rel="apple-touch-icon" sizes="180x180" href="img/icon-180.png">
+<style>
+  html, body { height: 100%; margin: 0; background: #0A0D18; color: #F2F4FA; font-family: system-ui, -apple-system, 'Noto Sans KR', sans-serif; }
+  body { display: flex; align-items: center; justify-content: center; }
+  .box { text-align: center; padding: 24px; }
+  img { width: 112px; height: 112px; border-radius: 26px; display: block; margin: 0 auto 16px; }
+  h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.03em; margin: 0 0 6px; color: #F7F3E8; }
+  p { margin: 0; font-size: 13px; color: #A6AFC6; }
+  a { display: inline-block; margin-top: 18px; padding: 12px 20px; border-radius: 12px; background: #F2C86B; color: #1A1300; font-weight: 800; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="box">
+  <img src="img/icon-192.png" alt="">
+  <h1>별무리 원정대</h1>
+  <p id="msg">원정대를 불러오는 중…</p>
+  <a id="go" href="https://claude.ai/artifact/ScJctky8n9vNw5CwXMe88P" hidden>게임 열기</a>
+</div>
+<script>
+  // 홈 화면 바로가기용 런처: 아이콘·이름만 여기서 쓰고, 게임 본체(세이브 포함)는 claude.ai 아티팩트에서 실행된다.
+  var GAME = 'https://claude.ai/artifact/ScJctky8n9vNw5CwXMe88P';
+  setTimeout(function () { location.replace(GAME); }, 250);
+  setTimeout(function () { document.getElementById('msg').textContent = '자동으로 열리지 않으면 아래 버튼을 눌러 주세요.'; document.getElementById('go').hidden = false; }, 2500);
+</script>
+</body>
+</html>
