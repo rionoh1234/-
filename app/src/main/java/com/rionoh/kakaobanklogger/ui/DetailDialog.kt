@@ -43,8 +43,9 @@ fun DetailDialog(
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 Field("시각", Format.fullTime(record.postedAt))
-                Field("상대방(추정)", record.counterparty ?: "-")
-                Field("잔액(추정)", Format.won(record.balance))
+                Field("상대방", record.counterparty ?: "-")
+                Field("내 계좌", record.account ?: "-")
+                Field("잔액", Format.won(record.balance))
                 Field(
                     "전송 상태",
                     when {
@@ -58,7 +59,7 @@ fun DetailDialog(
                 Text(raw, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "※ 유형·금액·상대방은 문구에서 추정한 값입니다. 원문을 기준으로 확인하세요.",
+                    "※ 유형·금액·상대방·계좌는 알림 문구에서 추출한 값입니다. 원문을 기준으로 확인하세요.",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

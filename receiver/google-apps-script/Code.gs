@@ -12,10 +12,11 @@ var SHEET_NAME = '알림기록';
 var HEADERS = [
   'received_at',      // 시트에 기록된 시각 (서버 기준)
   'posted_at',        // 알림 게시 시각 (기기 기준, ISO 8601)
-  'tx_type_ko',       // 입금/출금/카드/이체/기타 (추정)
-  'amount',           // 거래 금액 (추정)
-  'counterparty',     // 상대방 (추정)
-  'balance',          // 잔액 (추정)
+  'tx_type_ko',       // 입금/출금/카드/이체/기타
+  'amount',           // 거래 금액
+  'counterparty',     // 상대방 (입금자/수취인)
+  'account',          // 내 계좌 표시명 (예: 개인사업자통장(7607))
+  'balance',          // 잔액
   'title',            // 알림 제목 원문
   'text',             // 알림 본문 원문
   'big_text',         // 확장 본문 원문
@@ -52,6 +53,7 @@ function doPost(e) {
         body.tx_type_ko || '',
         body.amount === null || body.amount === undefined ? '' : body.amount,
         body.counterparty || '',
+        body.account || '',
         body.balance === null || body.balance === undefined ? '' : body.balance,
         body.title || '',
         body.text || '',

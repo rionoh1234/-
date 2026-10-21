@@ -84,3 +84,75 @@ class BankNotificationParserTest {
         assertEquals("월세", p.counterparty)
     }
 }
+
+/**
+ * 실기기에서 캡처한 카카오뱅크 알림 형식(2026-10) 기준 테스트.
+ * 출금 형식은 아직 캡처되지 않았으므로 해당 테스트는 가정(확인 필요)이다.
+ */
+class KakaoBankFormatTest {
+
+    @Test
+    fun real_deposit_notification_from_device() {
+        val p = BankNotificationParser.parse(
+            "입금 1,320,000원",
+            "고정숙(천미향) → 개인사업자통장(7607)\n잔액 21,750,269원",
+            null
+        )
+        assertEquals(TxType.DEPOSIT, p.txType)
+        assertEquals(1_320_000L, p.amount)
+        assertEquals(21_750_269L, p.balance)
+        assertEquals("고정숙(천미향)", p.counterparty)
+        assertEquals("개인사업자통장(7607)", p.account)
+    }
+
+    @Test
+    fun real_deposit_when_body_arrives_as_big_text() {
+        val p = BankNotificationParser.parse(
+            "입금 1,320,000원",
+            "고정숙(천미향) → 개인사업자통장(7607)",
+            "고정숙(천미향) → 개인사업자통장(7607)\n잔액 21,750,269원"
+        )
+        assertEquals(1_320_000L, p.amount)
+        assertEquals(21_750_269L, p.balance)
+        assertEquals("고정숙(천미향)", p.counterparty)
+        assertEquals("개인사업자통장(7607)", p.account)
+    }
+
+    @Test
+    fun assumed_withdrawal_format_account_on_left() {
+        // 가정: 출금은 "내 계좌 → 상대방" 으로 표시된다 (확인 필요)
+        val p = BankNotificationParser.parse(
+            "출금 500,000원",
+            "개인사업자통장(7607) → 김영수\n잔액 21,250,269원",
+            null
+        )
+        assertEquals(TxType.WITHDRAWAL, p.txType)
+        assertEquals(500_000L, p.amount)
+        assertEquals(21_250_269L, p.balance)
+        assertEquals("김영수", p.counterparty)
+        assertEquals("개인사업자통장(7607)", p.account)
+    }
+
+    @Test
+    fun withdrawal_with_account_hint_on_right_still_resolves_by_hint() {
+        // 힌트("통장")가 오른쪽에 있으면 방향과 무관하게 오른쪽을 내 계좌로 본다
+        val p = BankNotificationParser.parse(
+            "출금 10,000원",
+            "GS25 → 입출금통장(1234)\n잔액 100원",
+            null
+        )
+        assertEquals("GS25", p.counterparty)
+        assertEquals("입출금통장(1234)", p.account)
+    }
+
+    @Test
+    fun arrow_without_any_hint_uses_direction() {
+        val deposit = BankNotificationParser.parse("입금 1,000원", "홍길동 → 나", null)
+        assertEquals("홍길동", deposit.counterparty)
+        assertEquals("나", deposit.account)
+
+        val withdrawal = BankNotificationParser.parse("출금 1,000원", "나 → 홍길동", null)
+        assertEquals("홍길동", withdrawal.counterparty)
+        assertEquals("나", withdrawal.account)
+    }
+}

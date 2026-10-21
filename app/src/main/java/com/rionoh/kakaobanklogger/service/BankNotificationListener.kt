@@ -81,7 +81,8 @@ class BankNotificationListener : NotificationListenerService() {
             txType = parsed.txType.name,
             amount = parsed.amount,
             balance = parsed.balance,
-            counterparty = parsed.counterparty
+            counterparty = parsed.counterparty,
+            account = parsed.account
         )
 
         scope.launch {

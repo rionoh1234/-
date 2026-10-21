@@ -351,6 +351,7 @@ private fun RecordRow(r: NotificationRecord, showPackage: Boolean, onClick: () -
         Spacer(Modifier.height(4.dp))
         val line = listOfNotNull(
             r.counterparty,
+            r.account?.let { "→ $it" },
             r.balance?.let { "잔액 ${Format.won(it)}" }
         ).joinToString(" · ")
         if (line.isNotEmpty()) Text(line, style = MaterialTheme.typography.bodyMedium)

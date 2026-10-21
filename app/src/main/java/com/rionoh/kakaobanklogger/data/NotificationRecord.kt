@@ -32,6 +32,8 @@ data class NotificationRecord(
     val amount: Long?,
     val balance: Long?,
     val counterparty: String?,
+    /** 내 계좌 표시명(추정). 예: "개인사업자통장(7607)" */
+    val account: String? = null,
     /** 웹훅 전송 완료 시각. null 이면 미전송 */
     val forwardedAt: Long? = null,
     val forwardAttempts: Int = 0,

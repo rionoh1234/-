@@ -41,6 +41,7 @@ object Exporter {
                 put("amount", r.amount ?: JSONObject.NULL)
                 put("balance", r.balance ?: JSONObject.NULL)
                 put("counterparty", r.counterparty ?: JSONObject.NULL)
+                put("account", r.account ?: JSONObject.NULL)
                 put("forwarded_at", r.forwardedAt?.let { Payload.isoTime(it) } ?: JSONObject.NULL)
                 put("dedupe_key", r.dedupeKey)
             })
@@ -54,7 +55,7 @@ object Exporter {
         sb.append('﻿')
         sb.append(
             listOf(
-                "id", "posted_at", "tx_type_ko", "amount", "counterparty", "balance",
+                "id", "posted_at", "tx_type_ko", "amount", "counterparty", "account", "balance",
                 "title", "text", "big_text", "package", "forwarded_at"
             ).joinToString(",")
         ).append("\r\n")
@@ -66,6 +67,7 @@ object Exporter {
                     TxType.fromName(r.txType).label,
                     r.amount?.toString() ?: "",
                     r.counterparty ?: "",
+                    r.account ?: "",
                     r.balance?.toString() ?: "",
                     r.title ?: "",
                     r.text ?: "",

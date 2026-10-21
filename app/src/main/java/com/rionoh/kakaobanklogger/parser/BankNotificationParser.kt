@@ -21,18 +21,32 @@ data class ParsedTransaction(
     val txType: TxType,
     val amount: Long?,
     val balance: Long?,
-    val counterparty: String?
+    /** 상대방(입금자/수취인). 카카오뱅크 형식에서는 화살표의 반대편 */
+    val counterparty: String?,
+    /** 내 계좌 표시명. 예: "개인사업자통장(7607)" */
+    val account: String? = null
 )
 
 /**
- * 은행 알림 문구를 느슨하게 파싱한다.
+ * 은행 알림 문구를 파싱한다.
  *
- * 설계 원칙
- * 1. 카카오뱅크 알림의 정확한 문구 형식은 기기에서 수집한 원문으로 확인해야 한다(확인 필요).
- *    따라서 특정 형식을 가정하지 않고 "금액(원)", "잔액", "입금/출금" 같은 보편적 토큰만 사용한다.
- * 2. 파싱에 실패해도 수집 자체는 실패하지 않는다(모든 필드는 nullable, 유형은 UNKNOWN).
+ * 확인된 카카오뱅크 입금 알림 형식 (2026-10, 실기기 캡처):
+ *   제목: "입금 1,320,000원"
+ *   본문: "고정숙(천미향) → 개인사업자통장(7607)"
+ *         "잔액 21,750,269원"
+ *
+ * 1. 본문에 "A → B" 줄이 있으면 카카오뱅크 형식으로 보고 상대방/내 계좌를 분리한다.
+ *    - "통장", "계좌" 가 들어간 쪽을 내 계좌로 본다.
+ *    - 둘 다 없으면 입금은 왼쪽이 상대방, 출금·이체는 오른쪽이 상대방으로 본다(출금 형식은 확인 필요).
+ * 2. 그 외 형식은 "금액(원)", "잔액", "입금/출금" 같은 보편적 토큰으로 느슨하게 추정한다.
+ * 3. 파싱에 실패해도 수집 자체는 실패하지 않는다(모든 필드는 nullable, 유형은 UNKNOWN).
  */
 object BankNotificationParser {
+
+    // "고정숙(천미향) → 개인사업자통장(7607)"
+    private val ARROW_LINE = Regex("""^\s*(.+?)\s*(?:→|->|➡|⇒)\s*(.+?)\s*$""", RegexOption.MULTILINE)
+
+    private val ACCOUNT_HINT = Regex("""통장|계좌|적금|예금""")
 
     // "50,000원", "50000원", "50,000 원"
     private val AMOUNT = Regex("""(?<![\d,])(\d{1,3}(?:,\d{3})+|\d+)\s*원""")
@@ -67,9 +81,31 @@ object BankNotificationParser {
             ?.groupValues?.get(1)?.toAmountOrNull()
 
         val txType = detectType(all)
-        val counterparty = extractCounterparty(all, balanceMatch)
 
-        return ParsedTransaction(txType, amount, balance, counterparty)
+        val arrow = ARROW_LINE.find(body)
+        if (arrow != null) {
+            val left = arrow.groupValues[1].trim()
+            val right = arrow.groupValues[2].trim()
+            val (counterparty, account) = splitArrow(left, right, txType)
+            return ParsedTransaction(txType, amount, balance, counterparty, account)
+        }
+
+        val counterparty = extractCounterparty(all, balanceMatch)
+        return ParsedTransaction(txType, amount, balance, counterparty, null)
+    }
+
+    /** (상대방, 내 계좌) */
+    private fun splitArrow(left: String, right: String, type: TxType): Pair<String?, String?> {
+        val leftIsAccount = ACCOUNT_HINT.containsMatchIn(left)
+        val rightIsAccount = ACCOUNT_HINT.containsMatchIn(right)
+        return when {
+            rightIsAccount && !leftIsAccount -> left to right
+            leftIsAccount && !rightIsAccount -> right to left
+            // 힌트가 없거나 양쪽 다 있으면 거래 방향으로 판단
+            type == TxType.DEPOSIT -> left to right
+            type == TxType.WITHDRAWAL || type == TxType.TRANSFER -> right to left
+            else -> left to right
+        }
     }
 
     fun detectType(s: String): TxType = when {

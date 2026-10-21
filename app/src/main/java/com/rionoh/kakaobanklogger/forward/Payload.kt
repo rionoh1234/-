@@ -38,6 +38,7 @@ object Payload {
             put("amount", record.amount ?: JSONObject.NULL)
             put("balance", record.balance ?: JSONObject.NULL)
             put("counterparty", record.counterparty ?: JSONObject.NULL)
+            put("account", record.account ?: JSONObject.NULL)
             put("device", "${Build.MANUFACTURER} ${Build.MODEL}")
             put("app_version", BuildConfig.VERSION_NAME)
         }
@@ -65,6 +66,7 @@ object Payload {
             put("amount", JSONObject.NULL)
             put("balance", JSONObject.NULL)
             put("counterparty", JSONObject.NULL)
+            put("account", JSONObject.NULL)
             put("device", "${Build.MANUFACTURER} ${Build.MODEL}")
             put("app_version", BuildConfig.VERSION_NAME)
         }

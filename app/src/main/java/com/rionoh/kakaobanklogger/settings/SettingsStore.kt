@@ -21,8 +21,9 @@ class SettingsStore(context: Context) {
         get() = prefs.getString(KEY_WEBHOOK_SECRET, "") ?: ""
         set(value) = prefs.edit().putString(KEY_WEBHOOK_SECRET, value.trim()).apply()
 
+    /** 기본값 ON. URL/비밀키가 비어 있으면 Worker 가 아무것도 하지 않는다. */
     var forwardEnabled: Boolean
-        get() = prefs.getBoolean(KEY_FORWARD_ENABLED, false)
+        get() = prefs.getBoolean(KEY_FORWARD_ENABLED, true)
         set(value) = prefs.edit().putBoolean(KEY_FORWARD_ENABLED, value).apply()
 
     /** 쉼표로 구분한 패키지명 목록 */
