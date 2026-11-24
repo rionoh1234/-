@@ -165,7 +165,7 @@
     boss.id = id; boss.elem = want; boss.range = t.ranged ? 100 : 34; if (mob) boss.name = mob.name; return boss;
   };
   C.gimOf = function (i) { return C.GIMS[((i % C.GIMS.length) + C.GIMS.length) % C.GIMS.length]; };
-  C.RUSH = { sec: 20, n: 200, min: 1000, dgMin: 10, tw: 30, dgn: 100 };   // 2026-11-25 사용자: 보스 등장 후 20초(게임 시간, 격노 막대 숫자 90 → 70) 안에 잡으면 200스테이지 점프 — 7초는 스킬 쿨이 안 돌아 거의 안 나옴. (같은 날 앞서 15→7초·100→300). 탑 30층·던전 dgn 100
+  C.RUSH = { sec: 10, n: 200, min: 1000, dgMin: 10, tw: 30, dgn: 100 };   // 2026-11-25 사용자: 보스 등장 후 10초(게임 시간, 격노 막대 숫자 90 → 80, 20초안 → 사용자 '20초 하지 말고 10초') 안에 잡으면 200스테이지 점프 — 7초는 스킬 쿨이 안 돌아 거의 안 나옴. (같은 날 앞서 15→7초·100→300). 탑 30층·던전 dgn 100
   C.REVIVE_SEC = 12;          // 개별 영웅 부활 대기(초)
   C.maxMobs = function (slots) { return 2 + slots; };
   C.makeMob = function (type, mult, boss, stage) {
