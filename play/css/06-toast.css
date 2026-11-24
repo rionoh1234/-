@@ -1,0 +1,18 @@
+/* 토스트 · 뷰어 */
+.toast { position: fixed; top: calc(60px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); background: var(--panel2); border: 1px solid var(--gold2); color: var(--fg); padding: 9px 14px; border-radius: 999px; font-size: 13px; font-weight: 500; z-index: 30; animation: toastin .25s; max-width: 90%; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,.4); }
+.toast b { color: var(--gold3); }
+.toast .ico { width: 13px; height: 13px; }
+@keyframes toastin { from { opacity: 0; transform: translate(-50%, -8px);} to { opacity: 1; transform: translate(-50%, 0);} }
+#viewer { position: fixed; inset: 0; z-index: 40; background: rgba(5,6,12,.96); overflow: auto; display: flex; align-items: center; justify-content: center; padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+#viewer[hidden], #modal[hidden], [hidden] { display: none !important; }
+#viewer img { max-width: 100%; max-height: 100%; object-fit: contain; cursor: zoom-in; }
+#viewer.zoom { display: block; } #viewer.zoom img { max-width: none; max-height: none; width: 200%; cursor: zoom-out; }
+#viewer-close { position: fixed; top: calc(10px + env(safe-area-inset-top, 0px)); right: calc(10px + env(safe-area-inset-right, 0px)); width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line3); background: rgba(18,24,41,.9); color: var(--fg); font-size: 16px; z-index: 41; }
+
+/* 전투력 변화 알림(2026-11-02) */
+.powpop { position: fixed; left: 50%; top: 44%; transform: translate(-50%, -50%); z-index: 120; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 22px 12px; border-radius: 16px; background: rgba(10,13,24,.82); border: 1px solid var(--gold2); box-shadow: 0 8px 28px rgba(0,0,0,.55); animation: powpop 1.7s ease-out forwards; }
+.powpop span { font-size: 12px; font-weight: 700; color: var(--fg2); letter-spacing: .02em; }
+.powpop b { font-size: 28px; font-weight: 900; color: var(--gold3); line-height: 1.1; text-shadow: 0 2px 10px rgba(255,200,80,.35); }
+.powpop em { font-style: normal; font-size: 14px; font-weight: 800; color: var(--good, #5FD08A); }
+.powpop.down { border-color: rgba(255,110,110,.55); } .powpop.down em { color: #ff7a7a; } .powpop.down b { color: #e8e8f0; text-shadow: none; }
+@keyframes powpop { 0% { opacity: 0; transform: translate(-50%, -40%) scale(.85); } 12% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); } 22% { transform: translate(-50%, -50%) scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -62%) scale(1); } }

@@ -1,0 +1,140 @@
+/* 글꼴: Pretendard Variable (fonts/ 동봉) */
+@font-face { font-family: 'Pretendard'; font-weight: 45 920; font-style: normal; font-display: swap; src: url('../fonts/PretendardVariable.woff2') format('woff2-variations'), url('../fonts/PretendardVariable.woff2') format('woff2'); }
+/* 디자인 토큰 (별무리 UI 리디자인 캔버스 · Tokens 보드 기준) */
+:root {
+  --bg: #0A0D18; --bg2: #0C101E; --panel: #121829; --panel2: #161D33; --inset: #0E1428; --line: #202842; --line2: #242D47; --line3: #2A3350;
+  --fg: #F2F4FA; --fg1: #F7F3E8; --fg2: #A6AFC6; --fg3: #8F9AB8;
+  --gold: #F2C86B; --gold2: #B9892C; --gold3: #FFE08A; --goldbg: #2A2410; --goldline: #5A4A1A; --goldink: #1A1300; --golddim: #1C1A12; --golddimline: #3A3214;
+  --crys: #78B7FF; --crys2: #9CC8FF; --crysbg: #13223A; --crysline: #3A5A8A; --soul: #C4A4FF; --good: #4ED19A; --bad: #FF5C6E; --warn: #FFB15C;
+  --tr: #8A6CFF; --trbg: #3A2A66; --trfg: #D9CCFF; --trbtn: #2A1F4D; --trpip: #A98BFF;
+  --s1: #9AA3B8; --s2: #78B7FF; --s3: #F2C86B;
+  --e-fire: #FF7A45; --e-water: #4FA3FF; --e-wind: #4FD18B; --e-light: #F2C86B; --e-dark: #B388FF;
+  --t-fire: #2E1A14; --t-water: #13223A; --t-wind: #142A22; --t-light: #1E1A0F; --t-dark: #231B36;
+  --font: 'Pretendard', system-ui, -apple-system, 'Noto Sans KR', sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 14px; letter-spacing: -0.01em; overflow: hidden; -webkit-tap-highlight-color: transparent; user-select: none; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+button { font-family: inherit; letter-spacing: inherit; cursor: pointer; }
+svg { flex-shrink: 0; }
+#app { height: 100%; display: flex; flex-direction: column; min-height: 0; }
+
+/* 상단 자원 바 */
+#top { flex: 0 0 auto; display: flex; align-items: center; gap: 4px; padding-block: 10px 6px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); background: var(--bg); font-variant-numeric: tabular-nums; }
+#top .res { display: flex; align-items: center; gap: 3px; height: 32px; padding: 0 7px 0 6px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--line2); font-size: 13px; font-weight: 700; min-width: 0; }
+#top .res b { font-weight: 700; white-space: nowrap; }
+@media (max-width: 420px) { #top .res { font-size: 12px; padding: 0 6px 0 5px; } #top .res svg { width: 14px; height: 14px; } #top button { width: 36px; height: 34px; } }
+#top .xst b { color: #9FD8FF; } #top .gold b { color: var(--gold); } #top .crys b { color: var(--crys2); } #top .ush b { color: var(--soul); } #top .ssh b { color: var(--gold3); }
+#top .spacer { flex: 1; }
+#top button { width: 40px; height: 34px; border-radius: 10px; border: 1px solid var(--line2); background: var(--panel); color: var(--fg2); display: flex; align-items: center; justify-content: center; padding: 0; }
+#main { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding-block: 6px 16px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
+
+/* 하단 탭 바 */
+#tabs { flex: 0 0 auto; display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; background: var(--bg2); border-top: 1px solid var(--line); padding: 6px 6px calc(8px + env(safe-area-inset-bottom, 0px)); padding-left: max(6px, env(safe-area-inset-left, 0px)); padding-right: max(6px, env(safe-area-inset-right, 0px)); }
+#tabs button { position: relative; background: none; border: 0; border-radius: 12px; color: var(--fg3); padding: 7px 0 6px; font-size: 11px; font-weight: 500; display: flex; flex-direction: column; align-items: center; gap: 3px; min-height: 52px; }
+#tabs button svg { width: 22px; height: 22px; }
+#tabs button.on { color: var(--gold); background: #1A1710; font-weight: 700; }
+#tabs .badge { position: absolute; top: 3px; right: calc(50% - 24px); min-width: 18px; height: 18px; line-height: 18px; border-radius: 999px; background: var(--bad); color: #fff; font-size: 11px; font-weight: 800; padding: 0 5px; box-sizing: border-box; text-align: center; }
+#tabs button:focus-visible, button:focus-visible { outline: 2px solid var(--crys); outline-offset: -2px; }
+
+/* 타이포 */
+h2 { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin: 6px 0 10px; color: var(--fg1); text-wrap: balance; }
+h2 .muted { font-size: 12px; font-weight: 500; letter-spacing: -0.01em; }
+h2 .eyebrow, .eyebrow { display: block; font-size: 12px; font-weight: 500; letter-spacing: -0.01em; color: var(--fg3); margin-bottom: 2px; }
+h3 { font-size: 14px; font-weight: 700; margin: 12px 0 6px; color: var(--fg1); }
+h3 .tiny { font-weight: 500; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 10px 12px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.muted { color: var(--fg2); font-size: 12px; }
+.tiny { color: var(--fg3); font-size: 11px; }
+.num { font-variant-numeric: tabular-nums; }
+.ico { width: 12px; height: 12px; vertical-align: -1px; }
+.ico.gold { color: var(--gold); } .ico.crys { color: var(--crys); } .ico.ush { color: var(--soul); } .ico.ssh { color: var(--gold3); } .ico.est { color: #FF9A5C; } .ico.ush.u-fire { color: var(--e-fire); } .ico.ush.u-water { color: var(--e-water); } .ico.ush.u-wind { color: var(--e-wind); } .ico.ush.u-light { color: var(--e-light); } .ico.ush.u-dark { color: var(--e-dark); } .ico.xst { color: #9FD8FF; }
+
+/* 버튼 */
+.btn { background: var(--inset); border: 1px solid var(--line2); color: var(--fg2); border-radius: 12px; padding: 7px 12px; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; line-height: 1.15; }
+.btn.p { background: var(--gold); color: var(--goldink); border-color: var(--gold); font-weight: 800; }
+.btn.s { padding: 5px 10px; font-size: 12px; min-height: 40px; }
+.btn.on { background: var(--goldbg); border-color: var(--gold2); color: var(--gold3); }
+.btn.tr { background: var(--trbtn); border-color: var(--tr); color: #E6DCFF; font-weight: 800; }
+.btn[disabled] { opacity: .6; }
+.btn.p[disabled] { background: var(--golddim); border-color: var(--golddimline); color: var(--fg3); opacity: 1; }
+.btn .cost { font-size: 11px; font-weight: 600; color: var(--fg3); display: inline-flex; align-items: center; gap: 3px; }
+.btn.p .cost { color: var(--goldink); opacity: .8; }
+.btn.tr .cost { color: var(--soul); }
+.btn .cost .ico { width: 11px; height: 11px; }
+.btn.p .cost .ico { color: var(--goldink); }
+/* 눌러지지 않는(재화 부족 등) 버튼도 비용 숫자·재화 아이콘은 또렷하게(2026-11-19, 사용자 '재화가 있든 없든 잘 보이게') — 금색 버튼이 꺼지면 어두운 글자가 어두운 바탕에 묻히던 것 */
+.btn.p[disabled] .cost { color: var(--fg1); opacity: 1; }
+.btn[disabled] .cost .ico.gold { color: var(--gold); } .btn[disabled] .cost .ico.crys { color: var(--crys2); } .btn[disabled] .cost .ico.xst { color: #9FD8FF; } .btn[disabled] .cost .ico.ssh { color: var(--gold3); } .btn[disabled] .cost .ico.ush { color: var(--soul); } .btn[disabled] .cost .ico.est { color: #FF9A5C; } .btn[disabled] .cost .ico.seal { color: var(--gold3); }
+.btn[disabled] .cost .ico.ush.u-fire { color: var(--e-fire); } .btn[disabled] .cost .ico.ush.u-water { color: var(--e-water); } .btn[disabled] .cost .ico.ush.u-wind { color: var(--e-wind); } .btn[disabled] .cost .ico.ush.u-light { color: var(--e-light); } .btn[disabled] .cost .ico.ush.u-dark { color: var(--e-dark); }
+.seg { display: inline-flex; gap: 2px; padding: 2px; border-radius: 10px; background: var(--inset); border: 1px solid var(--line); }
+.seg button { height: 30px; padding: 0 12px; border-radius: 8px; border: none; background: transparent; color: var(--fg3); font-size: 12px; font-weight: 700; }
+.seg button.on { background: var(--line2); color: var(--fg); }
+
+/* 칩 · 점 · 태그 */
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0; }
+.chip { border: 1px solid var(--line2); background: var(--panel); border-radius: 999px; height: 36px; padding: 0 12px; font-size: 12px; font-weight: 700; color: var(--fg2); display: inline-flex; align-items: center; gap: 5px; }
+.chip.on { border-color: var(--gold); background: var(--goldbg); color: var(--gold3); }
+.hfilt { display: flex; gap: 5px; margin: 0 0 6px; overflow-x: auto; scrollbar-width: none; }
+.hfilt::-webkit-scrollbar { display: none; }
+.fchip { flex-shrink: 0; border: 1px solid var(--line2); background: var(--panel); border-radius: 999px; height: 30px; padding: 0 10px; font-size: 12px; font-weight: 700; color: var(--fg2); display: inline-flex; align-items: center; gap: 4px; }
+.hfilt.even5 { display: grid; grid-template-columns: repeat(5, 1fr); overflow: visible; } .hfilt.even5 .fchip { justify-content: center; padding: 0 4px; gap: 3px; }
+.fchip.on { border-color: var(--gold); background: var(--goldbg); color: var(--gold3); }
+.elem { display: inline-block; width: 9px; height: 9px; border-radius: 50%; font-size: 0; vertical-align: 0; flex-shrink: 0; }
+.elem.fire { background: var(--e-fire); } .elem.water { background: var(--e-water); } .elem.wind { background: var(--e-wind); } .elem.light { background: var(--e-light); } .elem.dark { background: var(--e-dark); }
+.stars { color: var(--s3); font-size: 11px; letter-spacing: 1px; }
+.stars.s1 { color: var(--s1); } .stars.s2 { color: var(--s2); }
+.role { font-size: 11px; font-weight: 600; color: var(--fg2); border: 1px solid var(--line2); background: var(--inset); border-radius: 999px; padding: 3px 8px; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.role.gold { background: var(--goldbg); border-color: var(--gold2); color: var(--gold3); }
+.lbtag { display: inline-flex; align-items: center; gap: 4px; height: 18px; padding: 0 6px; border-radius: 999px; background: var(--goldbg); border: 1px solid var(--gold2); color: var(--gold3); font-size: 10px; font-weight: 800; white-space: nowrap; }
+.lbtag.tr { background: var(--trbg); border-color: var(--tr); color: var(--trfg); }
+.lbtag.can { background: #10301F; border-color: var(--good); color: var(--good); }
+.lbtag.can::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--good); }
+.hcard.canlb { border-color: var(--good); box-shadow: 0 0 0 1px rgba(78,209,154,.35) inset; }
+.lbtag.big { height: 26px; padding: 0 10px; font-size: 12px; }
+.lbtag.big small { font-size: 11px; font-weight: 500; opacity: .8; }
+.lbpips { display: inline-flex; align-items: center; gap: 3px; }
+.lbpips i { width: 8px; height: 8px; border-radius: 50%; background: #1E2440; border: 1px solid #3A3F5C; box-sizing: border-box; }
+.lbpips i.on { background: var(--gold); border-color: var(--gold); }
+.lbpips i.t { margin-left: 2px; } .lbpips i.t:first-child { margin-left: 0; }
+.lbpips i.t.on { background: var(--trpip); border-color: var(--trpip); }
+.lbpips.big i { width: 9px; height: 9px; }
+.bar { height: 8px; background: var(--panel2); border-radius: 4px; overflow: hidden; border: 1px solid var(--line2); }
+.bar i { display: block; height: 100%; background: var(--gold); }
+.bar.c i { background: var(--crys); }
+
+/* 시즌 3: 별의 인장·관문·보스 기믹 꼬리표 */
+.ico.seal { color: var(--gold3); }
+.lbtag.gate { background: #3a1420; border-color: #ff7a8a; color: #ffb3bd; }
+.lbtag.gim { background: var(--panel2); border-color: var(--line); color: var(--fg1); }
+.lbtag.gim.barrier { border-color: #9fdcff; color: #cfeeff; } .lbtag.gim.armor { border-color: #cdd6e4; color: #e6ebf3; } .lbtag.gim.frenzy { border-color: #ff5a46; color: #ffb0a6; }
+.lbtag.gim.rampage { border-color: #ff9a3c; color: #ffd2a8; } .lbtag.gim.regen { border-color: #7dff9a; color: #c6ffd2; background: rgba(40,120,60,.25); }
+
+/* 기믹 꼬리표는 누르면 설명이 뜨는 버튼(2026-11-15) */
+button.lbtag.gim { font-family: inherit; height: 22px; padding: 0 5px 0 8px; gap: 5px; cursor: pointer; position: relative; z-index: 1; }
+button.lbtag.gim i { width: 13px; height: 13px; border-radius: 50%; background: currentColor; display: inline-flex; align-items: center; justify-content: center; }
+button.lbtag.gim i::before { content: "?"; font-style: normal; font-size: 9px; font-weight: 900; color: var(--bg); }
+.giminfo { background: var(--inset); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font-size: 13px; line-height: 1.5; color: var(--fg1); display: flex; flex-direction: column; gap: 6px; }
+.giminfo .how { color: var(--gold3); font-weight: 700; }
+.gimrow { display: flex; flex-wrap: wrap; gap: 6px; }
+.gimh { width: 62px; padding: 5px 2px 6px; border-radius: 12px; border: 1px solid var(--line2); background: var(--panel2); color: var(--fg1); display: flex; flex-direction: column; align-items: center; gap: 1px; font-family: inherit; }
+.gimh img { width: 44px; height: 56px; object-fit: contain; } .gimh b { font-size: 10px; font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .gimh i { font-style: normal; font-size: 8px; }
+.gimh.in { border-color: var(--good); opacity: 1; } .gimh:disabled { color: var(--fg1); }
+.gimh.e-fire { background: var(--t-fire); } .gimh.e-water { background: var(--t-water); } .gimh.e-wind { background: var(--t-wind); } .gimh.e-light { background: var(--t-light); } .gimh.e-dark { background: var(--t-dark); }
+/* 자원 획득처: 자원 숫자(물음표 표시)를 누르면 얻는 곳 목록 */
+.srcb { font: inherit; color: inherit; background: none; border: 0; padding: 0 2px; min-height: 30px; display: inline-flex; align-items: center; gap: 3px; cursor: pointer; }
+.srcb > i { width: 13px; height: 13px; border-radius: 50%; background: var(--fg3); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.srcb > i::before { content: "?"; font-style: normal; font-size: 9px; font-weight: 900; color: var(--bg); }
+h2 > .srcb.eyebrow { display: flex; min-height: 22px; }
+.srcl { display: flex; flex-direction: column; gap: 6px; }
+.srcr { display: flex; align-items: center; gap: 8px; min-height: 50px; padding: 8px 10px 8px 14px; border-radius: 12px; border: 1px solid var(--line2); background: var(--panel2); color: var(--fg1); font-family: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+.srcr b { flex: 1; font-weight: 700; } .srcr .v { color: var(--gold3); font-weight: 700; } .srcr .chev { color: var(--fg3); flex: none; }
+.srcr:disabled { cursor: default; background: var(--inset); } .srcr:disabled b { color: var(--fg3); } .srcr:disabled .v { color: var(--fg3); font-weight: 500; } .srcr:disabled .chev { visibility: hidden; }
+.srcuse { margin-top: 10px; font-size: 12px; color: var(--fg3); } .srcuse b { color: var(--fg2); font-weight: 600; margin-left: 4px; }
+
+/* 캐릭터 그림 선명도(2026-11-20): ★1·★2 도트는 어디서든 픽셀 그대로(부드럽게 줄이면 뿌옇게 번짐), ★3 고화질 그림(&hd)은 곱게 축소. 소환 연출처럼 크게 키우는 곳만 ★3도 픽셀 */
+img[src*="img/char/"] { image-rendering: pixelated; }
+img[src*="&hd"] { image-rendering: auto !important; }
+.sfx-ill.spr img[src*="&hd"] { image-rendering: pixelated !important; }

@@ -1,0 +1,12 @@
+/* 설정 · 기타 */
+textarea { width: 100%; box-sizing: border-box; min-height: 90px; background: var(--inset); color: var(--fg); border: 1px solid var(--line2); border-radius: 10px; font-size: 11px; font-family: monospace; user-select: text; padding: 8px; }
+.kv { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--line); color: var(--fg2); }
+.kv b, .kv .num { color: var(--fg1); font-weight: 700; }
+.kv:last-child { border-bottom: 0; }
+
+/* 로그인 */
+.login { max-width: 340px; margin: 12vh auto 0; display: flex; flex-direction: column; gap: 10px; }
+.login .lt { font-size: 26px; font-weight: 800; letter-spacing: -.03em; text-align: center; color: var(--gold); margin-bottom: 8px; }
+.login input[type=text], .login input:not([type]), .login input[type=password] { height: 46px; border-radius: 12px; border: 1px solid var(--line2); background: var(--inset); color: var(--fg); padding: 0 14px; font: inherit; font-size: 15px; }
+.login .btn { min-height: 46px; } .lg-msg { min-height: 18px; font-size: 12.5px; color: var(--bad); text-align: center; }
+.lg-legacy { display: flex; gap: 8px; align-items: center; font-size: 12.5px; color: var(--fg2); } .lg-legacy[hidden] { display: none; }

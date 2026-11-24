@@ -1,0 +1,14 @@
+/* 일일 임무·업적 (2026-10-26) */
+#top #btn-quest { position: relative; }
+#top #btn-quest .badge { position: absolute; top: -4px; right: -4px; min-width: 17px; height: 17px; line-height: 17px; border-radius: 999px; background: var(--bad); color: #fff; font-size: 10.5px; font-weight: 800; padding: 0 4px; box-sizing: border-box; }
+.qseg { display: flex; margin: 6px 0 10px; } .qseg button { flex: 1; height: 34px; font-size: 13px; }
+.qlist { display: grid; gap: 6px; }
+.qrow { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); }
+.qrow.bonus { border-color: var(--goldline); background: var(--golddim); }
+.qrow.got { opacity: .55; }
+.qrow .qt { flex: 1; min-width: 0; display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; align-items: baseline; }
+.qrow .qt b { font-size: 13px; font-weight: 700; color: var(--fg1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qrow .qt > span { font-size: 11.5px; color: var(--fg3); }
+.qbar { grid-column: 1 / -1; height: 5px; border-radius: 999px; background: var(--inset); overflow: hidden; } .qbar i { display: block; height: 100%; background: linear-gradient(90deg, var(--gold2), var(--gold)); }
+.qrow .btn { min-width: 86px; min-height: 38px; padding: 4px 8px; flex-shrink: 0; }
+.qgem { display: inline-flex; align-items: center; gap: 3px; font-weight: 800; } .qgem .ico { width: 14px; height: 14px; }

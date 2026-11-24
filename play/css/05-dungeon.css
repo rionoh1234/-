@@ -1,0 +1,95 @@
+/* 던전 · 도전 */
+.dg { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; }
+.dg .dh { display: flex; align-items: center; gap: 10px; }
+.dg .dic { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--panel2); border: 1px solid var(--line3); color: var(--fg2); }
+.dg.gold .dic { background: var(--goldbg); border-color: var(--goldline); color: var(--gold); }
+.dg.crys .dic { background: var(--crysbg); border-color: var(--crysline); color: var(--crys); }
+.dg.soul .dic { background: var(--t-dark); border-color: #5A4A8A; color: var(--soul); }
+.dg.t_fire .dic { background: var(--t-fire); border-color: color-mix(in srgb, var(--e-fire) 45%, transparent); color: var(--e-fire); } .dg.t_fire .tk .pips i.on { background: var(--e-fire); }
+.dg.t_water .dic { background: var(--t-water); border-color: color-mix(in srgb, var(--e-water) 45%, transparent); color: var(--e-water); } .dg.t_water .tk .pips i.on { background: var(--e-water); }
+.dg.t_wind .dic { background: var(--t-wind); border-color: color-mix(in srgb, var(--e-wind) 45%, transparent); color: var(--e-wind); } .dg.t_wind .tk .pips i.on { background: var(--e-wind); }
+.dg.t_light .dic { background: var(--t-light); border-color: color-mix(in srgb, var(--e-light) 45%, transparent); color: var(--e-light); } .dg.t_light .tk .pips i.on { background: var(--e-light); }
+.dg.t_dark .dic { background: var(--t-dark); border-color: color-mix(in srgb, var(--e-dark) 45%, transparent); color: var(--e-dark); } .dg.t_dark .tk .pips i.on { background: var(--e-dark); }
+.dg.equip .dic { background: #2A1A12; border-color: #6A3A22; color: #FF9A5C; } .dg.equip .tk .pips i.on { background: #FF9A5C; }
+.dg.raid .dic { background: var(--t-fire); border-color: #7A3A2A; color: var(--e-fire); }
+.dg.tower .dic { background: var(--golddim); border-color: var(--goldline); color: var(--gold3); }
+.dg .dt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dg b { font-weight: 700; font-size: 14px; color: var(--fg1); }
+.dg .dt .sub { font-size: 11px; color: var(--fg3); }
+.dg .dt .tk { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--fg2); flex-wrap: wrap; }
+.tk .pips { display: inline-flex; gap: 3px; } .tk .pips i { width: 14px; height: 6px; border-radius: 3px; background: #1E2A48; } .tk .pips i.on { background: var(--gold); }
+.dg.crys .tk .pips i.on { background: var(--crys); } .dg.soul .tk .pips i.on { background: var(--soul); } .dg.raid .tk .pips i.on { background: var(--e-fire); }
+.tk .ok { color: var(--good); font-weight: 700; }
+.dgbtns { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; margin-top: 10px; }
+.dgbtns .btn { flex-direction: column; gap: 1px; padding: 5px 6px; min-height: 44px; }
+.dgbtns .btn .cost { font-size: 9.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.dgban { position: relative; height: 88px; border-radius: 14px; overflow: hidden; margin-bottom: 8px; border: 1px solid var(--line3); display: flex; align-items: center; padding: 8px 10px 8px 12px; gap: 10px; isolation: isolate; }
+.dgban.raid { background: radial-gradient(120% 140% at 85% 30%, #6a1c1a 0%, #2a0c10 55%, #12070c 100%); border-color: #6A2A22; }
+.dgban.tower { background: radial-gradient(120% 140% at 85% 20%, #4a3c18 0%, #1c1a2c 60%, #0c0e1c 100%); border-color: var(--goldline); }
+.dgban .art { position: absolute; inset: 0; z-index: -2; background-size: cover; background-position: center 30%; }
+.dgban::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(6,8,16,.88) 0%, rgba(6,8,16,.55) 45%, rgba(6,8,16,0) 75%), linear-gradient(0deg, rgba(6,8,16,.55), transparent 55%); }
+.dgban .boss { position: absolute; right: 150px; bottom: -12px; height: 112px; z-index: -1; image-rendering: pixelated; transform: scaleX(1); filter: drop-shadow(0 0 18px rgba(255,80,40,.35)); }
+.dgban .tico { position: absolute; right: 120px; top: 9px; width: 70px; height: 70px; z-index: -1; color: var(--gold3); opacity: .22; }
+.dgban.anim .art, .dgban.anim .boss, .dgban.anim .tico { animation: ulswap .55s cubic-bezier(.2,.8,.2,1) backwards; }
+.dgban.tower.anim .art, .dgban.tower.anim .tico { animation-delay: .08s; }
+.dgban .info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; align-self: center; }
+.dgban .ttl { font-size: 11px; font-weight: 800; letter-spacing: .06em; color: var(--fg3); }
+.dgban.raid .ttl { color: #FF9A7A; } .dgban.tower .ttl { color: var(--gold3); }
+.dgban .info b { font-size: 17px; font-weight: 800; letter-spacing: -.03em; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+.dgban .tk { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--fg2); }
+.dgban.raid .tk .pips i.on { background: var(--e-fire); }
+.dgban .acts { display: flex; gap: 6px; flex-shrink: 0; }
+.dgban .acts .btn { flex-direction: column; gap: 1px; min-height: 46px; width: 70px; padding: 4px 6px; }
+.dgban.tower .acts .btn { width: 100px; }
+.dgban .acts .btn .cost { font-size: 9.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.dgban .acts { position: relative; z-index: 1; }
+.dgban .acts .btn:not(.p) { background: rgba(10,12,22,.9); border-color: rgba(255,255,255,.18); color: var(--fg1); }
+.dgban .acts .btn:disabled { opacity: 1; color: var(--fg3); }
+.dgban .acts .btn:disabled .cost { color: var(--fg2); }
+.dgban .lk { font-size: 11px; color: var(--fg3); text-align: center; }
+.dgban.locked { filter: grayscale(.6) brightness(.8); }
+.dgg { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 4px 10px 6px; margin-bottom: 8px; }
+.dggh { display: flex; align-items: center; justify-content: space-between; padding: 6px 0 4px; }
+.dggh b { font-size: 14px; font-weight: 800; color: var(--fg1); } .dggh .btn { min-height: 30px; padding: 4px 10px; font-size: 12px; }
+.dgr.dg { background: none; border: 0; border-top: 1px solid var(--line); border-radius: 0; margin: 0; padding: 7px 0; display: grid; grid-template-columns: 34px 1fr 86px 58px; align-items: center; gap: 7px; }
+.dgr.dg .dic { width: 34px; height: 34px; border-radius: 9px; }
+.dgr .dt { gap: 2px; } .dgr .dt b { font-size: 13px; }
+.dgr .btn { flex-direction: column; gap: 1px; min-height: 40px; padding: 4px 6px; }
+.dgr .btn .cost { font-size: 9.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.sweepcard { padding: 12px 12px 12px 14px; border-radius: 16px; background: var(--golddim); border: 1px solid var(--goldline); display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.sweepcard .t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.sweepcard .t b { font-size: 14px; font-weight: 800; color: var(--fg1); }
+.sweepcard .t b em { font-style: normal; color: var(--gold3); }
+.sweepcard .t div { font-size: 11px; color: var(--fg2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.checklist { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.ck { display: flex; justify-content: space-between; align-items: center; background: var(--inset); border: 1px solid var(--line); border-radius: 12px; padding: 9px 12px; font-size: 13px; color: var(--fg3); }
+.ck.on { color: var(--fg); border-color: var(--gold2); background: var(--golddim); } .ck.on b { color: var(--gold3); } .ck b { font-weight: 700; }
+.idle { text-align: center; }
+.idle .big { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; color: var(--gold); margin: 6px 0 4px; display: flex; justify-content: center; gap: 14px; align-items: center; }
+.idle .big .ico { width: 18px; height: 18px; }
+.dgban.tower .tico { display: none; }   /* 배경 그림(img/dg/tower.jpg)이 있어 탑 기호는 숨김 */
+
+/* 속성 시련 출전 인원(시즌 3) */
+.dgr .tn { margin-left: 4px; } .dgr .tn.low { color: var(--bad); }
+
+/* 허수아비(2026-11-23) */
+.dgg.dmy .dmrow { display: grid; grid-template-columns: 28px repeat(6, 1fr); align-items: center; gap: 3px; padding: 3px 0; }
+.dgg.dmy .dmrow .lb { font-size: 11px; font-weight: 700; color: var(--fg3); }
+.dgg.dmy .fchip { height: 28px; padding: 0 2px; font-size: 11px; justify-content: center; gap: 2px; min-width: 0; letter-spacing: -.02em; }
+.dgg.dmy .fchip[disabled] { opacity: .35; }
+.dgg.dmy .dmgo { width: 100%; margin: 6px 0 2px; min-height: 42px; flex-direction: row; gap: 6px; }
+.dgg.dmy .dmgo img { width: 26px; height: 26px; image-rendering: pixelated; }
+.dgg.dmy .dmgo .cost { margin-left: 4px; }
+.dmtot { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 8px 0; }
+.dmtot div { background: var(--inset); border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; display: flex; flex-direction: column; }
+.dmtot span { font-size: 10px; color: var(--fg3); } .dmtot b { font-size: 18px; font-weight: 800; color: var(--gold3); }
+.dmhs { display: flex; flex-direction: column; gap: 4px; }
+.dmh { display: grid; grid-template-columns: 30px 64px 1fr auto 34px; align-items: center; gap: 6px; font-size: 12px; }
+.dmh img { width: 30px; height: 40px; object-fit: contain; } .dmh b { font-weight: 700; color: var(--fg1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dmh .bar { height: 8px; border-radius: 4px; background: var(--inset); overflow: hidden; } .dmh .bar i { display: block; height: 100%; background: var(--gold); border-radius: 4px; }
+.dmh span { color: var(--fg2); font-size: 11px; } .dmh em { font-style: normal; color: var(--fg3); font-size: 11px; text-align: right; }
+.dmls { display: flex; flex-direction: column; gap: 4px; }
+.dml { display: grid; grid-template-columns: 1fr auto 70px; gap: 8px; align-items: center; background: var(--inset); border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; color: var(--fg2); font-size: 12px; text-align: left; }
+.dml span:nth-child(2) { display: inline-flex; align-items: center; gap: 4px; } .dml b { text-align: right; color: var(--fg1); }
+.dml.on { border-color: var(--gold2); background: var(--golddim); } .dml.best b { color: var(--gold3); }
+.dmact { margin-top: 10px; } .dmact .btn { width: 100%; }

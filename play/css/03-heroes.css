@@ -1,0 +1,121 @@
+/* 영웅 카드 · 그리드 */
+.hgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+.hcard { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; position: relative; min-width: 0; }
+.hcard .port { position: relative; height: 104px; display: flex; align-items: flex-end; justify-content: center; background: var(--panel2); }
+.hcard.e-fire .port { background: var(--t-fire); } .hcard.e-water .port { background: var(--t-water); } .hcard.e-wind .port { background: var(--t-wind); } .hcard.e-light .port { background: var(--t-light); } .hcard.e-dark .port { background: var(--t-dark); }
+.hcard img { width: 66px; height: 88px; object-fit: contain; }
+.hcard .stars { position: absolute; left: 6px; top: 6px; font-size: 10px; letter-spacing: 0; }
+.hcard .lbtag { position: absolute; right: 5px; top: 5px; }
+.hcard .dep { position: absolute; left: 6px; bottom: 6px; height: 18px; padding: 0 6px; border-radius: 6px; background: var(--gold); color: var(--goldink); font-size: 10px; font-weight: 800; display: inline-flex; align-items: center; }
+.hcard .new { position: absolute; right: 5px; bottom: 6px; height: 18px; padding: 0 6px; border-radius: 6px; background: var(--good); color: #0a2a14; font-size: 10px; font-weight: 800; display: inline-flex; align-items: center; }
+.hcard .ilbadge { position: absolute; right: 6px; bottom: 7px; font-size: 11px; color: var(--gold3); }
+.hcard .new + .ilbadge { display: none; }
+.hcard .meta { padding: 6px 8px 7px; display: flex; flex-direction: column; gap: 3px; }
+.hcard .nm { font-size: 12px; font-weight: 700; color: var(--fg1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hcard .lv { font-size: 10px; color: var(--fg3); display: flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; }
+.hcard .lv .elem { width: 7px; height: 7px; }
+.hcard .lv .s { margin-left: auto; font-weight: 700; color: var(--fg2); }
+.hcard.s3 { border-color: var(--goldline); }
+.hcard.s2 { border-color: var(--crysline); }
+.hcard.sel { outline: 2px solid var(--crys); outline-offset: -1px; }
+.hcard.unowned img { filter: brightness(0) opacity(.35); }
+.hcard.unowned .port { background: var(--panel2); }
+.party { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.party .slot { position: relative; background: var(--panel2); border: 1px dashed var(--line2); border-radius: 12px; height: 82px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; font-size: 10px; color: var(--fg3); overflow: hidden; text-align: center; line-height: 1.3; }
+.party .slot img { width: 52px; height: 62px; object-fit: contain; }
+.party .slot .snm { font-style: normal; font-size: 10.5px; font-weight: 700; color: var(--fg1); max-width: 100%; padding: 0 3px 4px; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
+.syn .synh { width: 100%; display: flex; align-items: center; gap: 6px; background: transparent; border: 0; border-bottom: 1px solid var(--line); padding: 12px 2px 8px; color: var(--fg1); font-size: 15px; text-align: left; }
+.syn .synh .num { font-size: 12px; font-weight: 700; color: var(--gold3); } .syn .synh svg { margin-left: auto; color: var(--fg3); transition: transform .15s; } .syn .synh.open svg { transform: rotate(180deg); }
+.party .slot.filled { border-style: solid; background: var(--t-light); border-color: var(--goldline); }
+.party .slot.filled span:not(.tag) { display: none; }
+.party .slot .tag { position: absolute; left: 5px; top: 4px; font-size: 10px; font-weight: 800; color: var(--gold3); }
+.party .slot.filled::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--gold); }
+.party .slot.main { border-color: var(--gold2); }
+.party .slot.locked { opacity: .6; justify-content: center; }
+.party .slot:not(.filled):not(.locked) { justify-content: center; }
+.pcard { padding: 10px 12px 12px; border-radius: 16px; background: var(--panel); border: 1px solid var(--goldline); display: flex; flex-direction: column; gap: 10px; }
+.pcard .ph { display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 700; color: var(--fg1); }
+.pcard .ph span { font-weight: 500; color: var(--fg3); margin-left: 6px; }
+.pcard .ph b { color: var(--gold3); }
+
+/* 모달 */
+#modal { position: fixed; inset: 0; background: rgba(5,6,12,.72); display: flex; align-items: flex-end; justify-content: center; z-index: 20; padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+#modal .box { background: var(--panel); border: 1px solid var(--line3); border-bottom: 0; border-radius: 24px 24px 0 0; width: 100%; max-width: 520px; max-height: 92%; overflow-y: auto; padding-block: 12px calc(16px + env(safe-area-inset-bottom, 0px)); padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); box-sizing: border-box; }
+#modal-box .closebar { position: sticky; top: 0; height: 0; z-index: 6; display: flex; justify-content: flex-end; }
+#modal-box .close { background: rgba(10,13,24,.72); border: 1px solid rgba(255,255,255,.18); color: #fff; border-radius: 50%; width: 36px; height: 36px; padding: 0; font-size: 15px; display: flex; align-items: center; justify-content: center; }
+.detail { display: flex; gap: 12px; }
+.detail img { width: 96px; height: 128px; object-fit: contain; }
+.detail .info { flex: 1; min-width: 0; }
+.detail .name { font-size: 24px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; color: var(--fg1); }
+.detail .hd { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.detail .hd > div:first-child { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.detail .lbcol { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+.detail .tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+.quote { font-size: 12px; font-style: italic; color: var(--fg2); }
+/* 일러스트: 모달 상단 꽉 채움, 정보 패널이 하단에 겹침 */
+.illust { position: relative; margin: -12px calc(-1 * max(14px, env(safe-area-inset-right, 0px))) 0 calc(-1 * max(14px, env(safe-area-inset-left, 0px))); border-radius: 24px 24px 0 0; overflow: hidden; height: min(54vh, 470px); background: #0b0d16; cursor: zoom-in; }
+.illust > img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; display: block; }
+.illust .il-hint { position: absolute; left: 12px; top: 12px; z-index: 2; font-size: 11px; font-weight: 600; color: var(--fg1); background: rgba(10,13,24,.72); border: 1px solid rgba(255,255,255,.18); border-radius: 999px; padding: 5px 10px; }
+.illust.locked { cursor: default; } .illust.locked img { filter: brightness(.15) grayscale(1); } .illust.locked .il-hint { display: none; }
+.illust + .detail.compact { position: relative; z-index: 3; margin: -66px calc(-1 * max(14px, env(safe-area-inset-right, 0px))) 0 calc(-1 * max(14px, env(safe-area-inset-left, 0px))); padding: 14px max(16px, env(safe-area-inset-right, 0px)) 4px max(16px, env(safe-area-inset-left, 0px)); background: var(--panel); border-top: 1px solid var(--line3); border-radius: 24px 24px 0 0; }
+.detail.compact > img { display: none; }
+.ilinfo { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; margin: 0; padding: 0 16px 14px; cursor: default; }
+.ilinfo .name { font-size: 24px; font-weight: 800; letter-spacing: -0.03em; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.9), 0 0 2px #000; }
+.ilinfo .tiny, .ilinfo .stars { text-shadow: 0 1px 4px rgba(0,0,0,.95); }
+.ilinfo .role { background: rgba(10,12,20,.6); border-color: rgba(255,255,255,.2); color: #fff; }
+.illust:has(.ilinfo)::after { content: ""; position: absolute; inset: auto 0 0 0; height: 40%; background: linear-gradient(180deg, rgba(10,13,24,0), rgba(10,13,24,.85)); pointer-events: none; z-index: 1; }
+#modal-box.ill .illust { height: calc(min(50vh, 440px) + 50px); }
+#modal-box.ill .illust::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 120px; background: linear-gradient(180deg, rgba(18,24,41,0), rgba(18,24,41,.93) 72%, var(--panel)); pointer-events: none; z-index: 1; }
+#modal-box.ill .statgrid, #modal-box.ill .skrow, #modal-box.ill .lvrow { position: relative; z-index: 3; }
+/* 영웅 상세: 정보 패널 윗부분을 그라데이션으로 투명하게 해 일러스트가 더 보이게 */
+#modal-box.ill .illust + .detail.compact { margin-top: -120px; padding-top: 44px; padding-bottom: 0; box-sizing: border-box; border-top: 0; border-radius: 0; background: linear-gradient(180deg, rgba(18,24,41,0) 0, rgba(18,24,41,.7) 44px, rgba(18,24,41,.93) 86px, var(--panel) 116px); }
+#modal-box.ill .detail.compact .name { text-shadow: 0 2px 8px rgba(0,0,0,.85); }
+#modal-box.ill .detail.compact .stars, #modal-box.ill .detail.compact .lbcol { filter: drop-shadow(0 1px 3px rgba(0,0,0,.8)); }
+.iltop { position: absolute; left: 12px; right: 12px; top: 60px; z-index: 2; pointer-events: none; }
+.iltop .tags { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin: 0; }
+.iltop .role { padding: 3px 7px; }
+.illb { position: absolute; right: 12px; top: 92px; z-index: 2; pointer-events: none; }
+.illb .lbcol { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; filter: drop-shadow(0 1px 3px rgba(0,0,0,.8)); }
+.detail .name.dnm { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; } .detail .name.dnm .lbcol { display: inline-flex; align-items: center; align-self: center; } .detail .name.dnm .lbtag.big { height: 20px; padding: 0 7px; font-size: 10.5px; line-height: 1; letter-spacing: 0; text-shadow: none; gap: 3px; } .detail .name.dnm .lbtag.big small { font-size: 9.5px; }
+.illb .shd { font-size: 11px; font-weight: 700; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.95); margin-top: -2px; }
+.illb .lbpips { flex-direction: column; align-items: center; gap: 4px; margin-right: 9px; }
+.illb .lbpips i.t { margin-left: 0; margin-top: 2px; } .illb .lbpips i.t:first-child { margin-top: 0; }
+.psv { flex-shrink: 0; align-self: flex-end; display: flex; flex-direction: column; align-items: flex-end; font-size: 12px; font-weight: 700; color: var(--fg1); text-shadow: 0 1px 6px rgba(0,0,0,.9); }
+.psv span { font-size: 10px; font-weight: 600; color: var(--fg3); }
+.iltop .role { background: rgba(10,12,20,.62); border-color: rgba(255,255,255,.2); color: #fff; backdrop-filter: blur(2px); }
+.iltop .role.gold { color: var(--gold3); border-color: var(--gold); }
+#modal-box.ill .detail.compact .quote { color: #E6E9F2; text-shadow: 0 1px 6px rgba(0,0,0,.9); }
+.skrow { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 4px; }
+.skrow .skill { position: relative; margin: 0 !important; align-items: flex-start; padding: 6px 8px !important; }
+.skrow .skill .sic { display: none; }
+.skrow .skill .sb { font-size: 11px; line-height: 1.38; }
+.skrow .skill .sb b { font-size: 12.5px; padding-right: 34px; flex-wrap: wrap; gap: 4px; }
+.skrow .skill .slv { position: absolute; top: 8px; right: 9px; font-size: 11px; }
+/* PC·넓은 화면: 모달 폭(520px)에 맞춰 일러스트를 더 길게 보여줌 */
+@media (min-width: 600px) and (min-height: 700px) { #modal-box.ill .illust, .illust { height: min(62vh, 600px); } #modal .box { max-height: 96%; } }
+#modal-box.ill .statgrid { margin: 6px 0 5px; gap: 5px; }
+#modal-box.ill .statgrid div { padding: 4px 8px; }
+#modal-box.ill .statgrid div b { font-size: 14px; } #modal-box.ill .exslot { margin: 6px 0; } #modal-box.ill .exslot .sh { margin-bottom: 4px; } #modal-box.ill .exslot .sh .btn { min-height: 32px; padding: 0 12px; }
+#modal-box.ill .skill { padding: 6px 8px; margin-bottom: 5px; }
+#modal-box.ill .detail .tags { margin-top: 6px; }
+.reveal .illust { animation: pop .5s; }
+
+/* 영웅 레벨 줄 (2026-10-30) */
+.lvrow { display: flex; align-items: center; gap: 6px; margin: 6px 0 4px; font-size: 12px; }
+.lvrow > b { font-size: 15px; color: var(--gold3); } .lvrow .cap { color: var(--fg3); margin-left: -4px; }
+.lvrow .sync { font-size: 10px; font-weight: 800; color: #8fd4ff; border: 1px solid #8fd4ff; border-radius: 999px; padding: 0 6px; line-height: 15px; }
+.lvrow .xpbar { flex: 1; height: 6px; border-radius: 999px; background: var(--inset); overflow: hidden; min-width: 40px; } .lvrow .xpbar i { display: block; height: 100%; background: linear-gradient(90deg, #5FD08A, #B7F27A); }
+.lvrow .pot { color: var(--fg2); display: inline-flex; align-items: center; gap: 2px; } .lvrow .pot .ico { width: 13px; height: 13px; }
+.lvrow .btn.s { min-height: 30px; padding: 0 9px; font-size: 12px; flex-direction: column; gap: 0; } .lvrow .btn .cost { font-size: 9.5px; }
+.hcard .lv .hlv { color: var(--gold3); font-weight: 800; }
+.party .slot .sinf { display: block; font-style: normal; font-size: 10px; font-weight: 700; color: var(--gold3); line-height: 12px; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.party .slot { height: 94px; } .party .slot .snm { padding-bottom: 0; } .party .slot .sinf { padding-bottom: 4px; }
+
+/* 승급 연출(2026-11-15): 레벨 숫자가 튀고 금빛이 한 번 훑고 지나감 */
+.lvrow.ascfx { position: relative; }
+.lvrow.ascfx > b { animation: ascpop .75s cubic-bezier(.2,.9,.2,1); transform-origin: left center; }
+.lvrow.ascfx::after { content: ""; position: absolute; inset: -4px -6px; border-radius: 12px; pointer-events: none; background: linear-gradient(100deg, transparent 32%, rgba(255,224,138,.6) 50%, transparent 68%); background-size: 260% 100%; animation: ascsweep .85s ease-out forwards; }
+@keyframes ascpop { 0% { transform: scale(1); } 28% { transform: scale(1.75); color: #fff; } 100% { transform: scale(1); } }
+@keyframes ascsweep { 0% { background-position: 130% 0; opacity: 1; } 100% { background-position: -70% 0; opacity: 0; } }
+
+.detail .name.dnm .nmt { white-space: nowrap; }   /* 2026-11-20 긴 이름은 fitName()이 글자를 줄임 */

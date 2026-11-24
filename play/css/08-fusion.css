@@ -1,0 +1,34 @@
+/* 조합 */
+.fcard { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 12px; }
+.fslots { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.fslots.five { gap: 4px; }
+.fslots.five .fslot { width: 46px; height: 62px; border-radius: 10px; font-size: 10px; }
+.fslots.five .fslot img { width: 40px; height: 52px; }
+.fslots.five .fout { width: 60px; height: 76px; }
+.fout.gold { border-color: var(--gold2); background: var(--goldbg); }
+.fout.gold .q { color: var(--gold3); }
+.fslot { position: relative; width: 62px; height: 80px; border-radius: 12px; border: 1px dashed var(--line2); background: var(--inset); display: flex; align-items: center; justify-content: center; color: var(--fg3); font-size: 11px; font-weight: 700; overflow: hidden; }
+.fslot.filled { border-style: solid; border-color: var(--line3); align-items: flex-end; cursor: pointer; }
+.fslot.filled.e-fire { background: var(--t-fire); } .fslot.filled.e-water { background: var(--t-water); } .fslot.filled.e-wind { background: var(--t-wind); } .fslot.filled.e-light { background: var(--t-light); } .fslot.filled.e-dark { background: var(--t-dark); }
+.fslot img { width: 50px; height: 66px; object-fit: contain; }
+.fslot.eqf { align-items: center; border-color: var(--q3); background: color-mix(in srgb, var(--q3) 12%, var(--inset)); }
+.fslot .fico { width: 46px; height: 46px; image-rendering: pixelated; } .fslot .fpi { width: 30px; height: 30px; color: var(--q3); }
+.fout.eqleg { border-color: var(--q4); background: color-mix(in srgb, var(--q4) 12%, var(--inset)); flex-direction: column; gap: 2px; } .fout.eqleg .q { color: var(--q4); }
+.eqcard.fsel { outline: 2px solid var(--gold3); outline-offset: 1px; }
+.fslot.eqf.leg { border-color: var(--q4); background: color-mix(in srgb, var(--q4) 12%, var(--inset)); } .fslot.eqf.leg .fpi { color: var(--q4); }
+.fout.eqmyth { border-color: var(--q5); background: color-mix(in srgb, var(--q5) 12%, var(--inset)); box-shadow: 0 0 16px -6px var(--q5); } .fout.eqmyth .q { color: var(--q5); }
+.eqcard.dim { opacity: .55; } .eqcard .mcnt { float: right; font-size: 11px; font-weight: 800; color: var(--fg3); } .eqcard .mcnt.ok { color: var(--q5); }
+.fslot .n { position: absolute; left: 5px; top: 4px; font-size: 10px; font-weight: 800; color: var(--fg3); }
+.fslot.filled .n { color: var(--gold3); }
+.farrow { color: var(--fg3); margin: 0 2px; }
+.fout { width: 70px; height: 88px; border-radius: 12px; border: 1px solid var(--crysline); background: var(--crysbg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.fout .q { font-size: 30px; font-weight: 800; color: var(--crys2); line-height: 1; }
+.fnote { margin-top: 10px; font-size: 11px; color: var(--fg3); text-align: center; line-height: 1.5; }
+.fnote b { color: var(--fg1); }
+.fcard .btn { flex-direction: column; gap: 1px; min-height: 48px; }
+.recipe { display: flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; margin-bottom: 6px; }
+.recipe img { width: 36px; height: 46px; object-fit: contain; }
+.recipe .plus { color: var(--fg3); }
+.recipe .t { flex: 1; min-width: 0; font-size: 12px; color: var(--fg2); }
+.recipe .t b { font-weight: 700; color: var(--fg1); }
+.recipe .no { filter: brightness(0) opacity(.3); }
