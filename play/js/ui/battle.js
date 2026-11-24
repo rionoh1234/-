@@ -129,9 +129,16 @@ const BC = {
           else if (S.autoBoss !== false && stage < S.maxClear) S.stage = stage + 1;   // 물러나 있던 곳의 보스를 잡으면 한 단계 위로
           F.setParams(st, this.params()); renderBattleHead();
         } else if (k === 'tower') {
-          const f = this.ctx.floor; const rw = C.towerReward(f); S.tower.floor = Math.max(S.tower.floor, f); S.gold += Math.round(rw.gold * G.goldMult(S)); S.crystal += rw.crystal; G.giveUsh(S, rw); S.sshard = (S.sshard || 0) + rw.sshard; if (rw.seal) S.seal = (S.seal || 0) + rw.seal;
+          const tw = (fl) => { const rw = C.towerReward(fl); S.tower.floor = Math.max(S.tower.floor, fl); S.gold += Math.round(rw.gold * G.goldMult(S)); S.crystal += rw.crystal; G.giveUsh(S, rw); S.sshard = (S.sshard || 0) + rw.sshard; if (rw.seal) S.seal = (S.seal || 0) + rw.seal; return rw; };
+          const f = this.ctx.floor; const rw = tw(f); let next = f + 1;
           feed(`${f}층 ${rewardTxt(rw)}`); if (rw.seal) bigPop('gate', `${f}층 돌파`, `${ico('seal')} 별의 인장 +${rw.seal}`, 2200);
-          this.ctx.floor = f + 1; F.setParams(st, this.params()); renderBattleHead();
+          if (this.bossAt != null && st.t - this.bossAt >= 0 && st.t - this.bossAt <= C.RUSH.sec) {   // 빠른 돌파(탑, 2026-11-24 사용자 — 10층): 보스를 RUSH.sec 안에 잡으면 다음 C.RUSH.tw층을 바로 클리어, 층마다 보상 전부
+            const tot = {}; let seal = 0;
+            for (let i = 1; i <= C.RUSH.tw; i++) { const r = tw(f + i); for (const k2 in r) if (typeof r[k2] === 'number') tot[k2] = (tot[k2] || 0) + r[k2]; if (r.seal) seal += r.seal; }
+            feed(`<b style="color:var(--gold)">빠른 돌파</b> ${f + 1}~${f + C.RUSH.tw}층 ${rewardTxt(tot)}`); bigPop(seal ? 'gate' : 'rush', '빠른 돌파', seal ? `${f + 1} → ${f + C.RUSH.tw}층 · ${ico('seal')} 별의 인장 +${seal}` : `${f + 1} → ${f + C.RUSH.tw}층`, seal ? 2200 : 1500);
+            addLog(`<b>빠른 돌파</b> 탑 ${f + 1}~${f + C.RUSH.tw}층 클리어`); next = f + C.RUSH.tw + 1;
+          }
+          this.bossAt = null; this.ctx.floor = next; F.setParams(st, this.params()); renderBattleHead();
         } else if (k === 'raid') { this.raidEnd(st.dmgDealt, true); }
         else if (k === 'dungeon') {
           const d = C.DG[this.ctx.dkind]; const lv = this.ctx.level; const rw = G.applyDungeonClear(S, this.ctx.dkind, lv);
@@ -346,7 +353,7 @@ function drawBossBar(cx, st, bc, dt, A) {
       cx.fillStyle = 'rgba(6,8,16,.85)'; rr(x0 - 1.5, ty - 1.5, w + 3, th + 3, 4); cx.fill(); cx.strokeStyle = low ? 'rgba(255,90,70,.9)' : 'rgba(255,255,255,.35)'; cx.lineWidth = 1; cx.stroke();
       cx.fillStyle = low ? `rgba(255,${80 + Math.round(50 * Math.sin(A * 10))},64,1)` : k < 0.5 ? '#ffc46b' : '#e9eefb'; rr(x0, ty, w * k, th, 2.5); cx.fill();
       { const P = st.params, D = P.stage;   // 빠른 진격 눈금(2026-11-24 사용자): 보스 등장 후 C.RUSH.sec 안에 잡으면 진격 — 그 시점 위치에 눈금, 아직 가능하면 눈금 오른쪽 막대를 금색으로
-        if (P.mode === 'stage' && D > S.maxClear && S.autoBoss !== false && D >= C.RUSH.min && D < C.STAGE_MAX && C.RUSH.sec < en.at) {
+        if (((P.mode === 'stage' && D > S.maxClear && S.autoBoss !== false && D >= C.RUSH.min && D < C.STAGE_MAX) || P.mode === 'tower') && C.RUSH.sec < en.at) {   // 탑은 매 층 빠른 돌파 가능
           const kr = 1 - C.RUSH.sec / en.at, xr = x0 + w * kr, on = bc.bossAt != null && st.t - bc.bossAt <= C.RUSH.sec && k > kr;
           if (on) { cx.fillStyle = '#ffd34f'; cx.fillRect(xr, ty, w * (k - kr), th); }
           cx.fillStyle = 'rgba(0,0,0,.85)'; cx.fillRect(Math.round(xr) - 2, ty - 4, 4, th + 8); cx.fillStyle = on ? '#ffd34f' : 'rgba(233,238,251,.5)'; cx.fillRect(Math.round(xr) - 1, ty - 3, 2, th + 6); } }
