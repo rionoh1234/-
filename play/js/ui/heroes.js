@@ -71,7 +71,7 @@ function openHero(id) {
   if ($('#ascup')) $('#ascup').onclick = () => { if (G.ascend(S, id)) { BC._rb = true; save(); re(); const lr = document.querySelector('#modal .lvrow'); if (lr) lr.classList.add('ascfx'); } };
   bindSrc($('#modal-box'), () => openHero(id));   // 승급석 숫자 → 획득처(닫으면 이 영웅으로 돌아옴)
   if ($('#exopen')) { $('#exopen').onclick = () => openExList(id); const ec = document.querySelector('.exslot .eqcard[data-exid]'); if (ec) ec.onclick = () => openExList(id); }
-  if ($('#lbup')) $('#lbup').onclick = () => { if (G.limitBreak(S, id)) { const now = S.heroes[id].lb; toast(now > 5 ? (now === C.LB_MAX ? `초월 완성! ${ch.name}의 고유 스킬이 진각성했습니다` : `초월 ${now - 5}단계! 전 능력치 +${Math.round(C.TR_STEP * 100)}%`) : `돌파 성공! 전 능력치 +${Math.round(C.LB_STEP * 100)}%`, now === C.LB_MAX ? 3200 : 1800); } re(); };
+  if ($('#lbup')) $('#lbup').onclick = () => { if (G.limitBreak(S, id)) { const now = S.heroes[id].lb; toast(now > 5 ? (now === C.LB_MAX ? `초월 완성! ${ch.name}의 고유 스킬이 진각성했습니다` : `초월 ${now - 5}단계! 전 능력치 ×${C.TR_MULT}`) : `돌파 성공! 전 능력치 +${Math.round(C.LB_STEP * 100)}%`, now === C.LB_MAX ? 3200 : 1800); } re(); };
   $('#setmain').onclick = () => { S.party = [id].concat(S.party.filter(x => x !== id)).slice(0, 5); partyChanged(); closeModal(); render(); toast(`${ch.name}이(가) 대표가 되었습니다`); };
   $('#pty').onclick = () => {
     if (inParty) { S.party = S.party.filter(x => x !== id); partyChanged(); closeModal(); render(); return; }
