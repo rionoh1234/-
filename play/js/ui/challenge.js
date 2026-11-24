@@ -36,13 +36,15 @@ function renderChallenge(m) {
     ${dgOn ? '' : `<div class="card muted" style="margin-bottom:10px">${C.DG_UNLOCK}스테이지 개방</div>`}
     ${grp('res', '자원 던전', RES)}${grp('tri', '속성의 시련', TRI)}${dummyBlock()}`;
   bindDummy(m);
-  m.querySelectorAll('button[data-gsweep]').forEach(b => b.onclick = () => { const ks = b.dataset.gsweep === 'res' ? RES : TRI; const tot = { gold: 0, crystal: 0, estone: 0, xstone: 0 }; let n = 0; for (const k of ks) { let r; while ((r = G.sweep(S, k))) { tot.gold += r.gold || 0; tot.crystal += r.crystal || 0; for (const u of C.U_KEYS) if (r[u]) tot[u] = (tot[u] || 0) + r[u]; tot.estone += r.estone || 0; tot.xstone += r.xstone || 0; tot.xpot = (tot.xpot || 0) + (r.xpot || 0); n++; } } if (n) { toast(`${n}장 소탕 ${rewardTxt(tot)}`, 2600); save(); render(); } });
+  m.querySelectorAll('button[data-gsweep]').forEach(b => b.onclick = () => { const ks = (b.dataset.gsweep === 'res' ? RES : TRI).filter(k => S.dg[k].lv && S.dg[k].t > 0); const mx = Math.max(0, ...ks.map(k => S.dg[k].t)); if (!mx) return;
+    sweepPick(b.dataset.gsweep === 'res' ? '자원 던전 소탕' : '속성의 시련 소탕', mx, (c) => { const tot = { gold: 0, crystal: 0, estone: 0, xstone: 0 }; let n = 0; for (const k of ks) { let r, i = 0; while (i++ < c && (r = G.sweep(S, k))) { tot.gold += r.gold || 0; tot.crystal += r.crystal || 0; for (const u of C.U_KEYS) if (r[u]) tot[u] = (tot[u] || 0) + r[u]; tot.estone += r.estone || 0; tot.xstone += r.xstone || 0; tot.xpot = (tot.xpot || 0) + (r.xpot || 0); n++; } } if (n) { toast(`${n}장 소탕 ${rewardTxt(tot)}`, 2600); save(); render(); } }); });
   m.querySelectorAll('button[data-dg]').forEach(b => b.onclick = () => { const k = b.dataset.dg; if (S.dg[k].t < 1 || S.dg[k].lv + 1 > C.dgCap(S)) return; if (C.DG[k].el && !G.trialTeam(S, C.DG[k].el).length) return; /* 입장엔 이용권 1장 보유가 필요하지만 새 레벨 도전은 성공·실패 모두 소모하지 않음 */ BC.ctx = { kind: 'dungeon', dkind: k, level: S.dg[k].lv + 1 }; BC.st = null; BC.rebuild(false); save(); setTab('battle'); });
   m.querySelectorAll('button[data-sweep]').forEach(b => b.onclick = () => { const r = G.sweep(S, b.dataset.sweep); if (r) { toast(`${C.DG[b.dataset.sweep].name} 소탕 ${rewardTxt(r)}`); save(); render(); } });
   // 줄마다 소탕은 한 번 누를 때 1장씩(2026-11-19, 사용자 '꼭 한 번에 3번 다 해야 되나, 끊어서 하게') — 한꺼번에는 묶음 제목의 '소탕 ×n'
-  m.querySelectorAll('button[data-sweepall]').forEach(b => b.onclick = () => { const k = b.dataset.sweepall; const r = G.sweep(S, k); if (r) { toast(`${C.DG[k].name} 소탕 ${rewardTxt(r)}`, 2200); save(); render(); } });
+  // 2026-11-24 사용자 '소탕 1·2·3번 나눠서' → 줄·묶음·레이드 소탕 모두 횟수 선택 창(이용권 1장이면 바로)
+  m.querySelectorAll('button[data-sweepall]').forEach(b => b.onclick = () => { const k = b.dataset.sweepall; sweepPick(`${C.DG[k].name} 소탕`, S.dg[k].t, (c) => { const tot = {}; let n = 0, r; while (n < c && (r = G.sweep(S, k))) { for (const x in r) if (typeof r[x] === 'number') tot[x] = (tot[x] || 0) + r[x]; n++; } if (n) { toast(`${C.DG[k].name} 소탕${n > 1 ? ' ×' + n : ''} ${rewardTxt(tot)}`, 2200); save(); render(); } }); });
   if ($('#sweep-all')) $('#sweep-all').onclick = () => { const t = G.sweepAll(S); if (t.n) { toast(`${t.n}장 소탕 ${rewardTxt(t)}`, 3000); save(); render(); } };
-  if ($('#raid-sweep')) $('#raid-sweep').onclick = () => { const r = G.sweepRaid(S); if (r) { toast(`레이드 소탕 ${rewardTxt(r)}`); save(); render(); } };
+  if ($('#raid-sweep')) $('#raid-sweep').onclick = () => sweepPick('레이드 소탕', S.raid.t, (c) => { const tot = {}; let n = 0, r; while (n < c && (r = G.sweepRaid(S))) { for (const x in r) if (typeof r[x] === 'number') tot[x] = (tot[x] || 0) + r[x]; n++; } if (n) { toast(`레이드 소탕${n > 1 ? ' ×' + n : ''} ${rewardTxt(tot)}`); save(); render(); } });
   m.querySelectorAll('[data-gim]').forEach(b => b.onclick = (e) => { e.stopPropagation(); openGim(b.dataset.gim); });
   if ($('#tower-go')) $('#tower-go').onclick = () => { BC.ctx = { kind: 'tower', floor: S.tower.floor + 1 }; BC.st = null; BC.rebuild(false); BC.bossBanner = 1.6; setTab('battle'); };   // 진입 배너 'BOSS / 무한의 탑 n층'(사용자 2026-11-19)
   if ($('#raid-go')) $('#raid-go').onclick = () => { if (!G.useTicket(S.raid)) return; BC.ctx = { kind: 'raid' }; BC.st = null; BC.rebuild(false); save(); setTab('battle'); };
@@ -114,4 +116,11 @@ function openDummyResult(i) {
     <div class="dmact"><button class="btn p" id="dm-again">다시<span class="cost">${dmTeamName(r.team)} · ${dmElName(r.el)}</span></button></div>`);
   document.querySelectorAll('#modal [data-dml]').forEach(b => b.onclick = () => openDummyResult(+b.dataset.dml));
   $('#dm-again').onclick = () => { const P = S.epresets || {}; closeModal(); BC.ctx = { kind: 'dummy', team: r.team && P[r.team] ? r.team : '', el: r.el }; BC.st = null; BC.rebuild(false); setTab('battle'); };
+}
+
+// 소탕 횟수 고르기(2026-11-24): 이용권이 1장이면 바로, 2장 이상이면 1회~n회 버튼 창
+function sweepPick(title, max, go) {
+  max = Math.max(0, max | 0); if (!max) return; if (max === 1) { go(1); return; }
+  modal(`<h3 style="margin:4px 56px 26px 0">${title}</h3><div class="swpick">${Array.from({ length: max }, (_, i) => `<button class="btn ${i === max - 1 ? 'p' : ''}" data-c="${i + 1}">${i + 1}회</button>`).join('')}</div>`);
+  document.querySelectorAll('#modal .swpick button').forEach(b => b.onclick = () => { closeModal(); go(+b.dataset.c); });
 }
