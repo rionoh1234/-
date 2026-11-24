@@ -94,5 +94,3 @@
 .dml.on { border-color: var(--gold2); background: var(--golddim); } .dml.best b { color: var(--gold3); }
 .dmact { margin-top: 10px; } .dmact .btn { width: 100%; }
 
-.swpick { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: 8px; }
-.swpick .btn { height: 44px; font-size: 16px; }

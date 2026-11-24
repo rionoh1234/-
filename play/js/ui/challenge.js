@@ -19,10 +19,10 @@ function renderChallenge(m) {
     return `<div class="dgr dg ${k}"><div class="dic"><svg width="18" height="18"><use href="#i-${DI[k]}"/></svg></div>
       <div class="dt"><div><b>${nm}</b> <span class="sub num">Lv.${t.lv}</span>${d.el ? ` <span class="sub num tn${tn < G.slots(S) ? ' low' : ''}">${tn}/${G.slots(S)}</span>` : ''}</div><div class="tk num">${ticketPips(t.t)}${t.t < C.TICKET_MAX && left > 0 ? `<span>${msS(left)}</span>` : ''}</div></div>
       <button class="btn s ${ok ? 'p' : ''}" data-dg="${k}" ${ok ? '' : 'disabled'}>Lv.${next}<span class="cost">${next <= C.dgCap(S) ? rewardTxt(rwNext) : next * 10 * C.STAGE_DISP + '스테이지'}</span></button>
-      <button class="btn s ${t.lv && t.t ? 'on' : ''}" data-sweepall="${k}" ${t.lv && t.t ? '' : 'disabled'}>소탕<span class="cost">×${t.t}</span></button></div>`;
+      <button class="btn s ${t.lv && t.t ? 'on' : ''}" data-sweepall="${k}" ${t.lv && t.t ? '' : 'disabled'}>소탕<span class="cost">×1</span></button></div>`;
   };
   const RES = ['gold', 'crys', 'xp', 'soul', 'equip'], TRI = C.DG_KINDS.filter(k => k.startsWith('t_'));
-  const grp = (id, title, ks) => { const n = ks.reduce((a, k) => a + (S.dg[k].lv ? S.dg[k].t : 0), 0); return `<div class="dgg"><div class="dggh"><b>${title}</b><button class="btn s ${n ? 'on' : ''}" data-gsweep="${id}" ${n ? '' : 'disabled'}>소탕 ×${n}</button></div>${ks.map(row).join('')}</div>`; };
+  const grp = (id, title, ks) => { const n = ks.reduce((a, k) => a + (S.dg[k].lv ? S.dg[k].t : 0), 0); return `<div class="dgg"><div class="dggh"><b>${title}</b><button class="btn s ${n ? 'on' : ''}" data-gsweep="${id}" ${n ? '' : 'disabled'}>소탕 ×1</button></div>${ks.map(row).join('')}</div>`; };
   const est = C.DG_KINDS.reduce((a, k) => { const t = S.dg[k]; if (t.lv && t.t) { const r = C.dungeonReward(k, t.lv); a.gold += (r.gold || 0) * t.t; a.crystal += (r.crystal || 0) * t.t; a.estone += (r.estone || 0) * t.t; a.xstone += (r.xstone || 0) * t.t; for (const u of C.U_KEYS) if (r[u]) a[u] = (a[u] || 0) + r[u] * t.t; } return a; }, { gold: 0, crystal: 0, estone: 0, xstone: 0 });
   if (S.raid.best && S.raid.t) { const r = C.raidReward(S.raid.best, boss.hp, boss.elem); est.crystal += r.crystal * S.raid.t; for (const u of C.U_KEYS) if (r[u]) est[u] = (est[u] || 0) + r[u] * S.raid.t; }
   const anim = dgAnim ? 'anim' : ''; dgAnim = false;
@@ -118,9 +118,5 @@ function openDummyResult(i) {
   $('#dm-again').onclick = () => { const P = S.epresets || {}; closeModal(); BC.ctx = { kind: 'dummy', team: r.team && P[r.team] ? r.team : '', el: r.el }; BC.st = null; BC.rebuild(false); setTab('battle'); };
 }
 
-// 소탕 횟수 고르기(2026-11-24): 이용권이 1장이면 바로, 2장 이상이면 1회~n회 버튼 창
-function sweepPick(title, max, go) {
-  max = Math.max(0, max | 0); if (!max) return; if (max === 1) { go(1); return; }
-  modal(`<h3 style="margin:4px 56px 26px 0">${title}</h3><div class="swpick">${Array.from({ length: max }, (_, i) => `<button class="btn ${i === max - 1 ? 'p' : ''}" data-c="${i + 1}">${i + 1}회</button>`).join('')}</div>`);
-  document.querySelectorAll('#modal .swpick button').forEach(b => b.onclick = () => { closeModal(); go(+b.dataset.c); });
-}
+// 소탕은 무조건 1회씩(2026-11-24 사용자 '무조건 소탕 ×1, 급하면 3연타') — 줄은 그 던전 1장, 묶음은 묶음 안 던전마다 1장, 레이드 1장. 같은 날 넣었던 횟수 선택 창(v0455)은 철회
+function sweepPick(title, max, go) { if ((max | 0) > 0) go(1); }
