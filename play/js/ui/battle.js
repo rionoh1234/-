@@ -146,7 +146,7 @@ const BC = {
           let next = lv + 1;
           if (lv >= C.RUSH.dgMin && this.bossAt != null && st.t - this.bossAt >= 0 && st.t - this.bossAt <= C.RUSH.sec) {   // 빠른 진격(던전): 다음 10레벨을 즉시 클리어, 레벨마다 보상 전부
             const tot = {}; let n = 0;
-            for (let i = 1; i <= C.RUSH.n; i++) { const L = lv + i; if (C.dgCap && L > C.dgCap(S)) break; const r = G.applyDungeonClear(S, this.ctx.dkind, L); for (const k in r) if (typeof r[k] === 'number') tot[k] = (tot[k] || 0) + r[k]; n++; }
+            for (let i = 1; i <= (C.RUSH.dgn || C.RUSH.n); i++) { const L = lv + i; if (C.dgCap && L > C.dgCap(S)) break; const r = G.applyDungeonClear(S, this.ctx.dkind, L); for (const k in r) if (typeof r[k] === 'number') tot[k] = (tot[k] || 0) + r[k]; n++; }
             if (n) { feed(`<b style="color:var(--gold)">빠른 진격</b> ${d.name} Lv.${lv + 1}~${lv + n} ${rewardTxt(tot)}`); bigPop('rush', '빠른 진격', `Lv.${lv + 1} → ${lv + n}`, 1500); next = lv + n + 1; }
           }
           this.bossAt = null;

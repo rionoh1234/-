@@ -65,6 +65,10 @@
         for (let n = 0; n < L.length && o.length; n++) { let wi = -1, wv = Infinity; o.forEach((x, i) => { if (x[1] === 5) return; const sc = x[1] * 100 + x[2] / C.EQ_OPTS[x[0]].base; if (sc <= wv) { wv = sc; wi = i; } }); if (wi < 0) wi = o.length - 1; o.splice(wi, 1); }
         it.o = L.concat(o); delete it.ol; }
       s.eq.capV = 7; }
+    if ((s.eq.capV || 0) < 8) {   // 8 = 무속성 고정 줄 보스 피해 → 공격력(속성 줄의 85%, 2026-11-25): 맨 앞 고정 줄만 새 정의로 바꿈(신화 ×3, 돌파는 optVal에서)
+      for (const it of s.eq.items) { if (!it.u || it.g < 4) continue; const u = G.eqUnique(it.u); const l = u && (u.leg || [])[0]; const x = it.o && it.o[0]; if (!l || !x || x[1] !== 5 || x[0] === l[0] || x[0] !== 'boss') continue;
+        it.o[0] = [l[0], 5, it.g === 5 ? Math.round(l[1] * C.mythMult(l[0]) * 10000) / 10000 : l[1]]; }
+      s.eq.capV = 8; }
     if (s.estone == null) s.estone = 0;
     return s.eq;
   };

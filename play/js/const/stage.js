@@ -165,7 +165,7 @@
     boss.id = id; boss.elem = want; boss.range = t.ranged ? 100 : 34; if (mob) boss.name = mob.name; return boss;
   };
   C.gimOf = function (i) { return C.GIMS[((i % C.GIMS.length) + C.GIMS.length) % C.GIMS.length]; };
-  C.RUSH = { sec: 15, n: 100, min: 1000, dgMin: 10, tw: 10 };   // tw = 탑 빠른 돌파 층수(2026-11-24 사용자 '10층')   // 2026-11-18 n·min 새 단위(×10)   // 빠른 진격(2026-10-31 사용자): 최전선 보스를 게임 시간 15초(×3 배속 실제 5초) 안에 잡으면 다음 10스테이지를 즉시 클리어 — 잡몹 20마리·보스·첫 클리어·장비 드롭 보상 전부 지급. 100스테이지부터(초반 보스는 원래 약해서 제외)
+  C.RUSH = { sec: 7, n: 300, min: 1000, dgMin: 10, tw: 30, dgn: 100 };   // 2026-11-25 사용자 '컷 올리고 점프 양 늘려' → 보스 등장 후 15 → 7초(게임 시간) 안 · 스테이지 100 → 300 · 탑 10 → 30층. 던전은 dgn(100, 이전과 같음)   // tw = 탑 빠른 돌파 층수(2026-11-24 사용자 '10층')   // 2026-11-18 n·min 새 단위(×10)   // 빠른 진격(2026-10-31 사용자): 최전선 보스를 게임 시간 15초(×3 배속 실제 5초) 안에 잡으면 다음 10스테이지를 즉시 클리어 — 잡몹 20마리·보스·첫 클리어·장비 드롭 보상 전부 지급. 100스테이지부터(초반 보스는 원래 약해서 제외)
   C.REVIVE_SEC = 12;          // 개별 영웅 부활 대기(초)
   C.maxMobs = function (slots) { return 2 + slots; };
   C.makeMob = function (type, mult, boss, stage) {
