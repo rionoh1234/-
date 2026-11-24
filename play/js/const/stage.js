@@ -125,7 +125,7 @@
   C.dMax = function (m) { return m || 0; };
   C.stageTitle = function (D) { const s = C.sOldI(D); const ch = C.stageChapter(s), lp = C.stageLoop(s); return `${Math.floor((s - 1) / 10) + 1}장 ${C.CHAPTER_NAME[ch]}${lp ? ' · 심화 ' + lp : ''}`; };
   C.isBossStage = function (s) { return s % 10 === 0; };   // 예전 단위(지역 보스 — 새 단위로는 100스테이지마다)
-  C.KILL_QUOTA = 20;   // 일반 몹 20마리 → 보스. 2026-11-18 스테이지 ×10 때 2로 줄였다가 2026-11-19 사용자 '원래대로 다시 늘려'로 20 복구
+  C.KILL_QUOTA = 50;   // 2026-11-24 사용자 '스테이지 잡몹 50마리'(탑 12·던전 8은 그대로). 이전:  일반 몹 20마리 → 보스. 2026-11-18 스테이지 ×10 때 2로 줄였다가 2026-11-19 사용자 '원래대로 다시 늘려'로 20 복구
   C.RUSH_KILLS = 2;    // 빠른 진격으로 건너뛴 스테이지 1개당 처치 보상 마릿수 — 진격 1회(100스테이지) = 200마리분으로 예전 양 유지(20으로 하면 진격 보상이 7배)
   // 관문(시즌 3): GATE.every 스테이지마다 관문 보스 — 체력·공격 배율 + 기믹, 빠른 진격으로 건너뛸 수 없음, 첫 클리어 시 별의 인장 1개
   C.GATE = { every: +(T.gte) || 500, k: +(T.gtk) || 1.4, from: 1000, seal: +(T.gts) || 1000 };   // 2026-11-18 새 단위(×10)   // seal = 별의 인장을 주는 관문 간격(2026-11-17 50 → 100, 소환 ★3 확률 상향과 짝)   // k = 관문 보스 체력·공격 배율(from 스테이지 초과부터 — 50·100 관문은 기믹만: 100 전후는 원래 가파른 구간이라 배율까지 얹으면 벽이 1.5일까지 늘어남)
@@ -184,12 +184,14 @@
   // 스테이지 전용 난이도 배분: 일반 몹은 약하게(쉽게 쓸어 담기), 보스는 체력을 크게 늘려 긴 전투 + 격노로 딜 체크
   //   격노: 보스 등장 후 at초(게임 시간, 배속 ×3이면 실시간 1/3)부터 per초마다 공격력 +100%
   C.STAGE_MOB = { hp: T.smh || 0.6, atk: T.sma || 0.5 };
+  C.STAGE_MOB_UP = { hp: T.smu || 20, atk: T.smua || 2, ramp: T.smur || 400 };   // 2026-11-24 사용자 '잡몹 50마리·버티고 아프게' — 잡몹 체력 ×20·공격 ×2, 보스와 같은 ramp(예전 단위 400 = 4000스테이지)까지 선형으로(새 계정 초반 보호)
   C.STAGE_BOSS = { hp: T.sbh || 60, atk: T.sba || 0.5, ramp: T.sbr || 400 };
   C.BOSS_ENRAGE = { at: T.bea || 90, per: T.bep || 12 };   // 2026-10-31 90/15 → 90/12(보스전 길이 조정과 짝)
   C.stageParams = function (D, slots, autoBoss) {
     const stage = C.sOld(D), si = C.sOldI(D);   // 예전 단위(소수)
     const ch = C.stageChapter(si); const m = C.stageMult(stage); const hue = C.CHAPTER_HUE[ch];
-    const mobs = C.CHAPTER_MOBS[ch].map(t => { const mm = C.makeMob(t, m, false); mm.hue = hue; mm.hp = Math.round(mm.hp * C.STAGE_MOB.hp); mm.atk = Math.round(mm.atk * C.STAGE_MOB.atk); return mm; });
+    const mu = Math.min(1, stage / C.STAGE_MOB_UP.ramp), mh = C.STAGE_MOB.hp * (1 + (C.STAGE_MOB_UP.hp - 1) * mu), ma = C.STAGE_MOB.atk * (1 + (C.STAGE_MOB_UP.atk - 1) * mu);
+    const mobs = C.CHAPTER_MOBS[ch].map(t => { const mm = C.makeMob(t, m, false); mm.hue = hue; mm.hp = Math.round(mm.hp * mh); mm.atk = Math.round(mm.atk * ma); return mm; });
     const boss = C.makeMob(C.chapterBoss(ch, C.stageLoop(si)), m * (D % (10 * C.STAGE_DISP) === 0 ? 1.15 : 1), true, stage); boss.hue = hue;
     const rp = Math.min(1, stage / C.STAGE_BOSS.ramp);   // 초반(동료 슬롯이 적을 때)은 완만하게, ramp 스테이지에서 최대
     boss.hp = Math.round(boss.hp * (1 + (C.STAGE_BOSS.hp - 1) * rp)); boss.atk = Math.round(boss.atk * (1 + (C.STAGE_BOSS.atk - 1) * rp));
