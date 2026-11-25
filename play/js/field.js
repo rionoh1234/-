@@ -18,8 +18,8 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
     b[f] = Math.min(S.max, (b[f] || 0) + 1);
     if (b[f] >= S.max) { if (k === 'blindT') smite(CUR, d); else if (k === 'frzT') iceOn(CUR, d); } }
   function smite(st, d) { const S = C.STACK; d.b.blindN = 0; const u = st.heroes.find(h => h.id === SRC && !h.dead) || st.heroes.find(h => !h.dead); if (!u) return; const lk = d.gim ? gimLeak(d) : 1;   // 천벌: 마지막 중첩을 쌓은 영웅의 공격력 기준
-    fx(st, { type: 'burst', x: d.x, y: d.y - 14, r: 46, ttl: 0.5, elem: 'light' }); if (!(lk > 0)) return;
-    const v = Math.max(1, Math.round(dotV(u, d, S.smite) * lk * takeAmp(d))); d.hp = Math.max(0, d.hp - v); st.dmgDealt += v; u.dmgOut = (u.dmgOut || 0) + v; text(st, d.x, d.y - 48, '천벌 ' + fmtN(v), 'crit'); if (d.hp <= 0 && !d.dead) kill(st, d, u); }
+    fx(st, { type: 'burst', x: d.x, y: d.y - 14, r: 60, ttl: 0.9, elem: 'light' }); if (!(lk > 0)) { text(st, d.x, d.y - 74, '천벌', 'smite', 3); return; }
+    const v = Math.max(1, Math.round(dotV(u, d, S.smite) * lk * takeAmp(d))); d.hp = Math.max(0, d.hp - v); st.dmgDealt += v; u.dmgOut = (u.dmgOut || 0) + v; text(st, d.x, d.y - 74, '천벌', 'smite', 3); text(st, d.x, d.y - 48, fmtN(v), 'crit', 1.5); st.shake = Math.max(st.shake || 0, 0.25);   /* 금색 큰 글자(게임 3초 = ×3배속 실시간 1초)가 떴다 사라짐 */ if (d.hp <= 0 && !d.dead) kill(st, d, u); }
   function iceOn(st, d) { const S = C.STACK; d.b.frzN = 0; d.iceT = S.iceT; d.iceLk = NOW + S.iceT + (S.iceLock || 0); if (!d.boss) d.b.stunT = Math.max(d.b.stunT || 0, S.iceT); text(st, d.x, d.y - 48, '동결!', 'crit'); fx(st, { type: 'burst', x: d.x, y: d.y - 14, r: 40, ttl: 0.5, elem: 'water' }); }
   const effN = (n) => Math.max(0, (n || 0) - C.STACK.base);   // 효과가 붙는 중첩 수: base중첩까지는 효과 없음(쌓는 영웅 없이도 2~3중첩은 생김 — 쌓는 영웅이 있어야 의미가 있게)
   const takeAmp = (d) => (d.b.comboT > 0 && C.STACK && effN(d.b.comboN) > 0 ? 1 + C.STACK.vuln * effN(d.b.comboN) : 1) * (d.grgT > 0 ? 1 + C.GROGGY.vuln : 1);   // 받는 피해 증폭(질풍 중첩 × 그로기) — 타격·지속 피해·천벌 공통
@@ -75,7 +75,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
   const effAtk = (u) => u.atk * (1 + u.b.atk * BW()) * (u.enr || 1) * (u.frz ? 1 + u.frz * C.GIM.frenzy.amp : 1) * (u.rmp ? 1 + u.rmp * C.GIM.rampage.amp : 1);
   const effDef = (u) => Math.max(0, u.def * (1 + u.b.def * BW()));
   const atkInterval = (u) => 100 / Math.max(20, u.spd * (u.aspd || 1) * (1 + u.b.aspd * BW()) * (u.b.slowT > 0 ? 1 - Math.min(0.9, u.b.slow || 0.3) * BW() : 1) * (u.rmp ? 1 + u.rmp * C.GIM.rampage.spd : 1));
-  const text = (st, x, y, txt, cls) => { if (st.headless) return; if (st.texts.length > 60) st.texts.shift(); let vx = 0; if (!/[가-힣]/.test(txt)) { const n = st.txn = (st.txn || 0) + 1; x += ((n * 37) % 37) - 18; y -= (n % 4) * 7; vx = ((n * 53) % 61) - 30; } st.texts.push({ x, y, txt, cls, ttl: 0.8, vx }); };   // 수치 글자는 흩뿌리고 좌우로 흘려 겹침을 줄임(그리기 전용 — 난수 st.rng는 쓰지 않음)
+  const text = (st, x, y, txt, cls, ttl) => { if (st.headless) return; if (st.texts.length > 60) st.texts.shift(); let vx = 0; if (!/[가-힣]/.test(txt)) { const n = st.txn = (st.txn || 0) + 1; x += ((n * 37) % 37) - 18; y -= (n % 4) * 7; vx = ((n * 53) % 61) - 30; } st.texts.push({ x, y, txt, cls, ttl: ttl || 0.8, vx }); };   // 수치 글자는 흩뿌리고 좌우로 흘려 겹침을 줄임(그리기 전용 — 난수 st.rng는 쓰지 않음)
   const fx = (st, o) => { if (st.headless) return; if (st.fx.length > 60) st.fx.shift(); o.ttl = o.max = o.ttl || 0.3; st.fx.push(o); };
 
   function damage(st, a, d, mult) {
@@ -91,7 +91,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
     if (a.kind === 'hero') mult *= skill ? 1 + (a.skillAmp || 0) + (a._ult ? a.ultAmp || 0 : 0) + (a.b.sklT > 0 ? a.b.skl * BW() : 0) : 1 + (a.basicAmp || 0);   // 장비 옵션: 스킬·궁극기·일반 공격 피해
     if (a.kind === 'hero' && C.STACK) {   // 중첩 연계: 유지형(stk — 이 영웅의 모든 피해가 대상의 중첩당 +per) · 소모형(eat — 고유기가 중첩을 전부 소모하며 중첩당 +per)
       if (a.stkK === undefined) { const s2 = a.skills.find(k => k.stk); a.stkK = s2 ? s2.stk : null; }
-      if (a.stkK) { const n = effN(d.b[a.stkK[0] + 'N']); if (n > 0) mult *= 1 + a.stkK[1] * n; }
+      if (a.stkK) { const n = Math.max(0, (d.b[a.stkK[0] + 'N'] || 0) - (a.stkK[2] != null ? a.stkK[2] : C.STACK.base)); if (n > 0) mult *= 1 + a.stkK[1] * n; }   // stk = [디버프, 중첩당 증가, 이 중첩까지는 효과 없음] — 유지형은 높은 중첩을 지켜야 보상(소모형과 같이 쓰면 거의 못 받음)
       if (skill && a._sk && a._sk.eat) { const f = a._sk.eat[0] + 'N', n = effN(d.b[f]); if (n > 0) { mult *= 1 + a._sk.eat[1] * n; if (EAT) EAT.push([d, f]); } } }
     const r = damage(st, a, d, mult);
     if (r.miss) { text(st, d.x, d.y - 30, '빗나감', 'heal'); return 0; }
@@ -462,7 +462,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
     const p = st.params;
     // 효과·텍스트 수명
     for (const f of st.fx) f.ttl -= dt; st.fx = st.fx.filter(f => f.ttl > 0);
-    for (const tx of st.texts) { tx.ttl -= dt; tx.y -= 28 * dt; if (tx.vx) tx.x += tx.vx * dt; } st.texts = st.texts.filter(t => t.ttl > 0);
+    for (const tx of st.texts) { tx.ttl -= dt; tx.y -= (tx.cls === 'smite' ? 6 : 28) * dt; if (tx.vx) tx.x += tx.vx * dt; } st.texts = st.texts.filter(t => t.ttl > 0);
     for (const m of st.mobs) if (m.dead) m.deadT -= dt; st.mobs = st.mobs.filter(m => !m.dead || m.deadT > 0);
 
     if (st.phase === 'dead') { st.deadT -= dt; if (st.deadT <= 0) { if (p.mode !== 'stage') { st.phase = 'lost'; st.events.push({ t: 'lost' }); } else respawnHeroes(st); } return; }

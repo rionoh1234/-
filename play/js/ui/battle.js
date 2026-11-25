@@ -273,10 +273,11 @@ const BC = {
     // 텍스트
     cx.textAlign = 'center'; cx.lineWidth = 3; cx.strokeStyle = 'rgba(0,0,0,.85)'; cx.lineJoin = 'round';
     for (const t of st.texts) {
-      const a = Math.min(1, t.ttl / 0.3); cx.globalAlpha = a; t._a = (t._a || 0) + dt; const pop = t._a < 0.1 ? 1.55 - t._a * 5.5 : 1;   // 처음 0.1초(실시간) 크게 떴다가 제 크기로
-      const col = { crit: '#ffb347', heal: '#7cf29a', adv: '#ffd27a', dis: '#9fb0d8', enemy: '#ff8080', burn: '#ff9a5a', skill: '#9fe3ff', sig: '#ffd34f', norm: '#ffffff' }[t.cls] || '#fff';
-      cx.font = 'bold ' + Math.round((t.cls === 'crit' ? 16 : t.cls === 'sig' ? 14 : t.cls === 'skill' ? 10 : 12) * pop) + "px 'Pretendard', sans-serif"; cx.fillStyle = col;
-      cx.strokeText(t.txt, t.x, t.y); cx.fillText(t.txt, t.x, t.y);
+      const sm = t.cls === 'smite'; const a = Math.min(1, t.ttl / (sm ? 1.2 : 0.3)); cx.globalAlpha = a; t._a = (t._a || 0) + dt; const pop = t._a < 0.1 ? 1.55 - t._a * 5.5 : 1;   // 처음 0.1초(실시간) 크게 떴다가 제 크기로
+      const col = { crit: '#ffb347', heal: '#7cf29a', adv: '#ffd27a', dis: '#9fb0d8', enemy: '#ff8080', burn: '#ff9a5a', skill: '#9fe3ff', sig: '#ffd34f', smite: '#ffd34f', norm: '#ffffff' }[t.cls] || '#fff';
+      cx.font = (sm ? '900 ' : 'bold ') + Math.round((sm ? 30 : t.cls === 'crit' ? 16 : t.cls === 'sig' ? 14 : t.cls === 'skill' ? 10 : 12) * pop) + "px 'Pretendard', sans-serif"; cx.fillStyle = col;
+      if (sm) { cx.shadowColor = 'rgba(255,211,79,.95)'; cx.shadowBlur = 14; }   // 천벌: 금색 큰 글자 + 빛 번짐, 천천히 사라짐
+      cx.strokeText(t.txt, t.x, t.y); cx.fillText(t.txt, t.x, t.y); if (sm) cx.shadowBlur = 0;
     }
     cx.globalAlpha = 1;
     // 스테이지 전환 암전: gen이 바뀌면 0.5초 동안 검은 화면에서 서서히 밝아짐

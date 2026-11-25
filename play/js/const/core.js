@@ -153,7 +153,7 @@
   C.CNT_CD = T0.cnc != null ? +T0.cnc : 8;     // 파훼 1번 스킬 기본 쿨(★3 실제 약 20초 = 8 × 0.85 × 3)
   C.SUP_CLASS = { 109: 'buff', 59: 'buff', 105: 'buff', 123: 'buff', 127: 'buff', 110: 'debuff', 74: 'debuff', 118: 'debuff', 72: 'debuff', 64: 'debuff' };   // ★3 지원: 아군 버프형 · 상대 디버프형(속성마다 1명씩)
   C.GRANT_CD = T0.gcd != null ? +T0.gcd : 8;   // 파훼 지원 궁극기 기본 쿨 상한(원래 13~15)
-  C.STACK = Object.assign({ on: ['burnT', 'blindT'], max: 10, base: 4, icd: 0.5, dot: 0.3, vuln: 0.12, smite: 19, iceT: 3, iceAmp: 0.5, iceLock: 12 }, T0.stk || {});   // 속성 디버프 중첩(2026-11-25, field.js stackAdd). on = 켜 둔 속성(사용자 '화염이랑 빛만 일단' — 출혈 bleedT·연타 comboT·빙결 frzT는 코드만 있고 꺼 둠). base중첩까지는 효과 없음. 수치는 '디버프 지원 편성 = 지금 같은 속성 프리셋 +20%' 목표로 시뮬
+  C.STACK = Object.assign({ on: ['burnT', 'blindT'], max: 10, base: 4, icd: 1, dot: 0.1, vuln: 0.12, smite: 35, iceT: 3, iceAmp: 0.5, iceLock: 12 }, T0.stk || {});   // 속성 디버프 중첩(2026-11-25, field.js stackAdd). on = 켜 둔 속성(사용자 '화염이랑 빛만 일단' — 출혈 bleedT·연타 comboT·빙결 frzT는 코드만 있고 꺼 둠). base중첩까지는 효과 없음. 수치는 '디버프 지원 편성 = 지금 같은 속성 프리셋 +20%' 목표로 시뮬
   C.GROGGY = Object.assign({ max: 150, strong: 100, freeze: 30, slow: 15, sIcd: 3, wIcd: 10, decay: 6, cdRef: 15, dur: 5, vuln: 2 }, T0.grg || {});   // 보스 그로기 게이지(2026-11-25): field.js grog. 목표 = CC 영웅 1명은 거의 불가·2명 약 20초(게임 시간)마다, 그로기 5초·받는 피해 +200%
   C.GIM_LOCK = T0.gml != null ? +T0.gml : 16;   // 같은 영웅의 파훼는 이 초에 한 번만 인정(field.js lock) — 혼자면 빈틈, 둘이 번갈아 쓰면 메움
   C.GIM_DEB = { armor: 'burn', rampage: 'freeze', barrier: 'combo', frenzy: 'blind', regen: 'bleed' };   // 기믹 ↔ 답 디버프(속성 1:1)
