@@ -10,21 +10,21 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
   let NOW = 0;   // 지금 전투 시각(tick 시작에 갱신) — 영웅별 디버프 만료 기록용
   // 속성 디버프 중첩(2026-11-25 사용자 '한 캐릭터는 쌓고 한 캐릭터는 쌓인 만큼 세지는 시너지'): 속성 디버프(화상·출혈·연타·실명·빙결)가 걸릴 때마다 +1(최대 C.STACK.max, 대상마다 icd초에 한 번), 디버프가 끝나면 0.
   //   화상·출혈 = 지속 피해가 중첩만큼 커짐 · 연타(질풍) = 받는 피해 중첩당 +vuln · 실명(빛) = 가득 차면 천벌(큰 피해) 후 0 · 빙결(서리) = 가득 차면 동결(iceT초 — 맞는 공격 전부 치명타 + 치명타 피해 +iceAmp) 후 0
-  const STK = { burnT: 'burnN', bleedT: 'bleedN', comboT: 'comboN', blindT: 'blindN', frzT: 'frzN' };
+  const STK = { burnT: 'burnN', bleedT: 'bleedN', comboT: 'vsN', blindT: 'blindN', frzT: 'frzN' };   // 질풍: 연타가 걸릴 때 '받는 피해 증가' 중첩(vsN, 자기 타이머 vsT)이 쌓임 — 연타(추가타·장벽 파훼)는 그 위에 따로(2026-11-25 사용자 '받피증 중첩이길 바랐다, 연타는 그 위에 얹어지는 것')
   let STKADD = false;   // 쌓는 영웅(디버프 지원의 부여 효과)이 건 디버프만 중첩을 올린다 — 그 밖의 디버프는 1중첩을 만들 뿐(2026-11-25 사용자 '1중첩부터 효과, 대신 쌓는 캐릭을 넣어야 5~7중첩')
   let CUR = null, EAT = null;   // CUR = 지금 틱의 전투 상태 · EAT = 이번 시전에서 소모할 중첩 [대상, 필드]
   function stackAdd(d, k) { const S = C.STACK, f = STK[k]; if (!S || !f || !S.on.includes(k) || !CUR || !d || d.kind !== 'mob' || d.dead || !SRC) return; const b = d.b;
     if (k === 'frzT' && (d.iceT > 0 || (d.iceLk || 0) > NOW)) return;   // 동결 중·동결 직후 iceLock초는 빙결이 안 쌓임
     if ((b[f + 'Lk'] || 0) > NOW) return;   /* 소모형이 터뜨린 직후 eatLock초는 다시 안 쌓임(유지형과 같이 쓰면 유지형이 손해 — 둘 중 하나를 고르게) */
-    if (!STKADD) { if (!(b[f] > 0)) b[f] = 1; return; } const tk = f + 'At'; if (b[tk] != null && NOW - b[tk] < S.icd && NOW >= b[tk]) return; b[tk] = NOW;
-    b[f] = Math.min(S.max, (b[f] || 0) + 1);
+    if (!STKADD) { if (!(b[f] > 0)) b[f] = 1; if (f === 'vsN') b.vsT = Math.max(b.vsT || 0, 3); return; } const tk = f + 'At'; if (b[tk] != null && NOW - b[tk] < S.icd && NOW >= b[tk]) return; b[tk] = NOW;
+    b[f] = Math.min(S.max, (b[f] || 0) + 1); if (f === 'vsN') b.vsT = Math.max(b.vsT || 0, 3);
     if (b[f] >= S.max) { if (k === 'blindT') smite(CUR, d); else if (k === 'frzT') iceOn(CUR, d); } }
   function smite(st, d) { const S = C.STACK; d.b.blindN = 0; const u = st.heroes.find(h => h.id === SRC && !h.dead) || st.heroes.find(h => !h.dead); if (!u) return; const lk = d.gim ? gimLeak(d) : 1;   // 천벌: 마지막 중첩을 쌓은 영웅의 공격력 기준
     fx(st, { type: 'burst', x: d.x, y: d.y - 14, r: 60, ttl: 0.9, elem: 'light' }); if (!(lk > 0)) { text(st, d.x, d.y - 74, '천벌', 'smite', 3); return; }
     const v = Math.max(1, Math.round(dotV(u, d, S.smite) * lk * takeAmp(d))); d.hp = Math.max(0, d.hp - v); st.dmgDealt += v; u.dmgOut = (u.dmgOut || 0) + v; text(st, d.x, d.y - 74, '천벌', 'smite', 3); text(st, d.x, d.y - 48, fmtN(v), 'crit', 1.5); st.shake = Math.max(st.shake || 0, 0.25);   /* 금색 큰 글자(게임 3초 = ×3배속 실시간 1초)가 떴다 사라짐 */ if (d.hp <= 0 && !d.dead) kill(st, d, u); }
   function iceOn(st, d) { const S = C.STACK; d.b.frzN = 0; d.iceT = S.iceT; d.iceLk = NOW + S.iceT + (S.iceLock || 0); if (!d.boss) d.b.stunT = Math.max(d.b.stunT || 0, S.iceT); text(st, d.x, d.y - 74, '동결', 'ice', 3); st.shake = Math.max(st.shake || 0, 0.2); fx(st, { type: 'burst', x: d.x, y: d.y - 14, r: 40, ttl: 0.5, elem: 'water' }); }
   const effN = (n) => Math.max(0, (n || 0) - C.STACK.base);   // 효과가 붙는 중첩 수: base중첩까지는 효과 없음(쌓는 영웅 없이도 2~3중첩은 생김 — 쌓는 영웅이 있어야 의미가 있게)
-  const windN = (d) => d.b.comboT > 0 && C.STACK ? Math.max(0, (d.b.comboN || 0) - (C.STACK.vulnFrom != null ? C.STACK.vulnFrom : C.STACK.base)) : 0;   // 질풍 중첩: vulnFrom중첩까지는 효과 없음(질풍은 쌓는 영웅 없이도 3~4중첩이 흔해서 문턱을 더 높임)
+  const windN = (d) => d.b.vsT > 0 && C.STACK ? Math.max(0, (d.b.vsN || 0) - (C.STACK.vulnFrom != null ? C.STACK.vulnFrom : C.STACK.base)) : 0;   // 질풍 중첩: vulnFrom중첩까지는 효과 없음(질풍은 쌓는 영웅 없이도 3~4중첩이 흔해서 문턱을 더 높임)
   const takeAmp = (d) => (windN(d) > 0 ? 1 + C.STACK.vuln * windN(d) : 1) * (d.grgT > 0 ? 1 + C.GROGGY.vuln : 1);   // 받는 피해 증폭(질풍 중첩 × 그로기) — 타격·지속 피해·천벌 공통
   function tag(d, k, t) { stackAdd(d, k); if (!d.boss || !SRC) return; const S = d.src || (d.src = {}), m = S[k] || (S[k] = {}); m[SRC] = Math.max(m[SRC] || 0, NOW + (t || 3) * (C.BUFF_DUR || 1)); }   // 이 영웅이 건 몫의 만료(공용 타이머는 다른 영웅 것이 더 길 수 있어서 따로)   // 보스에게 건 디버프를 건 영웅별로 기록(만료 시각)
   function unl(st, d, k) { const m = d.src && d.src[k]; if (!m) return 0; let best = 0; for (const id in m) if (m[id] > st.t && !(d.lk && d.lk[id] > st.t) && (!best || m[id] < m[best])) best = id; return best; }   // 여럿이면 가장 먼저 끝나는 쪽을 씀(오래 남는 디버프는 다음 파훼로)   // 잠기지 않은 영웅의 디버프가 걸려 있으면 그 영웅 id
@@ -324,7 +324,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
     if (b.defT > 0 && (b.defT -= bd) <= 0) b.def = 0;
     if (b.aspdT > 0 && (b.aspdT -= bd) <= 0) b.aspd = 0;
     if (b.slowT > 0) { b.slowT -= bd; if (b.slowT <= 0) b.slow = 0; } if (b.gdrT > 0) b.gdrT -= bd; if (b.stunT > 0) b.stunT -= dt; if (b.tauntT > 0) b.tauntT -= bd;
-    if (u.kind === 'mob') { if (u.iceT > 0) u.iceT -= dt; if (b.burnN && !(b.burnT > 0)) b.burnN = 0; if (b.bleedN && !(b.bleedT > 0)) b.bleedN = 0; if (b.comboN && !(b.comboT > 0)) b.comboN = 0; if (b.blindN && !(b.blindT > 0)) b.blindN = 0; if (b.frzN && !(b.frzT > 0)) b.frzN = 0; }
+    if (u.kind === 'mob') { if (u.iceT > 0) u.iceT -= dt; if (b.burnN && !(b.burnT > 0)) b.burnN = 0; if (b.bleedN && !(b.bleedT > 0)) b.bleedN = 0; if (b.vsT > 0 && (b.vsT -= bd) <= 0) b.vsN = 0; if (b.blindN && !(b.blindT > 0)) b.blindN = 0; if (b.frzN && !(b.frzT > 0)) b.frzN = 0; }
     if (u.boss && C.GROGGY) { if (u.grgT > 0) u.grgT -= dt; else if (u.grg > 0) u.grg = Math.max(0, u.grg - C.GROGGY.decay * dt); }
     if (b.vulnT > 0 && (b.vulnT -= bd) <= 0) b.vuln = 0;
     if (b.sklT > 0 && (b.sklT -= bd) <= 0) b.skl = 0; if (b.comboT > 0) b.comboT -= bd; if (b.gfxT > 0) b.gfxT -= bd; if (b.frzT > 0) b.frzT -= bd; if (b.blindT > 0) b.blindT -= bd; if (b.crtT > 0 && (b.crtT -= bd) <= 0) b.crt = 0; if (b.cdmT > 0 && (b.cdmT -= bd) <= 0) b.cdm = 0;
