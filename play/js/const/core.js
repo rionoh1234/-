@@ -146,7 +146,8 @@
   C.ELEM_FX = { haste: +(T0.efh) || 0.3, radiance: +(T0.efr) || 1.3, might: +(T0.efm) || 0.45, slow: +(T0.efs) || 2.6, focus: +(T0.efc) || 0.2 };   // 1번 스킬 속성 부가 효과(아군 버프) 세기, 4초(화면은 ÷3·×3). 측정(scratchpad bal/fxE.js, 섞은 편성에서 한 명만 켬/끔, 보스 90초 준 피해) 질풍 0.3 +7.0% 기준 — 화염 0.3 +3.7 / 0.6 +9.8 · 서리 1 +2.7 / 2 +5.3(둔화는 받는 피해 -3.3%) · 빛 1.5 +8.2 · 어둠 0.3 +10.8 / 0.6 +22.9 → 각 +7% 안팎
   C.ELEM_FX.frost = C.ELEM_FX.slow; delete C.ELEM_FX.slow;   // 서리 버프형 = 아군 스킬 피해(디버프형 둔화와 분리)
   C.ELEM_TEAM = { might: 'atk', frost: 'skl', haste: 'aspd', radiance: 'cdm', focus: 'crt' };   // 버프형 부가 효과 → 버프 칸(field.js u.b)
-  C.ELEM_DEB = { burn: +(T0.edb) || 3.5, combo: +(T0.edc) || 0.23, blind: +(T0.edl) || 0.5, bleed: +(T0.edd) || 0.3, bleedVuln: +(T0.edv) || 0.32 };   // 디버프형 세기(세기 ÷3·지속 ×3 규칙 적용 — 화상·출혈의 매초 피해, 연타 추가타 비율, 실명 빗나감 확률, 출혈 받는 피해)
+  C.ELEM_DEB = {   // 2026-11-25 사용자 '세 도트 모두 동일해야지': 화상·출혈·중독 1틱 = 공격력 × 3.5 × BUFF_STR × (스킬 피해·치명 기대값·상성·보스 피해, field.js dotV). 출혈 예전 0.3
+    burn: +(T0.edb) || 3.5, combo: +(T0.edc) || 0.23, blind: +(T0.edl) || 0.5, bleed: +(T0.edd) || 3.5, bleedVuln: +(T0.edv) || 0.32 };   // 디버프형 세기(세기 ÷3·지속 ×3 규칙 적용 — 화상·출혈의 매초 피해, 연타 추가타 비율, 실명 빗나감 확률, 출혈 받는 피해)
   C.ELEM_DEBUFFS = ['burn', 'freeze', 'combo', 'blind', 'bleed'];   // 2026-11-20 서리 디버프 둔화 → 빙결(둔화 + 폭주 기믹의 답)
   C.GRANT = { p: +(T0.grp) || 0.5, dur: 7 };   // 2026-11-20 파훼 지원 버프: 아군 공격 1회당 p 확률로 지원의 속성 디버프(일반 스킬 = 시전 시 100% — 사용자 '그 반의 비율'), 7초(다른 궁극기 버프와 같음)
   C.CNT_CD = T0.cnc != null ? +T0.cnc : 8;     // 파훼 1번 스킬 기본 쿨(★3 실제 약 20초 = 8 × 0.85 × 3)

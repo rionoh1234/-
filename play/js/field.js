@@ -53,6 +53,9 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
   const alive = (a) => a.filter(u => !u.dead);
   const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   const BW = () => C.BUFF_STR == null ? 1 : C.BUFF_STR;   // 버프·디버프 세기 배율(지속 ×3과 짝 — const/core.js C.BUFF_DUR)
+  // 지속 피해 세기(2026-11-25 사용자 '도트딜 유의미하게'): 거는 순간 그 영웅의 스킬 피해·치명타 기대값·상성·보스 피해를 곱해 둔다(예전엔 공격력만 → 일반 치명타의 1/30~1/150). 피해는 건 영웅 몫(dmgOut)으로 셈
+  const dotV = (u, d, k, key) => { let v = effAtk(u) * k; if (u && u.kind === 'hero') { const cr = Math.min(0.95, (u.crit || 0.05) + (u.b.crtT > 0 ? u.b.crt * BW() : 0)), cd = (u.cdmg || 1.5) + (u.b.cdmT > 0 ? u.b.cdm * BW() : 0);
+    v *= (1 + (u.skillAmp || 0) + (u.b.sklT > 0 ? u.b.skl * BW() : 0)) * (1 + cr * (cd - 1)) * C.elemMult(u.elem, d.elem) * (d.boss && u.bossDmg ? 1 + u.bossDmg : 1) * (C.DOT_MULT || 1); if (key) d.b[key + 'By'] = u; } return v; };
   const effAtk = (u) => u.atk * (1 + u.b.atk * BW()) * (u.enr || 1) * (u.frz ? 1 + u.frz * C.GIM.frenzy.amp : 1) * (u.rmp ? 1 + u.rmp * C.GIM.rampage.amp : 1);
   const effDef = (u) => Math.max(0, u.def * (1 + u.b.def * BW()));
   const atkInterval = (u) => 100 / Math.max(20, u.spd * (u.aspd || 1) * (1 + u.b.aspd * BW()) * (u.b.slowT > 0 ? 1 - Math.min(0.9, u.b.slow || 0.3) * BW() : 1) * (u.rmp ? 1 + u.rmp * C.GIM.rampage.spd : 1));
@@ -167,13 +170,13 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
   }
   function applyDeb(st, u, d, k) {   // 속성 디버프 1종 걸기(일반 스킬 fx와 같은 세기·지속) — 파훼 지원 버프용
     const DB = C.ELEM_DEB;
-    if (k === 'burn') { d.b.burn = Math.max(d.b.burnT > 0 ? d.b.burn : 0, effAtk(u) * DB.burn); d.b.burnT = Math.max(d.b.burnT || 0, 3); tag(d, 'burnT'); d.b.burnTick = d.b.burnTick || 0; armorBreak(st, d); }
+    if (k === 'burn') { d.b.burn = Math.max(d.b.burnT > 0 ? d.b.burn : 0, dotV(u, d, DB.burn, 'burn')); d.b.burnT = Math.max(d.b.burnT || 0, 3); tag(d, 'burnT'); d.b.burnTick = d.b.burnTick || 0; armorBreak(st, d); }
     else if (k === 'freeze' || k === 'slow') slowOn(st, u, d, 3);
     else if (k === 'combo') { d.b.comboT = Math.max(d.b.comboT || 0, 3); tag(d, 'comboT'); }
     else if (k === 'blind') { d.b.blindT = Math.max(d.b.blindT || 0, 3); tag(d, 'blindT'); if (d.boss) interrupt(st, d); }
     else if (k === 'bleed') bleedOn(st, u, d, 3, 1);
   }
-  function bleedOn(st, u, d, t, mul) { const DB = C.ELEM_DEB; d.b.bleed = Math.max(d.b.bleedT > 0 ? d.b.bleed : 0, effAtk(u) * DB.bleed * (mul || 1)); d.b.bleedT = Math.max(d.b.bleedT || 0, t || 3); tag(d, 'bleedT', t); d.b.bleedTick = d.b.bleedTick || 0; d.b.vuln = Math.max(d.b.vulnT > 0 ? d.b.vuln : 0, DB.bleedVuln); d.b.vulnT = Math.max(d.b.vulnT || 0, t || 3); armorBreak(st, d); }
+  function bleedOn(st, u, d, t, mul) { const DB = C.ELEM_DEB; d.b.bleed = Math.max(d.b.bleedT > 0 ? d.b.bleed : 0, dotV(u, d, DB.bleed * (mul || 1), 'bleed')); d.b.bleedT = Math.max(d.b.bleedT || 0, t || 3); tag(d, 'bleedT', t); d.b.bleedTick = d.b.bleedTick || 0; d.b.vuln = Math.max(d.b.vulnT > 0 ? d.b.vuln : 0, DB.bleedVuln); d.b.vulnT = Math.max(d.b.vulnT || 0, t || 3); armorBreak(st, d); }
   function castOnce(st, u, sk, tgt) {
     const isHero = u.kind === 'hero';
     const mates = alive(isHero ? st.heroes : st.mobs);
@@ -182,11 +185,11 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
     const applyFx = (d, dealt) => {
       if (!sk.fx) return;
       if (!d || !C.ELEM_DEBUFFS.includes(sk.fx)) return; fxDone = true; const DB = C.ELEM_DEB;
-      if (sk.fx === 'burn') { d.b.burn = effAtk(u) * DB.burn; d.b.burnT = 3; tag(d, 'burnT'); d.b.burnTick = 0; }
+      if (sk.fx === 'burn') { d.b.burn = Math.max(d.b.burnT > 0 ? d.b.burn : 0, dotV(u, d, DB.burn, 'burn')); d.b.burnT = 3; tag(d, 'burnT'); d.b.burnTick = 0; }
       if (sk.fx === 'freeze' || sk.fx === 'slow') slowOn(st, u, d, 3);
       if (sk.fx === 'combo') { d.b.comboT = Math.max(d.b.comboT || 0, 3); tag(d, 'comboT'); }
       if (sk.fx === 'blind') { d.b.blindT = Math.max(d.b.blindT || 0, 3); tag(d, 'blindT'); if (d.boss) interrupt(st, d); }
-      if (sk.fx === 'bleed') { d.b.bleed = Math.max(d.b.bleedT > 0 ? d.b.bleed : 0, effAtk(u) * DB.bleed); d.b.bleedT = 3; tag(d, 'bleedT'); d.b.bleedTick = d.b.bleedTick || 0; d.b.vuln = Math.max(d.b.vulnT > 0 ? d.b.vuln : 0, DB.bleedVuln); d.b.vulnT = Math.max(d.b.vulnT || 0, 3); armorBreak(st, d); }
+      if (sk.fx === 'bleed') { d.b.bleed = Math.max(d.b.bleedT > 0 ? d.b.bleed : 0, dotV(u, d, DB.bleed, 'bleed')); d.b.bleedT = 3; tag(d, 'bleedT'); d.b.bleedTick = d.b.bleedTick || 0; d.b.vuln = Math.max(d.b.vulnT > 0 ? d.b.vuln : 0, DB.bleedVuln); d.b.vulnT = Math.max(d.b.vulnT || 0, 3); armorBreak(st, d); }
       if (sk.fx === 'vuln' && d) { d.b.vuln = Math.max(d.b.vulnT > 0 ? d.b.vuln : 0, 0.2); d.b.vulnT = Math.max(d.b.vulnT || 0, 3); }   // 어둠 표식(2026-11-16, 흡혈 대체 — 흡혈은 측정 효과 0): 받는 피해 20%↑ 3초(세기·지속 배율 적용 → 6.7% 9초)
     };
     let ok = true;
@@ -219,7 +222,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
         for (let i = 0; i < sk.n && cur; i++) { seen.add(cur); pts.push({ x: cur.x, y: cur.y - 14 }); hit(st, u, cur, sk.mult * (1 - i * 0.08), true); cur = nearest(cur, foes.filter(f => !seen.has(f) && !f.dead && dist(f, cur) < 120)); }
         fx(st, { type: 'bolt', pts, ttl: 0.4, elem: u.elem }); break; }
       case 'meteor': { if (!tgt) return false; const cx = tgt.x, cy = tgt.y; const fs = alive(isHero ? st.mobs : st.heroes).filter(f => Math.hypot(f.x - cx, f.y - cy) <= sk.r); fx(st, { type: 'burst', x: cx, y: cy - 10, r: sk.r, ttl: 0.55, elem: u.elem });
-        for (const f of fs) { hit(st, u, f, sk.mult, true); if (sk.burn) { f.b.burn = effAtk(u) * 0.15; f.b.burnT = 3; tag(f, 'burnT'); f.b.burnTick = 0; } } break; }
+        for (const f of fs) { hit(st, u, f, sk.mult, true); if (sk.burn) { f.b.burn = Math.max(f.b.burnT > 0 ? f.b.burn : 0, dotV(u, f, C.ELEM_DEB.burn, 'burn')); f.b.burnT = 3; tag(f, 'burnT'); f.b.burnTick = 0; } } break; }
       case 'execute': { if (!tgt) return false; const low = tgt.hp / tgt.maxHp <= sk.th; fx(st, { type: 'slash', x: tgt.x, y: tgt.y - 14, ttl: 0.35, elem: u.elem, big: true }); const v = hit(st, u, tgt, sk.mult * (low ? 2 : 1), true); if (low) text(st, tgt.x, tgt.y - 40, '처형!', 'crit'); if (sk.drain) heal(st, u, u, v * sk.drain); break; }
       case 'whirl': { const fs = foesInRange(st, u, sk.r); if (!fs.length) return false; for (let i = 0; i < sk.hits; i++) { fx(st, { type: 'ring', x: u.x, y: u.y - 10, r: sk.r * (0.6 + i * 0.1), ttl: 0.25 + i * 0.07, elem: u.elem }); for (const f of fs) if (!f.dead) hit(st, u, f, sk.mult, true); } break; }
       case 'shield': { for (const m of mates) { m.shield = Math.max(m.shield, m.maxHp * sk.pct); m.shieldT = sk.sdur || 8; m.reflect = sk.reflect || 0; if (sk.heal) heal(st, u, m, effAtk(u) * sk.heal * (1 + u.healBonus)); fx(st, { type: 'aura', x: m.x, y: m.y - 12, r: 28, ttl: 0.6, elem: u.elem }); } if (sk.selfDef) { u.b.def = Math.max(u.b.def, sk.selfDef); u.b.defT = sk.dur || 6; } break; }
@@ -227,14 +230,14 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
         else { if (!mates.some(m => m.hp / m.maxHp < 0.85)) return false; for (const m of mates) { fx(st, { type: 'healfx', x: m.x, y: m.y - 14, ttl: 0.6 }); heal(st, u, m, effAtk(u) * sk.mult * (1 + u.healBonus)); } } fx(st, { type: 'burst', x: u.x, y: u.y - 12, r: 70, ttl: 0.6, elem: 'light' }); break; }
       case 'sanctuary': { for (const m of mates) { m.b.hot = effAtk(u) * sk.mult * (1 + u.healBonus); m.b.hotT = 5; m.b.hotTick = 0; m.b.def = Math.max(m.b.def, sk.def || 0.3); m.b.defT = 5; } fx(st, { type: 'burst', x: u.x, y: u.y - 12, r: 90, ttl: 0.7, elem: 'light' }); break; }
       case 'mark': { const fs = foesInRange(st, u, 120); if (!fs.length) return false; for (const f of fs) { f.b.vuln = Math.max(f.b.vuln, sk.pct); f.b.vulnT = sk.dur || 6; armorBreak(st, f); fx(st, { type: 'stun', x: f.x, y: f.y - 38, ttl: 1.0, glyph: '᛭' }); } fx(st, { type: 'ring', x: u.x, y: u.y - 10, r: 120, ttl: 0.5, elem: u.elem }); break; }
-      case 'plague': { const fs = foesInRange(st, u, 120); if (!fs.length) return false; for (const f of fs) { f.b.psn = effAtk(u) * sk.mult; f.b.psnT = 5; f.b.psnTick = 0; if (sk.hVuln) { f.b.vuln = Math.max(f.b.vuln, sk.hVuln); f.b.vulnT = 5; armorBreak(st, f); } if (sk.hSlow) slowOn(st, u, f, sk.hSlow); } fx(st, { type: 'burst', x: u.x, y: u.y - 10, r: 120, ttl: 0.6, elem: 'dark' }); break; }
+      case 'plague': { const fs = foesInRange(st, u, 120); if (!fs.length) return false; for (const f of fs) { f.b.psn = Math.max(f.b.psnT > 0 ? f.b.psn : 0, dotV(u, f, C.ELEM_DEB.burn, 'psn')); f.b.psnT = 3; f.b.psnTick = 0; if (sk.hVuln) { f.b.vuln = Math.max(f.b.vuln, sk.hVuln); f.b.vulnT = 5; armorBreak(st, f); } if (sk.hSlow) slowOn(st, u, f, sk.hSlow); } fx(st, { type: 'burst', x: u.x, y: u.y - 10, r: 120, ttl: 0.6, elem: 'dark' }); break; }
       case 'line': { if (!tgt) return false; const dx = tgt.x - u.x, dy = tgt.y - u.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
         const fs = alive(isHero ? st.mobs : st.heroes).filter(f => { const px = f.x - u.x, py = f.y - u.y, t = px * ux + py * uy, perp = Math.abs(px * uy - py * ux); return t >= -10 && t <= sk.len && perp <= sk.w / 2; });
         fx(st, { type: 'beam', x: u.x, y: u.y - 14, x2: u.x + ux * sk.len, y2: u.y - 14 + uy * sk.len, w: sk.w, ttl: 0.4, elem: u.elem });
-        for (const f of fs) { hit(st, u, f, sk.mult, true); if (sk.burn) { f.b.burn = effAtk(u) * 0.15; f.b.burnT = 3; tag(f, 'burnT'); f.b.burnTick = 0; } }
+        for (const f of fs) { hit(st, u, f, sk.mult, true); if (sk.burn) { f.b.burn = Math.max(f.b.burnT > 0 ? f.b.burn : 0, dotV(u, f, C.ELEM_DEB.burn, 'burn')); f.b.burnT = 3; tag(f, 'burnT'); f.b.burnTick = 0; } }
         if (sk.buff) for (const m of mates) { m.b.atk = Math.max(m.b.atk, sk.buff); m.b.atkT = sk.dur || 5; } break; }
       case 'nova': { const fs = foesInRange(st, u, sk.r); if (!fs.length) return false; fx(st, { type: 'burst', x: u.x, y: u.y - 10, r: sk.r, ttl: 0.5, elem: u.elem });
-        for (const f of fs) { hit(st, u, f, sk.mult, true); if (sk.burn) { f.b.burn = effAtk(u) * 0.15; f.b.burnT = 3; tag(f, 'burnT'); f.b.burnTick = 0; } if (!f.boss && sk.kb) { const d = dist(u, f) || 1; f.x += (f.x - u.x) / d * sk.kb; f.y += (f.y - u.y) / d * sk.kb; } if (sk.stun && stun(st, f, sk.stun)) fx(st, { type: 'stun', x: f.x, y: f.y - 36, ttl: sk.stun }); }
+        for (const f of fs) { hit(st, u, f, sk.mult, true); if (sk.burn) { f.b.burn = Math.max(f.b.burnT > 0 ? f.b.burn : 0, dotV(u, f, C.ELEM_DEB.burn, 'burn')); f.b.burnT = 3; tag(f, 'burnT'); f.b.burnTick = 0; } if (!f.boss && sk.kb) { const d = dist(u, f) || 1; f.x += (f.x - u.x) / d * sk.kb; f.y += (f.y - u.y) / d * sk.kb; } if (sk.stun && stun(st, f, sk.stun)) fx(st, { type: 'stun', x: f.x, y: f.y - 36, ttl: sk.stun }); }
         if (sk.selfDef) { u.b.def = Math.max(u.b.def, sk.selfDef); u.b.defT = sk.dur || 6; } break; }   // stun·selfDef: 108 마그나(2026-11-19)
       case 'dive': { const foes = alive(isHero ? st.mobs : st.heroes); if (!foes.length) return false; let best = foes[0], bn = -1; for (const f of foes) { const n = foes.filter(o => dist(o, f) < sk.r).length; if (n > bn) { bn = n; best = f; } }
         fx(st, { type: 'beam', x: u.x, y: u.y - 14, x2: best.x, y2: best.y - 14, w: 8, ttl: 0.25, elem: u.elem }); u.x = best.x - 12 * (best.x >= u.x ? 1 : -1); u.y = best.y; clamp(u);
@@ -276,7 +279,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
     if (sk.grant) for (const m of mates) { m.b.gfx = sk.grant; m.b.gfxT = sk.gdur || C.GRANT.dur; m.b.gfxBy = u.id; fx(st, { type: 'aura', x: m.x, y: m.y - 12, r: 28, ttl: 0.6, elem: u.elem }); }
     if (sk.lsBuff) { u.lsBuff = sk.lsBuff; u.lsBuffT = sk.dur || 7; }
     if (sk.postNova) { const n = sk.postNova; const fs = foesInRange(st, u, n.r); fx(st, { type: 'burst', x: u.x, y: u.y - 10, r: n.r, ttl: 0.55, elem: u.elem });
-      for (const f of fs) { if (n.mult) hit(st, u, f, n.mult, true); if (n.stun) stun(st, f, n.stun); if (n.burn) { f.b.burn = effAtk(u) * 0.15; f.b.burnT = 3; tag(f, 'burnT'); f.b.burnTick = 0; } if (n.bleed) bleedOn(st, u, f, n.bleedT || 3, n.bleedMul || 1); if (n.vuln) { f.b.vuln = Math.max(f.b.vulnT > 0 ? f.b.vuln : 0, n.vuln); f.b.vulnT = Math.max(f.b.vulnT || 0, n.vulnT || 5); } if (n.blind) { f.b.blindT = Math.max(f.b.blindT || 0, n.blind); tag(f, 'blindT'); if (f.boss) interrupt(st, f); } } }
+      for (const f of fs) { if (n.mult) hit(st, u, f, n.mult, true); if (n.stun) stun(st, f, n.stun); if (n.burn) { f.b.burn = Math.max(f.b.burnT > 0 ? f.b.burn : 0, dotV(u, f, C.ELEM_DEB.burn, 'burn')); f.b.burnT = 3; tag(f, 'burnT'); f.b.burnTick = 0; } if (n.bleed) bleedOn(st, u, f, n.bleedT || 3, n.bleedMul || 1); if (n.vuln) { f.b.vuln = Math.max(f.b.vulnT > 0 ? f.b.vuln : 0, n.vuln); f.b.vulnT = Math.max(f.b.vulnT || 0, n.vulnT || 5); } if (n.blind) { f.b.blindT = Math.max(f.b.blindT || 0, n.blind); tag(f, 'blindT'); if (f.boss) interrupt(st, f); } } }
     // 2026-11-20 신규 ★3 20인용: 적 전체 둔화 · 아군(또는 자신) 받는 피해 감소(gdr — 세기·지속 배율 규칙 그대로)
     if (sk.postSlow) { for (const f of foesInRange(st, u, 220)) { slowOn(st, u, f, sk.postSlow); f.b.slow = Math.max(f.b.slow || 0, 0.3); } fx(st, { type: 'ring', x: u.x, y: u.y - 10, r: 120, ttl: 0.45, elem: 'water' }); }
     if (sk.postDr) { const [v, d] = sk.postDr; for (const m of (sk.drSelf ? [u] : mates)) { m.b.gdr = Math.max(m.b.gdrT > 0 ? m.b.gdr : 0, v); m.b.gdrT = Math.max(m.b.gdrT || 0, d); fx(st, { type: 'aura', x: m.x, y: m.y - 12, r: 24, ttl: 0.5, elem: u.elem }); } }
@@ -293,9 +296,9 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
     if (u.shieldT > 0 && (u.shieldT -= bd) <= 0) { u.shield = 0; u.reflect = 0; }
     if (u.lsBuffT > 0) u.lsBuffT -= bd;
     if (b.hotT > 0) { b.hotT -= bd; b.hotTick += dt; if (b.hotTick >= 1) { b.hotTick -= 1; heal(st, u, u, b.hot * dk); } }
-    if (b.bleedT > 0) { b.bleedT -= bd; b.bleedTick += dt; if (b.bleedTick >= 1) { b.bleedTick -= 1; const lk = u.gim ? gimLeak(u) : 1; if (lk > 0) { const v = Math.max(1, Math.round(b.bleed * dk * lk)); u.hp = Math.max(0, u.hp - v); if (u.kind === 'mob') st.dmgDealt += v; text(st, u.x, u.y - 26, fmtN(v), 'burn'); if (u.hp <= 0 && !u.dead) kill(st, u, null); } } }
-    if (b.burnT > 0) { b.burnT -= bd; b.burnTick += dt; if (b.burnTick >= 1) { b.burnTick -= 1; const lk = u.gim ? gimLeak(u) : 1; if (lk > 0) { const v = Math.max(1, Math.round(b.burn * dk * lk)); u.hp = Math.max(0, u.hp - v); if (u.kind === 'mob') st.dmgDealt += v; text(st, u.x, u.y - 26, '🔥' + fmtN(v), 'burn'); if (u.hp <= 0 && !u.dead) kill(st, u, null); } } }
-    if (b.psnT > 0) { b.psnT -= bd; b.psnTick += dt; if (b.psnTick >= 1) { b.psnTick -= 1; const lk = u.gim ? gimLeak(u) : 1; if (lk > 0) { const v = Math.max(1, Math.round(b.psn * dk * lk)); u.hp = Math.max(0, u.hp - v); if (u.kind === 'mob') st.dmgDealt += v; text(st, u.x, u.y - 26, '☠' + fmtN(v), 'burn'); if (u.hp <= 0 && !u.dead) kill(st, u, null); } } }   // 중독(사령왕 역병) — 2026-11-20 화상과 분리: 화상만 철갑을 벗김
+    if (b.bleedT > 0) { b.bleedT -= bd; b.bleedTick += dt; if (b.bleedTick >= 1) { b.bleedTick -= 1; const lk = u.gim ? gimLeak(u) : 1; if (lk > 0) { const v = Math.max(1, Math.round(b.bleed * dk * lk * (b.vulnT > 0 ? 1 + b.vuln * dk : 1))); u.hp = Math.max(0, u.hp - v); if (u.kind === 'mob') { st.dmgDealt += v; const by = b.bleedBy; if (by && by.kind === 'hero') by.dmgOut = (by.dmgOut || 0) + v; } text(st, u.x, u.y - 26, fmtN(v), 'burn'); if (u.hp <= 0 && !u.dead) kill(st, u, null); } } }
+    if (b.burnT > 0) { b.burnT -= bd; b.burnTick += dt; if (b.burnTick >= 1) { b.burnTick -= 1; const lk = u.gim ? gimLeak(u) : 1; if (lk > 0) { const v = Math.max(1, Math.round(b.burn * dk * lk * (b.vulnT > 0 ? 1 + b.vuln * dk : 1))); u.hp = Math.max(0, u.hp - v); if (u.kind === 'mob') { st.dmgDealt += v; const by = b.burnBy; if (by && by.kind === 'hero') by.dmgOut = (by.dmgOut || 0) + v; } text(st, u.x, u.y - 26, '🔥' + fmtN(v), 'burn'); if (u.hp <= 0 && !u.dead) kill(st, u, null); } } }
+    if (b.psnT > 0) { b.psnT -= bd; b.psnTick += dt; if (b.psnTick >= 1) { b.psnTick -= 1; const lk = u.gim ? gimLeak(u) : 1; if (lk > 0) { const v = Math.max(1, Math.round(b.psn * dk * lk * (b.vulnT > 0 ? 1 + b.vuln * dk : 1))); u.hp = Math.max(0, u.hp - v); if (u.kind === 'mob') { st.dmgDealt += v; const by = b.psnBy; if (by && by.kind === 'hero') by.dmgOut = (by.dmgOut || 0) + v; } text(st, u.x, u.y - 26, '☠' + fmtN(v), 'burn'); if (u.hp <= 0 && !u.dead) kill(st, u, null); } } }   // 중독(사령왕 역병) — 2026-11-20 화상과 분리: 화상만 철갑을 벗김
   }
   function moveToward(u, tx, ty, speed, dt, stopAt) {
     const dx = tx - u.x, dy = ty - u.y, d = Math.hypot(dx, dy); if (d <= stopAt) return;
