@@ -5,6 +5,7 @@
   const TF = g.TUNE || {};
   const REGEN_FIGHT = TF.rgc != null && TF.rgc !== '' && !isNaN(+TF.rgc) ? +TF.rgc : (C.REGEN_FIGHT != null ? C.REGEN_FIGHT : 0.004);   // 전투 중 자연 회복(초당 최대 체력 비율)
 const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'resurrect', 'anthem']);   // 치유가 사거리와 무관하게 쓰는 회복·보호 스킬
+  let SKCD = 0;   // 지금 시전 중인 스킬의 쿨(그로기 게이지 가산 비례용, castSkill에서 설정 — 시전 후 효과(postFx)까지 유지)
   let SRC = 0;   // 2026-11-20 파훼 잠금: 지금 디버프를 거는 영웅(id) — 같은 영웅의 파훼는 C.GIM_LOCK초에 한 번만 인정
   let NOW = 0;   // 지금 전투 시각(tick 시작에 갱신) — 영웅별 디버프 만료 기록용
   function tag(d, k, t) { if (!d.boss || !SRC) return; const S = d.src || (d.src = {}), m = S[k] || (S[k] = {}); m[SRC] = Math.max(m[SRC] || 0, NOW + (t || 3) * (C.BUFF_DUR || 1)); }   // 이 영웅이 건 몫의 만료(공용 타이머는 다른 영웅 것이 더 길 수 있어서 따로)   // 보스에게 건 디버프를 건 영웅별로 기록(만료 시각)
@@ -113,7 +114,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
   function grog(st, f, kind) { const Gg = C.GROGGY; if (!Gg || !f || !f.boss || f.dead || f.grgT > 0) return;
     if (kind === 'strong') { const m = f.grgS || (f.grgS = {}); if (m[SRC] != null && st.t - m[SRC] < Gg.sIcd) return; m[SRC] = st.t; }   // 같은 영웅의 강한 CC는 sIcd초에 한 번(다단 히트 기절 중복 방지)
     else { const m = f.grgW || (f.grgW = {}); if (m[kind] != null && st.t - m[kind] < Gg.wIcd) return; m[kind] = st.t; }   // 약한 CC는 종류별 wIcd초에 한 번
-    let add = Gg[kind]; if (kind === 'strong') { const h = st.heroes.find(x => x.id === SRC), cd = h && h._sk && h._sk.cd; if (cd) add *= Math.max(0.4, Math.min(1.4, cd / Gg.cdRef)); }   // 강한 CC는 그 스킬 쿨에 비례(쿨 cdRef초 = 100%) — 쿨 짧은 CC 영웅 혼자 채우지 못하게
+    let add = Gg[kind]; if (kind === 'strong') { const cd = SKCD; if (cd) add *= Math.max(0.4, Math.min(1.4, cd / Gg.cdRef)); }   // 강한 CC는 그 스킬 쿨에 비례(쿨 cdRef초 = 100%) — 쿨 짧은 CC 영웅 혼자 채우지 못하게
     f.grg = (f.grg || 0) + add;
     if (f.grg >= Gg.max) { f.grg = 0; f.grgT = Gg.dur; f.grgN = (f.grgN || 0) + 1; f.b.stunT = Math.max(f.b.stunT || 0, Gg.dur); text(st, f.x, f.y - 62, '그로기!', 'crit'); fx(st, { type: 'stun', x: f.x, y: f.y - 44, ttl: Gg.dur }); st.events.push({ t: 'groggy' }); } }
   function stun(st, f, dur) {   // 기절: 일반 적은 기절, 보스는 기절 면역이지만 격분을 모으는 중이면 끊는다. 돌려주는 값 = 실제로 기절했는지
@@ -238,7 +239,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
         else { if (!mates.some(m => m.hp / m.maxHp < 0.85)) return false; for (const m of mates) { fx(st, { type: 'healfx', x: m.x, y: m.y - 14, ttl: 0.6 }); heal(st, u, m, effAtk(u) * sk.mult * (1 + u.healBonus)); } } fx(st, { type: 'burst', x: u.x, y: u.y - 12, r: 70, ttl: 0.6, elem: 'light' }); break; }
       case 'sanctuary': { for (const m of mates) { m.b.hot = effAtk(u) * sk.mult * (1 + u.healBonus); m.b.hotT = 5; m.b.hotTick = 0; m.b.def = Math.max(m.b.def, sk.def || 0.3); m.b.defT = 5; } fx(st, { type: 'burst', x: u.x, y: u.y - 12, r: 90, ttl: 0.7, elem: 'light' }); break; }
       case 'mark': { const fs = foesInRange(st, u, 120); if (!fs.length) return false; for (const f of fs) { f.b.vuln = Math.max(f.b.vuln, sk.pct); f.b.vulnT = sk.dur || 6; armorBreak(st, f); fx(st, { type: 'stun', x: f.x, y: f.y - 38, ttl: 1.0, glyph: '᛭' }); } fx(st, { type: 'ring', x: u.x, y: u.y - 10, r: 120, ttl: 0.5, elem: u.elem }); break; }
-      case 'plague': { const fs = foesInRange(st, u, 120); if (!fs.length) return false; for (const f of fs) { f.b.psn = Math.max(f.b.psnT > 0 ? f.b.psn : 0, dotV(u, f, C.ELEM_DEB.burn, 'psn')); f.b.psnT = 3; f.b.psnTick = 0; if (sk.hVuln) { f.b.vuln = Math.max(f.b.vuln, sk.hVuln); f.b.vulnT = 5; armorBreak(st, f); } if (sk.hSlow) slowOn(st, u, f, sk.hSlow); } fx(st, { type: 'burst', x: u.x, y: u.y - 10, r: 120, ttl: 0.6, elem: 'dark' }); break; }
+      case 'plague': { const fs = foesInRange(st, u, 120); if (!fs.length) return false; for (const f of fs) { f.b.psn = Math.max(f.b.psnT > 0 ? f.b.psn : 0, dotV(u, f, C.ELEM_DEB.burn * (sk.dotMul || 1), 'psn')); f.b.psnT = 3; f.b.psnTick = 0; if (sk.hVuln) { f.b.vuln = Math.max(f.b.vuln, sk.hVuln); f.b.vulnT = 5; armorBreak(st, f); } if (sk.hSlow) slowOn(st, u, f, sk.hSlow); } fx(st, { type: 'burst', x: u.x, y: u.y - 10, r: 120, ttl: 0.6, elem: 'dark' }); break; }
       case 'line': { if (!tgt) return false; const dx = tgt.x - u.x, dy = tgt.y - u.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
         const fs = alive(isHero ? st.mobs : st.heroes).filter(f => { const px = f.x - u.x, py = f.y - u.y, t = px * ux + py * uy, perp = Math.abs(px * uy - py * ux); return t >= -10 && t <= sk.len && perp <= sk.w / 2; });
         fx(st, { type: 'beam', x: u.x, y: u.y - 14, x2: u.x + ux * sk.len, y2: u.y - 14 + uy * sk.len, w: sk.w, ttl: 0.4, elem: u.elem });
@@ -251,7 +252,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
         fx(st, { type: 'beam', x: u.x, y: u.y - 14, x2: best.x, y2: best.y - 14, w: 8, ttl: 0.25, elem: u.elem }); u.x = best.x - 12 * (best.x >= u.x ? 1 : -1); u.y = best.y; clamp(u);
         fx(st, { type: 'burst', x: best.x, y: best.y - 10, r: sk.r, ttl: 0.5, elem: u.elem });
         for (const f of foes.filter(o => dist(o, best) <= sk.r)) { hit(st, u, f, sk.mult, true); if (sk.stun) stun(st, f, sk.stun); } break; }
-      case 'timestop': { const fs = foesInRange(st, u, sk.r); if (!fs.length) return false; fx(st, { type: 'burst', x: u.x, y: u.y - 10, r: sk.r, ttl: 0.7, elem: 'water' }); for (const f of fs) { f.b.stunT = Math.max(f.b.stunT, f.boss ? 1 : sk.dur); if (f.boss) stun(st, f, 1); if (u.elem === 'water') slowOn(st, u, f, sk.dur); hit(st, u, f, sk.mult, true); } break; }   /* 서리의 동결(절대영도 등) = 빙결 */
+      case 'timestop': { const fs = foesInRange(st, u, sk.r); if (!fs.length) return false; fx(st, { type: 'burst', x: u.x, y: u.y - 10, r: sk.r, ttl: 0.7, elem: 'water' }); for (const f of fs) { if (sk.hard) { f.b.stunT = Math.max(f.b.stunT, f.boss ? 1 : sk.dur); if (f.boss) stun(st, f, 1); } slowOn(st, u, f, sk.dur); hit(st, u, f, sk.mult, true); } break; }   /* 2026-11-25: 기본은 빙결(둔화)만 — 전용장비(hard)일 때만 기절(하드 CC) */   /* 서리의 동결(절대영도 등) = 빙결 */
       case 'vortex': { if (!tgt) return false; const cx = tgt.x, cy = tgt.y; const fs = alive(isHero ? st.mobs : st.heroes).filter(f => Math.hypot(f.x - cx, f.y - cy) <= sk.r); fx(st, { type: 'vortex', x: cx, y: cy - 10, r: sk.r * 0.6, ttl: 0.8, elem: u.elem });
         for (const f of fs) { if (!f.boss) { f.x += (cx - f.x) * 0.75; f.y += (cy - f.y) * 0.75; } else if (isHero) grog(st, f, 'strong'); if (!sk.noSlow) slowOn(st, u, f, 3); hit(st, u, f, sk.mult, true); } break; }
       case 'berserk': { if (!tgt) return false; if (!sk.noCost) u.hp = Math.max(1, u.hp - u.maxHp * 0.1); u.b.atk = Math.max(u.b.atk, sk.atk); u.b.atkT = sk.dur || 6; u.b.aspd = Math.max(u.b.aspd, sk.aspd); u.b.aspdT = sk.dur || 6; fx(st, { type: 'aura', x: u.x, y: u.y - 12, r: 34, ttl: 0.8, elem: 'fire' }); break; }
@@ -265,7 +266,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
 
   // 스킬 시전 래퍼: 전용장비 특수 옵션(반복 시전·적중 효과·시전 후 효과)을 처리한다
   function castSkill(st, u, sk, tgt) {
-    const isHero = u.kind === 'hero'; u._ult = !!sk.ult; u._sk = sk; if (isHero) SRC = u.id;
+    const isHero = u.kind === 'hero'; u._ult = !!sk.ult; u._sk = sk; if (isHero) { SRC = u.id; SKCD = sk.cd || 0; }
     let ok = castOnce(st, u, sk, tgt);
     if (ok && sk.team && isHero) { const [k, v, dur] = sk.team; for (const m of alive(st.heroes)) { m.b[k] = Math.max(m.b[k + 'T'] > 0 ? m.b[k] || 0 : 0, v); m.b[k + 'T'] = Math.max(m.b[k + 'T'] || 0, dur); } }   // 지원 1번의 아군 공격 효과(2026-11-16): [능력치 칸, 세기, 지속] — skl 스킬 피해 · cdm 치명타 피해 · atk 공격력
     if (ok && sk.repeat > 1) { const foes = alive(u.kind === 'hero' ? st.mobs : st.heroes); for (let i = 1; i < sk.repeat && foes.length; i++) { const t2 = foes[Math.floor(st.rng() * foes.length)]; if (!t2.dead) castOnce(st, u, sk, t2); } }
@@ -274,6 +275,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
     if (ok && sk.fx && C.ELEM_TEAM[sk.fx]) {   // 1번 스킬 속성 부가 효과 = 아군 전체 버프(2026-11-17 사용자: 화염 공격력 · 서리 스킬 피해(+둔화) · 질풍 공속 · 빛 치명타 피해 · 어둠 치명타 확률). 시전 성공 시 살아 있는 아군 전원, 4초(세기 ÷3·지속 ×3)
       const k = C.ELEM_TEAM[sk.fx], v = C.ELEM_FX[sk.fx];
       for (const m of (isHero ? alive(st.heroes) : [u])) { if (!(m.b[k + 'T'] > 0) || (m.b[k] || 0) < v) m.b[k] = v; m.b[k + 'T'] = Math.max(m.b[k + 'T'] || 0, 4); } }
+    if (isHero) SKCD = 0;
     if (ok) { u.atkAt = st.t; st.events.push({ t: 'skill', uid: u.uid, hid: u.id, sk, name: sk.name, main: !!u.isMain, sig: !!sk.sig, ult: isHero && !!sk.ult, elem: u.elem, who: u.name }); if (sk.ult && isHero) { st.shake = Math.max(st.shake || 0, 0.2); text(st, u.x, u.y - 50, sk.name.replace(/^(진·|각성·)/, ''), 'sig'); } else if (sk.sig) { st.shake = Math.max(st.shake || 0, 0.25); text(st, u.x, u.y - 50, sk.name, 'sig'); } else if (u.isMain) text(st, u.x, u.y - 44, sk.name, 'skill'); }
     return ok;
   }
