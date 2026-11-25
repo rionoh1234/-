@@ -22,7 +22,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
   function smite(st, d) { const S = C.STACK; d.b.blindN = 0; const u = st.heroes.find(h => h.id === SRC && !h.dead) || st.heroes.find(h => !h.dead); if (!u) return; const lk = d.gim ? gimLeak(d) : 1;   // 천벌: 마지막 중첩을 쌓은 영웅의 공격력 기준
     fx(st, { type: 'burst', x: d.x, y: d.y - 14, r: 60, ttl: 0.9, elem: 'light' }); if (!(lk > 0)) { text(st, d.x, d.y - 74, '천벌', 'smite', 3); return; }
     const v = Math.max(1, Math.round(dotV(u, d, S.smite) * lk * takeAmp(d))); d.hp = Math.max(0, d.hp - v); st.dmgDealt += v; u.dmgOut = (u.dmgOut || 0) + v; text(st, d.x, d.y - 74, '천벌', 'smite', 3); text(st, d.x, d.y - 48, fmtN(v), 'crit', 1.5); st.shake = Math.max(st.shake || 0, 0.25);   /* 금색 큰 글자(게임 3초 = ×3배속 실시간 1초)가 떴다 사라짐 */ if (d.hp <= 0 && !d.dead) kill(st, d, u); }
-  function iceOn(st, d) { const S = C.STACK; d.b.frzN = 0; d.iceT = S.iceT; d.iceLk = NOW + S.iceT + (S.iceLock || 0); if (!d.boss) d.b.stunT = Math.max(d.b.stunT || 0, S.iceT); text(st, d.x, d.y - 48, '동결!', 'crit'); fx(st, { type: 'burst', x: d.x, y: d.y - 14, r: 40, ttl: 0.5, elem: 'water' }); }
+  function iceOn(st, d) { const S = C.STACK; d.b.frzN = 0; d.iceT = S.iceT; d.iceLk = NOW + S.iceT + (S.iceLock || 0); if (!d.boss) d.b.stunT = Math.max(d.b.stunT || 0, S.iceT); text(st, d.x, d.y - 74, '동결', 'ice', 3); st.shake = Math.max(st.shake || 0, 0.2); fx(st, { type: 'burst', x: d.x, y: d.y - 14, r: 40, ttl: 0.5, elem: 'water' }); }
   const effN = (n) => Math.max(0, (n || 0) - C.STACK.base);   // 효과가 붙는 중첩 수: base중첩까지는 효과 없음(쌓는 영웅 없이도 2~3중첩은 생김 — 쌓는 영웅이 있어야 의미가 있게)
   const windN = (d) => d.b.comboT > 0 && C.STACK ? Math.max(0, (d.b.comboN || 0) - (C.STACK.vulnFrom != null ? C.STACK.vulnFrom : C.STACK.base)) : 0;   // 질풍 중첩: vulnFrom중첩까지는 효과 없음(질풍은 쌓는 영웅 없이도 3~4중첩이 흔해서 문턱을 더 높임)
   const takeAmp = (d) => (windN(d) > 0 ? 1 + C.STACK.vuln * windN(d) : 1) * (d.grgT > 0 ? 1 + C.GROGGY.vuln : 1);   // 받는 피해 증폭(질풍 중첩 × 그로기) — 타격·지속 피해·천벌 공통
@@ -465,7 +465,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
     const p = st.params;
     // 효과·텍스트 수명
     for (const f of st.fx) f.ttl -= dt; st.fx = st.fx.filter(f => f.ttl > 0);
-    for (const tx of st.texts) { tx.ttl -= dt; tx.y -= (tx.cls === 'smite' ? 6 : 28) * dt; if (tx.vx) tx.x += tx.vx * dt; } st.texts = st.texts.filter(t => t.ttl > 0);
+    for (const tx of st.texts) { tx.ttl -= dt; tx.y -= (tx.cls === 'smite' || tx.cls === 'ice' ? 6 : 28) * dt; if (tx.vx) tx.x += tx.vx * dt; } st.texts = st.texts.filter(t => t.ttl > 0);
     for (const m of st.mobs) if (m.dead) m.deadT -= dt; st.mobs = st.mobs.filter(m => !m.dead || m.deadT > 0);
 
     if (st.phase === 'dead') { st.deadT -= dt; if (st.deadT <= 0) { if (p.mode !== 'stage') { st.phase = 'lost'; st.events.push({ t: 'lost' }); } else respawnHeroes(st); } return; }

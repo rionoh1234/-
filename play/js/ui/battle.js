@@ -273,10 +273,10 @@ const BC = {
     // 텍스트
     cx.textAlign = 'center'; cx.lineWidth = 3; cx.strokeStyle = 'rgba(0,0,0,.85)'; cx.lineJoin = 'round';
     for (const t of st.texts) {
-      const sm = t.cls === 'smite'; const a = Math.min(1, t.ttl / (sm ? 1.2 : 0.3)); cx.globalAlpha = a; t._a = (t._a || 0) + dt; const pop = t._a < 0.1 ? 1.55 - t._a * 5.5 : 1;   // 처음 0.1초(실시간) 크게 떴다가 제 크기로
-      const col = { crit: '#ffb347', heal: '#7cf29a', adv: '#ffd27a', dis: '#9fb0d8', enemy: '#ff8080', burn: '#ff9a5a', skill: '#9fe3ff', sig: '#ffd34f', smite: '#ffd34f', norm: '#ffffff' }[t.cls] || '#fff';
+      const sm = t.cls === 'smite' || t.cls === 'ice'; const a = Math.min(1, t.ttl / (sm ? 1.2 : 0.3)); cx.globalAlpha = a; t._a = (t._a || 0) + dt; const pop = t._a < 0.1 ? 1.55 - t._a * 5.5 : 1;   // 처음 0.1초(실시간) 크게 떴다가 제 크기로
+      const col = { crit: '#ffb347', heal: '#7cf29a', adv: '#ffd27a', dis: '#9fb0d8', enemy: '#ff8080', burn: '#ff9a5a', skill: '#9fe3ff', sig: '#ffd34f', smite: '#ffd34f', ice: '#aee6ff', norm: '#ffffff' }[t.cls] || '#fff';
       cx.font = (sm ? '900 ' : 'bold ') + Math.round((sm ? 30 : t.cls === 'crit' ? 16 : t.cls === 'sig' ? 14 : t.cls === 'skill' ? 10 : 12) * pop) + "px 'Pretendard', sans-serif"; cx.fillStyle = col;
-      if (sm) { cx.shadowColor = 'rgba(255,211,79,.95)'; cx.shadowBlur = 14; }   // 천벌: 금색 큰 글자 + 빛 번짐, 천천히 사라짐
+      if (sm) { cx.shadowColor = t.cls === 'ice' ? 'rgba(120,200,255,.95)' : 'rgba(255,211,79,.95)'; cx.shadowBlur = 14; }   // 천벌: 금색 큰 글자 + 빛 번짐, 천천히 사라짐
       cx.strokeText(t.txt, t.x, t.y); cx.fillText(t.txt, t.x, t.y); if (sm) cx.shadowBlur = 0;
     }
     cx.globalAlpha = 1;
@@ -537,12 +537,12 @@ function fitField() {
 window.addEventListener('resize', () => { if (tab === 'battle') setTimeout(fitField, 50); });
 // 상태 아이콘(2026-11-15, 사용자 '보스에 걸린 디버프·버프를 시간 바 아래에, 영웅 버프는 초상화 아래 작은 아이콘으로'): 전투 엔진의 지속 효과(u.b · 보호막 · 흡혈 강화)를 그대로 읽음
 //   [아이콘, 버프(b)·디버프(d), 꾸밈(u 올림 화살표 · dn 내림 화살표 · f 채움)]. 색은 그 유닛 기준 — 버프 = 푸른색, 디버프 = 붉은색(보스·영웅 같은 기준. 처음엔 '내 편에 좋은가'로 칠해 보스의 화상이 푸르게 나왔고, 사용자 '화상도 디버프잖아')
-const ST_DEF = { stun: ['stun', 'd', ''], burn: ['flame', 'd', ''], mark: ['mark', 'd', ''], defD: ['shield', 'd', 'dn'], atkD: ['sword', 'd', 'dn'], slow: ['sand', 'd', ''],
+const ST_DEF = { stun: ['stun', 'd', ''], burn: ['flame', 'd', ''], mark: ['mark', 'd', ''], defD: ['shield', 'd', 'dn'], atkD: ['sword', 'd', 'dn'], slow: ['sand', 'd', ''], ice: ['sand', 'd', 'f'],
   atkU: ['sword', 'b', 'u'], defU: ['shield', 'b', 'u'], fast: ['fast', 'b', ''], shld: ['shield', 'b', 'f'], hot: ['plus', 'b', ''], taunt: ['hand', 'b', ''], ls: ['drop', 'b', ''], skl: ['spark', 'b', 'u'], cdm: ['mark', 'b', 'u'], crt: ['stun', 'b', 'u'], combo: ['fast', 'd', ''], blind: ['eye', 'd', ''], bleed: ['drop', 'd', ''] };
 function unitStatus(u) {
   const b = u.b || {}, o = [];
   if (b.stunT > 0) o.push(['stun', b.stunT]); if (b.burnT > 0) o.push(['burn', b.burnT, b.burnN]); if (b.bleedT > 0) o.push(['bleed', b.bleedT]); if (b.comboT > 0) o.push(['combo', b.comboT, b.comboN]); if (b.blindT > 0) o.push(['blind', b.blindT, b.blindN]); if (b.vulnT > 0) o.push(['mark', b.vulnT]);
-  if (b.defT > 0 && b.def < 0) o.push(['defD', b.defT]); if (b.atkT > 0 && b.atk < 0) o.push(['atkD', b.atkT]); if (b.slowT > 0) o.push(['slow', b.slowT]);
+  if (b.defT > 0 && b.def < 0) o.push(['defD', b.defT]); if (b.atkT > 0 && b.atk < 0) o.push(['atkD', b.atkT]); if (u.iceT > 0) o.push(['ice', u.iceT / (C.BUFF_DUR || 1)]); if (b.slowT > 0) o.push(['slow', b.slowT, b.frzT > 0 ? b.frzN : 0]);
   if (b.atkT > 0 && b.atk > 0) o.push(['atkU', b.atkT]); const dU = Math.max(b.defT > 0 && b.def > 0 ? b.defT : 0, b.gdrT > 0 ? b.gdrT : 0); if (dU > 0) o.push(['defU', dU]);
   if (b.aspdT > 0 && b.aspd > 0) o.push(['fast', b.aspdT]); if (u.shield > 0 && u.shieldT > 0) o.push(['shld', u.shieldT]); if (b.hotT > 0) o.push(['hot', b.hotT]); if (b.tauntT > 0) o.push(['taunt', b.tauntT]); if (u.lsBuffT > 0) o.push(['ls', u.lsBuffT]); if (b.sklT > 0) o.push(['skl', b.sklT]); if (b.cdmT > 0) o.push(['cdm', b.cdmT]); if (b.crtT > 0) o.push(['crt', b.crtT]);
   return o;
