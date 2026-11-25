@@ -8,7 +8,22 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
   let SKCD = 0;   // 지금 시전 중인 스킬의 쿨(그로기 게이지 가산 비례용, castSkill에서 설정 — 시전 후 효과(postFx)까지 유지)
   let SRC = 0;   // 2026-11-20 파훼 잠금: 지금 디버프를 거는 영웅(id) — 같은 영웅의 파훼는 C.GIM_LOCK초에 한 번만 인정
   let NOW = 0;   // 지금 전투 시각(tick 시작에 갱신) — 영웅별 디버프 만료 기록용
-  function tag(d, k, t) { if (!d.boss || !SRC) return; const S = d.src || (d.src = {}), m = S[k] || (S[k] = {}); m[SRC] = Math.max(m[SRC] || 0, NOW + (t || 3) * (C.BUFF_DUR || 1)); }   // 이 영웅이 건 몫의 만료(공용 타이머는 다른 영웅 것이 더 길 수 있어서 따로)   // 보스에게 건 디버프를 건 영웅별로 기록(만료 시각)
+  // 속성 디버프 중첩(2026-11-25 사용자 '한 캐릭터는 쌓고 한 캐릭터는 쌓인 만큼 세지는 시너지'): 속성 디버프(화상·출혈·연타·실명·빙결)가 걸릴 때마다 +1(최대 C.STACK.max, 대상마다 icd초에 한 번), 디버프가 끝나면 0.
+  //   화상·출혈 = 지속 피해가 중첩만큼 커짐 · 연타(질풍) = 받는 피해 중첩당 +vuln · 실명(빛) = 가득 차면 천벌(큰 피해) 후 0 · 빙결(서리) = 가득 차면 동결(iceT초 — 맞는 공격 전부 치명타 + 치명타 피해 +iceAmp) 후 0
+  const STK = { burnT: 'burnN', bleedT: 'bleedN', comboT: 'comboN', blindT: 'blindN', frzT: 'frzN' };
+  let CUR = null, EAT = null;   // CUR = 지금 틱의 전투 상태 · EAT = 이번 시전에서 소모할 중첩 [대상, 필드]
+  function stackAdd(d, k) { const S = C.STACK, f = STK[k]; if (!S || !f || !S.on.includes(k) || !CUR || !d || d.kind !== 'mob' || d.dead || !SRC) return; const b = d.b;
+    if (k === 'frzT' && (d.iceT > 0 || (d.iceLk || 0) > NOW)) return;   // 동결 중·동결 직후 iceLock초는 빙결이 안 쌓임
+    const tk = f + 'At'; if (b[tk] != null && NOW - b[tk] < S.icd && NOW >= b[tk]) return; b[tk] = NOW;
+    b[f] = Math.min(S.max, (b[f] || 0) + 1);
+    if (b[f] >= S.max) { if (k === 'blindT') smite(CUR, d); else if (k === 'frzT') iceOn(CUR, d); } }
+  function smite(st, d) { const S = C.STACK; d.b.blindN = 0; const u = st.heroes.find(h => h.id === SRC && !h.dead) || st.heroes.find(h => !h.dead); if (!u) return; const lk = d.gim ? gimLeak(d) : 1;   // 천벌: 마지막 중첩을 쌓은 영웅의 공격력 기준
+    fx(st, { type: 'burst', x: d.x, y: d.y - 14, r: 46, ttl: 0.5, elem: 'light' }); if (!(lk > 0)) return;
+    const v = Math.max(1, Math.round(dotV(u, d, S.smite) * lk * takeAmp(d))); d.hp = Math.max(0, d.hp - v); st.dmgDealt += v; u.dmgOut = (u.dmgOut || 0) + v; text(st, d.x, d.y - 48, '천벌 ' + fmtN(v), 'crit'); if (d.hp <= 0 && !d.dead) kill(st, d, u); }
+  function iceOn(st, d) { const S = C.STACK; d.b.frzN = 0; d.iceT = S.iceT; d.iceLk = NOW + S.iceT + (S.iceLock || 0); if (!d.boss) d.b.stunT = Math.max(d.b.stunT || 0, S.iceT); text(st, d.x, d.y - 48, '동결!', 'crit'); fx(st, { type: 'burst', x: d.x, y: d.y - 14, r: 40, ttl: 0.5, elem: 'water' }); }
+  const effN = (n) => Math.max(0, (n || 0) - C.STACK.base);   // 효과가 붙는 중첩 수: base중첩까지는 효과 없음(쌓는 영웅 없이도 2~3중첩은 생김 — 쌓는 영웅이 있어야 의미가 있게)
+  const takeAmp = (d) => (d.b.comboT > 0 && C.STACK && effN(d.b.comboN) > 0 ? 1 + C.STACK.vuln * effN(d.b.comboN) : 1) * (d.grgT > 0 ? 1 + C.GROGGY.vuln : 1);   // 받는 피해 증폭(질풍 중첩 × 그로기) — 타격·지속 피해·천벌 공통
+  function tag(d, k, t) { stackAdd(d, k); if (!d.boss || !SRC) return; const S = d.src || (d.src = {}), m = S[k] || (S[k] = {}); m[SRC] = Math.max(m[SRC] || 0, NOW + (t || 3) * (C.BUFF_DUR || 1)); }   // 이 영웅이 건 몫의 만료(공용 타이머는 다른 영웅 것이 더 길 수 있어서 따로)   // 보스에게 건 디버프를 건 영웅별로 기록(만료 시각)
   function unl(st, d, k) { const m = d.src && d.src[k]; if (!m) return 0; let best = 0; for (const id in m) if (m[id] > st.t && !(d.lk && d.lk[id] > st.t) && (!best || m[id] < m[best])) best = id; return best; }   // 여럿이면 가장 먼저 끝나는 쪽을 씀(오래 남는 디버프는 다음 파훼로)   // 잠기지 않은 영웅의 디버프가 걸려 있으면 그 영웅 id
   function lock(st, d, k) { const id = unl(st, d, k); if (id) (d.lk || (d.lk = {}))[id] = st.t + C.GIM_LOCK; }
   const HEAL_BASIC = +(TF.hbh) || C.HEAL_BASIC || 0;   // 치유 평타 → 체력 비율 가장 낮은 아군 회복(공격력 ×값), 0이면 끔
@@ -67,13 +82,17 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
     if (a.kind !== 'hero' && a.b.blindT > 0 && st.rng() < C.ELEM_DEB.blind * BW()) return { v: 0, crit: false, el: null, miss: true };   // 실명: 빗나감
     const atk = effAtk(a), def = effDef(d);
     const el = C.elemMult(a.elem, d.elem);
-    const crit = st.rng() < Math.min(0.95, (a.crit || 0.05) + (a.b && a.b.crtT > 0 ? a.b.crt * BW() : 0));   // b.crt: 아군 치명타 확률 버프(어둠 1번 부가 효과)
-    let v = mult * atk * atk / (atk + def) * el * (crit ? (a.cdmg || 1.5) + (a.b && a.b.cdmT > 0 ? a.b.cdm * BW() : 0) : 1) * (0.92 + st.rng() * 0.16) * (d.b.vulnT > 0 ? 1 + d.b.vuln * BW() : 1) * (d.boss && a.bossDmg ? 1 + a.bossDmg : 1) * (d.grgT > 0 ? 1 + C.GROGGY.vuln : 1) * (1 - (d.dr || 0)) * (d.b && d.b.gdrT > 0 ? 1 - d.b.gdr * BW() : 1);
+    const ice = d.iceT > 0 && a.kind === 'hero' && C.STACK; const crit = st.rng() < Math.min(0.95, (a.crit || 0.05) + (a.b && a.b.crtT > 0 ? a.b.crt * BW() : 0)) || !!ice;   // 동결된 적은 무조건 치명타   // b.crt: 아군 치명타 확률 버프(어둠 1번 부가 효과)
+    let v = mult * atk * atk / (atk + def) * el * (crit ? (a.cdmg || 1.5) + (a.b && a.b.cdmT > 0 ? a.b.cdm * BW() : 0) : 1) * (0.92 + st.rng() * 0.16) * (d.b.vulnT > 0 ? 1 + d.b.vuln * BW() : 1) * (d.boss && a.bossDmg ? 1 + a.bossDmg : 1) * (a.kind === 'hero' ? takeAmp(d) : 1) * (ice ? 1 + C.STACK.iceAmp : 1) * (1 - (d.dr || 0)) * (d.b && d.b.gdrT > 0 ? 1 - d.b.gdr * BW() : 1);
     return { v: Math.max(1, Math.round(v)), crit, el: el > 1 ? 'adv' : (el < 1 ? 'dis' : null) };
   }
   function hit(st, a, d, mult, skill) {
     if (a.kind === 'hero') SRC = a.id;
     if (a.kind === 'hero') mult *= skill ? 1 + (a.skillAmp || 0) + (a._ult ? a.ultAmp || 0 : 0) + (a.b.sklT > 0 ? a.b.skl * BW() : 0) : 1 + (a.basicAmp || 0);   // 장비 옵션: 스킬·궁극기·일반 공격 피해
+    if (a.kind === 'hero' && C.STACK) {   // 중첩 연계: 유지형(stk — 이 영웅의 모든 피해가 대상의 중첩당 +per) · 소모형(eat — 고유기가 중첩을 전부 소모하며 중첩당 +per)
+      if (a.stkK === undefined) { const s2 = a.skills.find(k => k.stk); a.stkK = s2 ? s2.stk : null; }
+      if (a.stkK) { const n = effN(d.b[a.stkK[0] + 'N']); if (n > 0) mult *= 1 + a.stkK[1] * n; }
+      if (skill && a._sk && a._sk.eat) { const f = a._sk.eat[0] + 'N', n = effN(d.b[f]); if (n > 0) { mult *= 1 + a._sk.eat[1] * n; if (EAT) EAT.push([d, f]); } } }
     const r = damage(st, a, d, mult);
     if (r.miss) { text(st, d.x, d.y - 30, '빗나감', 'heal'); return 0; }
     if (d.gim && a.kind === 'hero') { r.v = gimHit(st, d, r.v); if (!r.v) { fx(st, { type: 'hit', x: d.x, y: d.y - 14, ttl: 0.15 }); if (a.kind === 'hero' && a.b.gfxT > 0 && st.rng() < C.GRANT.p) { SRC = a.b.gfxBy || a.id; applyDeb(st, a, d, a.b.gfx); SRC = a.id; } return 0; } }   // 보스 기믹: 장벽·철갑
@@ -266,10 +285,11 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
 
   // 스킬 시전 래퍼: 전용장비 특수 옵션(반복 시전·적중 효과·시전 후 효과)을 처리한다
   function castSkill(st, u, sk, tgt) {
-    const isHero = u.kind === 'hero'; u._ult = !!sk.ult; u._sk = sk; if (isHero) { SRC = u.id; SKCD = sk.cd || 0; }
+    const isHero = u.kind === 'hero'; u._ult = !!sk.ult; u._sk = sk; if (isHero) { SRC = u.id; SKCD = sk.cd || 0; } EAT = sk.eat ? [] : null;
     let ok = castOnce(st, u, sk, tgt);
     if (ok && sk.team && isHero) { const [k, v, dur] = sk.team; for (const m of alive(st.heroes)) { m.b[k] = Math.max(m.b[k + 'T'] > 0 ? m.b[k] || 0 : 0, v); m.b[k + 'T'] = Math.max(m.b[k + 'T'] || 0, dur); } }   // 지원 1번의 아군 공격 효과(2026-11-16): [능력치 칸, 세기, 지속] — skl 스킬 피해 · cdm 치명타 피해 · atk 공격력
     if (ok && sk.repeat > 1) { const foes = alive(u.kind === 'hero' ? st.mobs : st.heroes); for (let i = 1; i < sk.repeat && foes.length; i++) { const t2 = foes[Math.floor(st.rng() * foes.length)]; if (!t2.dead) castOnce(st, u, sk, t2); } }
+    if (EAT) { for (const [d, f] of EAT) if (d.b[f] > 1) d.b[f] = 1; EAT = null; }   // 소모형: 시전이 끝나면 중첩을 1로(디버프 자체는 남음 — 기믹 파훼 유지)
     u._ult = false; u._sk = null;
     if (ok && u.kind === 'hero') postFx(st, u, sk);
     if (ok && sk.fx && C.ELEM_TEAM[sk.fx]) {   // 1번 스킬 속성 부가 효과 = 아군 전체 버프(2026-11-17 사용자: 화염 공격력 · 서리 스킬 피해(+둔화) · 질풍 공속 · 빛 치명타 피해 · 어둠 치명타 확률). 시전 성공 시 살아 있는 아군 전원, 4초(세기 ÷3·지속 ×3)
@@ -301,15 +321,16 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
     if (b.defT > 0 && (b.defT -= bd) <= 0) b.def = 0;
     if (b.aspdT > 0 && (b.aspdT -= bd) <= 0) b.aspd = 0;
     if (b.slowT > 0) { b.slowT -= bd; if (b.slowT <= 0) b.slow = 0; } if (b.gdrT > 0) b.gdrT -= bd; if (b.stunT > 0) b.stunT -= dt; if (b.tauntT > 0) b.tauntT -= bd;
+    if (u.kind === 'mob') { if (u.iceT > 0) u.iceT -= dt; if (b.burnN && !(b.burnT > 0)) b.burnN = 0; if (b.bleedN && !(b.bleedT > 0)) b.bleedN = 0; if (b.comboN && !(b.comboT > 0)) b.comboN = 0; if (b.blindN && !(b.blindT > 0)) b.blindN = 0; if (b.frzN && !(b.frzT > 0)) b.frzN = 0; }
     if (u.boss && C.GROGGY) { if (u.grgT > 0) u.grgT -= dt; else if (u.grg > 0) u.grg = Math.max(0, u.grg - C.GROGGY.decay * dt); }
     if (b.vulnT > 0 && (b.vulnT -= bd) <= 0) b.vuln = 0;
     if (b.sklT > 0 && (b.sklT -= bd) <= 0) b.skl = 0; if (b.comboT > 0) b.comboT -= bd; if (b.gfxT > 0) b.gfxT -= bd; if (b.frzT > 0) b.frzT -= bd; if (b.blindT > 0) b.blindT -= bd; if (b.crtT > 0 && (b.crtT -= bd) <= 0) b.crt = 0; if (b.cdmT > 0 && (b.cdmT -= bd) <= 0) b.cdm = 0;
     if (u.shieldT > 0 && (u.shieldT -= bd) <= 0) { u.shield = 0; u.reflect = 0; }
     if (u.lsBuffT > 0) u.lsBuffT -= bd;
     if (b.hotT > 0) { b.hotT -= bd; b.hotTick += dt; if (b.hotTick >= 1) { b.hotTick -= 1; heal(st, u, u, b.hot * dk); } }
-    if (b.bleedT > 0) { b.bleedT -= bd; b.bleedTick += dt; if (b.bleedTick >= 1) { b.bleedTick -= 1; const lk = u.gim ? gimLeak(u) : 1; if (lk > 0) { const v = Math.max(1, Math.round(b.bleed * dk * lk * (b.vulnT > 0 ? 1 + b.vuln * dk : 1) * (u.grgT > 0 ? 1 + C.GROGGY.vuln : 1))); u.hp = Math.max(0, u.hp - v); if (u.kind === 'mob') { st.dmgDealt += v; const by = b.bleedBy; if (by && by.kind === 'hero') by.dmgOut = (by.dmgOut || 0) + v; } text(st, u.x, u.y - 26, fmtN(v), 'burn'); if (u.hp <= 0 && !u.dead) kill(st, u, null); } } }
-    if (b.burnT > 0) { b.burnT -= bd; b.burnTick += dt; if (b.burnTick >= 1) { b.burnTick -= 1; const lk = u.gim ? gimLeak(u) : 1; if (lk > 0) { const v = Math.max(1, Math.round(b.burn * dk * lk * (b.vulnT > 0 ? 1 + b.vuln * dk : 1) * (u.grgT > 0 ? 1 + C.GROGGY.vuln : 1))); u.hp = Math.max(0, u.hp - v); if (u.kind === 'mob') { st.dmgDealt += v; const by = b.burnBy; if (by && by.kind === 'hero') by.dmgOut = (by.dmgOut || 0) + v; } text(st, u.x, u.y - 26, '🔥' + fmtN(v), 'burn'); if (u.hp <= 0 && !u.dead) kill(st, u, null); } } }
-    if (b.psnT > 0) { b.psnT -= bd; b.psnTick += dt; if (b.psnTick >= 1) { b.psnTick -= 1; const lk = u.gim ? gimLeak(u) : 1; if (lk > 0) { const v = Math.max(1, Math.round(b.psn * dk * lk * (b.vulnT > 0 ? 1 + b.vuln * dk : 1) * (u.grgT > 0 ? 1 + C.GROGGY.vuln : 1))); u.hp = Math.max(0, u.hp - v); if (u.kind === 'mob') { st.dmgDealt += v; const by = b.psnBy; if (by && by.kind === 'hero') by.dmgOut = (by.dmgOut || 0) + v; } text(st, u.x, u.y - 26, '☠' + fmtN(v), 'burn'); if (u.hp <= 0 && !u.dead) kill(st, u, null); } } }   // 중독(사령왕 역병) — 2026-11-20 화상과 분리: 화상만 철갑을 벗김
+    if (b.bleedT > 0) { b.bleedT -= bd; b.bleedTick += dt; if (b.bleedTick >= 1) { b.bleedTick -= 1; const lk = u.gim ? gimLeak(u) : 1; if (lk > 0) { const v = Math.max(1, Math.round(b.bleed * dk * lk * (b.vulnT > 0 ? 1 + b.vuln * dk : 1) * takeAmp(u) * (C.STACK ? 1 + C.STACK.dot * effN(b.bleedN) : 1))); u.hp = Math.max(0, u.hp - v); if (u.kind === 'mob') { st.dmgDealt += v; const by = b.bleedBy; if (by && by.kind === 'hero') by.dmgOut = (by.dmgOut || 0) + v; } text(st, u.x, u.y - 26, fmtN(v), 'burn'); if (u.hp <= 0 && !u.dead) kill(st, u, null); } } }
+    if (b.burnT > 0) { b.burnT -= bd; b.burnTick += dt; if (b.burnTick >= 1) { b.burnTick -= 1; const lk = u.gim ? gimLeak(u) : 1; if (lk > 0) { const v = Math.max(1, Math.round(b.burn * dk * lk * (b.vulnT > 0 ? 1 + b.vuln * dk : 1) * takeAmp(u) * (C.STACK ? 1 + C.STACK.dot * effN(b.burnN) : 1))); u.hp = Math.max(0, u.hp - v); if (u.kind === 'mob') { st.dmgDealt += v; const by = b.burnBy; if (by && by.kind === 'hero') by.dmgOut = (by.dmgOut || 0) + v; } text(st, u.x, u.y - 26, '🔥' + fmtN(v), 'burn'); if (u.hp <= 0 && !u.dead) kill(st, u, null); } } }
+    if (b.psnT > 0) { b.psnT -= bd; b.psnTick += dt; if (b.psnTick >= 1) { b.psnTick -= 1; const lk = u.gim ? gimLeak(u) : 1; if (lk > 0) { const v = Math.max(1, Math.round(b.psn * dk * lk * (b.vulnT > 0 ? 1 + b.vuln * dk : 1) * takeAmp(u))); u.hp = Math.max(0, u.hp - v); if (u.kind === 'mob') { st.dmgDealt += v; const by = b.psnBy; if (by && by.kind === 'hero') by.dmgOut = (by.dmgOut || 0) + v; } text(st, u.x, u.y - 26, '☠' + fmtN(v), 'burn'); if (u.hp <= 0 && !u.dead) kill(st, u, null); } } }   // 중독(사령왕 역병) — 2026-11-20 화상과 분리: 화상만 철갑을 벗김
   }
   function moveToward(u, tx, ty, speed, dt, stopAt) {
     const dx = tx - u.x, dy = ty - u.y, d = Math.hypot(dx, dy); if (d <= stopAt) return;
@@ -436,7 +457,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
     st.phase = 'hunt'; st.spawnT = 1.2; st.frontX = 120; st.gen = (st.gen || 0) + 1; st.events.push({ t: 'respawn' });
   }
 
-  function tick(st) { NOW = st.t;
+  function tick(st) { NOW = st.t; CUR = st;
     const dt = TICK; st.t += dt;
     const p = st.params;
     // 효과·텍스트 수명

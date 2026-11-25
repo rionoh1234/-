@@ -79,6 +79,7 @@
 .sti .ic.f svg { fill: currentColor; fill-opacity: .45; }
 .sti .ic.u::after, .sti .ic.dn::after { content: ""; width: 0; height: 0; border-left: 2.5px solid transparent; border-right: 2.5px solid transparent; margin-left: -1px; }
 .sti .ic.u::after { border-bottom: 4px solid currentColor; align-self: flex-start; margin-top: 2px; } .sti .ic.dn::after { border-top: 4px solid currentColor; align-self: flex-end; margin-bottom: 2px; }
+.sti u { font-size: 10px; font-weight: 800; color: #ffd34f; text-decoration: none; padding: 0 1px; font-variant-numeric: tabular-nums; }
 .sti b { font-size: 10px; font-weight: 800; color: #fff; padding: 0 1px; font-variant-numeric: tabular-nums; }
 #bstat { position: absolute; left: 14.6%; top: 12.4%; height: 4.6%; max-width: 50%; display: flex; align-items: center; gap: 3px; overflow: hidden; pointer-events: none; z-index: 1; line-height: 1; }
 #bstat[hidden] { display: none; }

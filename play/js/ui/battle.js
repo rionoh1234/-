@@ -540,7 +540,7 @@ const ST_DEF = { stun: ['stun', 'd', ''], burn: ['flame', 'd', ''], mark: ['mark
   atkU: ['sword', 'b', 'u'], defU: ['shield', 'b', 'u'], fast: ['fast', 'b', ''], shld: ['shield', 'b', 'f'], hot: ['plus', 'b', ''], taunt: ['hand', 'b', ''], ls: ['drop', 'b', ''], skl: ['spark', 'b', 'u'], cdm: ['mark', 'b', 'u'], crt: ['stun', 'b', 'u'], combo: ['fast', 'd', ''], blind: ['eye', 'd', ''], bleed: ['drop', 'd', ''] };
 function unitStatus(u) {
   const b = u.b || {}, o = [];
-  if (b.stunT > 0) o.push(['stun', b.stunT]); if (b.burnT > 0) o.push(['burn', b.burnT]); if (b.bleedT > 0) o.push(['bleed', b.bleedT]); if (b.comboT > 0) o.push(['combo', b.comboT]); if (b.blindT > 0) o.push(['blind', b.blindT]); if (b.vulnT > 0) o.push(['mark', b.vulnT]);
+  if (b.stunT > 0) o.push(['stun', b.stunT]); if (b.burnT > 0) o.push(['burn', b.burnT, b.burnN]); if (b.bleedT > 0) o.push(['bleed', b.bleedT]); if (b.comboT > 0) o.push(['combo', b.comboT]); if (b.blindT > 0) o.push(['blind', b.blindT, b.blindN]); if (b.vulnT > 0) o.push(['mark', b.vulnT]);
   if (b.defT > 0 && b.def < 0) o.push(['defD', b.defT]); if (b.atkT > 0 && b.atk < 0) o.push(['atkD', b.atkT]); if (b.slowT > 0) o.push(['slow', b.slowT]);
   if (b.atkT > 0 && b.atk > 0) o.push(['atkU', b.atkT]); const dU = Math.max(b.defT > 0 && b.def > 0 ? b.defT : 0, b.gdrT > 0 ? b.gdrT : 0); if (dU > 0) o.push(['defU', dU]);
   if (b.aspdT > 0 && b.aspd > 0) o.push(['fast', b.aspdT]); if (u.shield > 0 && u.shieldT > 0) o.push(['shld', u.shieldT]); if (b.hotT > 0) o.push(['hot', b.hotT]); if (b.tauntT > 0) o.push(['taunt', b.tauntT]); if (u.lsBuffT > 0) o.push(['ls', u.lsBuffT]); if (b.sklT > 0) o.push(['skl', b.sklT]); if (b.cdmT > 0) o.push(['cdm', b.cdmT]); if (b.crtT > 0) o.push(['crt', b.crtT]);
@@ -550,8 +550,8 @@ function statusFill(el, list, hero, sec) {   // 내용이 바뀔 때만 다시 �
   if (hero) list = list.filter(x => ST_DEF[x[0]][1] === 'b').concat(list.filter(x => ST_DEF[x[0]][1] === 'd'));
   const K = C.BUFF_DUR || 1;   // 타이머 값 × 배율 = 실제 남은 초
   const rs = (k, v) => Math.max(1, Math.ceil(v * (k === 'stun' ? 1 : K)));   // 기절은 지속 배율 없음
-  const sig = list.map(([k, v]) => k + (sec ? rs(k, v) : '')).join(','); if (el.dataset.s === sig) return; el.dataset.s = sig;
-  el.innerHTML = list.map(([k, v]) => { const d = ST_DEF[k]; return `<i class="sti ${d[1] === 'b' ? 'g' : 'x'}"><span class="ic ${d[2]}"><svg><use href="#i-${d[0]}"/></svg></span>${sec ? `<b>${rs(k, v)}</b>` : ''}</i>`; }).join('');
+  const sig = list.map(([k, v, n]) => k + (sec ? rs(k, v) : '') + (n > 1 ? 'x' + n : '')).join(','); if (el.dataset.s === sig) return; el.dataset.s = sig;
+  el.innerHTML = list.map(([k, v, n]) => { const d = ST_DEF[k]; return `<i class="sti ${d[1] === 'b' ? 'g' : 'x'}"><span class="ic ${d[2]}"><svg><use href="#i-${d[0]}"/></svg></span>${n > 1 ? `<u>×${n}</u>` : ''}${sec ? `<b>${rs(k, v)}</b>` : ''}</i>`; }).join('');   // n = 중첩 수(2026-11-25 속성 디버프 중첩 — 화상·실명)
 }
 function updBossStat() {   // 보스 띠 아래 줄 왼쪽(오른쪽은 기믹 알약 — drawBossBar)
   const el = $('#bstat'); if (!el || !BC.st) return; const B = BC.st.boss, on = !!B && !B.dead && BC.st.params.mode !== 'raid';
