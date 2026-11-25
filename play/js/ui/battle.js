@@ -359,15 +359,18 @@ function drawBossBar(cx, st, bc, dt, A) {
           cx.fillStyle = 'rgba(0,0,0,.85)'; cx.fillRect(Math.round(xr) - 2, ty - 4, 4, th + 8); cx.fillStyle = on ? '#ffd34f' : 'rgba(233,238,251,.5)'; cx.fillRect(Math.round(xr) - 1, ty - 3, 2, th + 6); } }
       const sec = String(Math.ceil(-e)); cx.font = "800 10px 'Pretendard', sans-serif"; cx.textAlign = 'left'; cx.lineWidth = 3; cx.strokeStyle = 'rgba(0,0,0,.85)'; cx.fillStyle = low ? '#ff8a78' : '#e9eefb'; cx.strokeText(sec, x0 + w + 6, ty + th + 1); cx.fillText(sec, x0 + w + 6, ty + th + 1); }
     else { const tx = '격노 ×' + (B.enr || 1).toFixed(1); cx.font = "800 11px 'Pretendard', sans-serif"; cx.textAlign = 'right'; cx.lineWidth = 3; cx.strokeStyle = 'rgba(0,0,0,.85)'; cx.fillStyle = `rgba(255,${90 + Math.round(60 * Math.sin(A * 9))},70,1)`; cx.strokeText(tx, x0 + w, y0 + h + 12); cx.fillText(tx, x0 + w, y0 + h + 12); } }
+  let pillR = x0 + w + 1.5;   // 알약은 오른쪽부터 왼쪽으로 쌓음(기믹 → 그로기)
+  const pill = (label, col, fill) => { cx.font = "800 10px 'Pretendard', sans-serif"; const tw = cx.measureText ? (cx.measureText(label) || {}).width || label.length * 9 : label.length * 9, pw = tw + 16, px = pillR - pw, py = y0 + h + 15, ph = 15;
+    cx.fillStyle = 'rgba(6,8,16,.88)'; rr(px, py, pw, ph, 7.5); cx.fill(); cx.save(); rr(px, py, pw, ph, 7.5); if (cx.clip) cx.clip(); cx.globalAlpha *= 0.3; cx.fillStyle = col; cx.fillRect(px, py, pw * Math.max(0, Math.min(1, fill)), ph); cx.restore();
+    cx.strokeStyle = col; cx.lineWidth = 1.2; rr(px, py, pw, ph, 7.5); cx.stroke(); cx.fillStyle = col; cx.textAlign = 'center'; cx.fillText(label, px + pw / 2, py + 11); pillR = px - 4; };
   const G0 = B.gim; if (G0) { let label, col, fill = 1;
     if (G0 === 'barrier') { if (B.bar > 0) { const k = B.bar / (B.maxHp * C.GIM.barrier.pct); label = '장벽 ' + Math.ceil(k * 100) + '%'; col = '#9fdcff'; fill = k; } else { label = '무방비 ' + Math.max(1, Math.ceil(B.barT)); col = '#ffd34f'; fill = B.barT / C.GIM.barrier.every; } }
     else if (G0 === 'armor') { if (B.armT > 0) { label = '철갑 해제 ' + Math.max(1, Math.ceil(B.armT)); col = '#ffd34f'; fill = B.armT / C.GIM.armor.open; } else { label = '철갑'; col = '#cdd6e4'; } }
     else if (G0 === 'frenzy') { if (B.chargeT > 0) { label = '격분!'; col = '#ff5a46'; fill = 1 - B.chargeT / C.GIM.frenzy.cast; } else { label = '격분' + (B.frz ? ' ×' + B.frz : ''); col = '#ff9a8a'; fill = 1 - Math.max(0, B.chT) / C.GIM.frenzy.every; } }
     else if (G0 === 'regen') { if (B.rgnT > 0) { label = '재생 차단 ' + Math.max(1, Math.ceil(B.rgnT)); col = '#ffd34f'; fill = B.rgnT / C.GIM.regen.open; } else { label = '재생'; col = '#7dff9a'; } }
     else { if (B.rmpOn) { label = '폭주 ×' + B.rmp; col = '#ff9a3c'; fill = B.rmpAcc / C.GIM.rampage.every; } else if (B.rmpBrk) { label = '폭주 해제 ' + Math.max(1, Math.ceil(B.rmpCd)); col = '#ffd34f'; fill = B.rmpCd / C.GIM.rampage.stagger; } else { label = '폭주 ' + Math.max(1, Math.ceil(B.rmpCd)); col = '#ff9a3c'; fill = 1 - B.rmpCd / C.GIM.rampage.first; } }
-    cx.font = "800 10px 'Pretendard', sans-serif"; const tw = cx.measureText ? (cx.measureText(label) || {}).width || label.length * 9 : label.length * 9, pw = tw + 16, px = x0 + w - pw + 1.5, py = y0 + h + 15, ph = 15;
-    cx.fillStyle = 'rgba(6,8,16,.88)'; rr(px, py, pw, ph, 7.5); cx.fill(); cx.save(); rr(px, py, pw, ph, 7.5); if (cx.clip) cx.clip(); cx.globalAlpha *= 0.3; cx.fillStyle = col; cx.fillRect(px, py, pw * Math.max(0, Math.min(1, fill)), ph); cx.restore();
-    cx.strokeStyle = col; cx.lineWidth = 1.2; rr(px, py, pw, ph, 7.5); cx.stroke(); cx.fillStyle = col; cx.textAlign = 'center'; cx.fillText(label, px + pw / 2, py + 11); }
+    pill(label, col, fill); }
+  if (C.GROGGY && (B.grgT > 0 || B.grg > 0)) { if (B.grgT > 0) pill('그로기 ' + Math.max(1, Math.ceil(B.grgT)), `rgba(255,${200 + Math.round(40 * Math.sin(A * 12))},90,1)`, B.grgT / C.GROGGY.dur); else pill('그로기', '#c9a6ff', B.grg / C.GROGGY.max); }   // 보스 그로기 게이지(2026-11-25): 차는 중 = 보라, 그로기 중 = 금색 깜박임
   cx.globalAlpha = 1; cx.textAlign = 'center';
 }
 // 기믹 설명(2026-11-15, 사용자 '꼬리표를 누르면 어떻게 파훼하는지 알려줘 · 귀찮은 건 싫다'): 무엇을 하는 보스인지 · 무엇이 답인지 · 내 영웅 중 답(누르면 바로 출전)

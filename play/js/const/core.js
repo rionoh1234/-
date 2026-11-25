@@ -153,6 +153,7 @@
   C.CNT_CD = T0.cnc != null ? +T0.cnc : 8;     // 파훼 1번 스킬 기본 쿨(★3 실제 약 20초 = 8 × 0.85 × 3)
   C.SUP_CLASS = { 109: 'buff', 59: 'buff', 105: 'buff', 123: 'buff', 127: 'buff', 110: 'debuff', 74: 'debuff', 118: 'debuff', 72: 'debuff', 64: 'debuff' };   // ★3 지원: 아군 버프형 · 상대 디버프형(속성마다 1명씩)
   C.GRANT_CD = T0.gcd != null ? +T0.gcd : 8;   // 파훼 지원 궁극기 기본 쿨 상한(원래 13~15)
+  C.GROGGY = Object.assign({ max: 150, strong: 100, freeze: 30, slow: 15, sIcd: 3, wIcd: 10, decay: 6, cdRef: 15, dur: 5, vuln: 2 }, T0.grg || {});   // 보스 그로기 게이지(2026-11-25): field.js grog. 목표 = CC 영웅 1명은 거의 불가·2명 약 20초(게임 시간)마다, 그로기 5초·받는 피해 +200%
   C.GIM_LOCK = T0.gml != null ? +T0.gml : 16;   // 같은 영웅의 파훼는 이 초에 한 번만 인정(field.js lock) — 혼자면 빈틈, 둘이 번갈아 쓰면 메움
   C.GIM_DEB = { armor: 'burn', rampage: 'freeze', barrier: 'combo', frenzy: 'blind', regen: 'bleed' };   // 기믹 ↔ 답 디버프(속성 1:1)
   C.SUP_A = { fire: +(T0.saf) || 1, water: +(T0.saw) || 1, wind: +(T0.san) || 1, light: +(T0.sal) || 1, dark: +(T0.sad) || 1 };   // 지원 1번 스킬 세기 배율(측정용 손잡이, 2026-11-16). 확정값은 정의에 직접 반영
