@@ -371,7 +371,7 @@ function drawBossBar(cx, st, bc, dt, A) {
     else if (G0 === 'regen') { if (B.rgnT > 0) { label = '재생 차단 ' + Math.max(1, Math.ceil(B.rgnT)); col = '#ffd34f'; fill = B.rgnT / C.GIM.regen.open; } else { label = '재생'; col = '#7dff9a'; } }
     else { if (B.rmpOn) { label = '폭주 ×' + B.rmp; col = '#ff9a3c'; fill = B.rmpAcc / C.GIM.rampage.every; } else if (B.rmpBrk) { label = '폭주 해제 ' + Math.max(1, Math.ceil(B.rmpCd)); col = '#ffd34f'; fill = B.rmpCd / C.GIM.rampage.stagger; } else { label = '폭주 ' + Math.max(1, Math.ceil(B.rmpCd)); col = '#ff9a3c'; fill = 1 - B.rmpCd / C.GIM.rampage.first; } }
     pill(label, col, fill); }
-  if (C.GROGGY && (B.grgT > 0 || B.grg > 0)) { if (B.grgT > 0) pill('그로기 ' + Math.max(1, Math.ceil(B.grgT)), `rgba(255,${200 + Math.round(40 * Math.sin(A * 12))},90,1)`, B.grgT / C.GROGGY.dur); else pill('그로기', '#c9a6ff', B.grg / C.GROGGY.max); }   // 보스 그로기 게이지(2026-11-25): 차는 중 = 보라, 그로기 중 = 금색 깜박임
+  if (C.GROGGY && (B.grgT > 0 || B.grg > 0)) { if (B.grgT > 0) pill('그로기 ' + Math.max(1, Math.ceil(B.grgT)), `rgba(255,${200 + Math.round(40 * Math.sin(A * 12))},90,1)`, B.grgT / C.GROGGY.dur); else pill('CC ' + Math.min(99, Math.floor(B.grg / C.GROGGY.max * 100)) + '%', '#c9a6ff', B.grg / C.GROGGY.max); }   /* 차는 중에는 'CC n%'(2026-11-25 사용자 '계속 그로기인데?' — 차는 중에도 '그로기'라고 떠서 걸린 것처럼 보였음) */   // 보스 그로기 게이지(2026-11-25): 차는 중 = 보라, 그로기 중 = 금색 깜박임
   cx.globalAlpha = 1; cx.textAlign = 'center';
 }
 // 기믹 설명(2026-11-15, 사용자 '꼬리표를 누르면 어떻게 파훼하는지 알려줘 · 귀찮은 건 싫다'): 무엇을 하는 보스인지 · 무엇이 답인지 · 내 영웅 중 답(누르면 바로 출전)
