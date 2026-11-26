@@ -154,6 +154,7 @@
   C.SUP_CLASS = { 109: 'buff', 59: 'buff', 105: 'buff', 123: 'buff', 127: 'buff', 110: 'debuff', 74: 'debuff', 118: 'debuff', 72: 'debuff', 64: 'debuff' };   // ★3 지원: 아군 버프형 · 상대 디버프형(속성마다 1명씩)
   C.GRANT_CD = T0.gcd != null ? +T0.gcd : 8;   // 파훼 지원 궁극기 기본 쿨 상한(원래 13~15)
   C.STACK = Object.assign({ on: ['burnT', 'blindT', 'comboT', 'frzT', 'bleedT'], max: 10, base: 0, icd: 1, dot: 0.2, dotB: 0.05, eatLock: 3, vuln: 0.05, vulnFrom: 0, smite: 20, iceT: 3, iceAmp: 0.7, iceLock: 0, burstSmite: 3.75, burstIce: 3, burstAt: 6, burstWait: 8 }, T0.stk || {});   // 속성 디버프 중첩(field.js stackAdd). 1중첩부터 효과, 중첩을 올리는 건 디버프 지원의 부여 효과뿐. 2026-11-25 '속성마다 터뜨리는 필수 딜러'(이프리아·나디아·브륀힐드·갈레안·모르가나 eat): 목표 = 쌓는 지원만 1.1배 · 지원 + 터뜨리는 딜러 1.3배(기준 = 중첩 없던 프리셋). burstSmite·burstIce = 빛·서리 딜러가 터뜨릴 때 중첩 수 비례 천벌·동결의 배율, burstAt·burstWait = 쌓는 지원이 편성에 있으면 burstAt중첩까지 최대 burstWait초 아낌
+  C.STACK = T0.stk ? C.STACK : null;   // 2026-11-27 사용자 '중첩부터 방향이 정형화됐다' → 속성 디버프 중첩·터뜨리는 딜러 끔(코드는 남김, TUNE.stk를 주면 시험용으로 켜짐). 대신 영웅마다 다른 개성(data/el/*.js의 tr, field.js traitMult)
   C.GROGGY = Object.assign({ max: 150, strong: 100, freeze: 15, slow: 8, sIcd: 3, wIcd: 10, decay: 7, cdRef: 15, dur: 5, vuln: 2 }, T0.grg || {});   // 보스 그로기 게이지(2026-11-25): field.js grog. 목표 = CC 영웅 1명은 거의 불가·2명 약 20초(게임 시간)마다, 그로기 5초·받는 피해 +200%
   C.GIM_LOCK = T0.gml != null ? +T0.gml : 16;   // 같은 영웅의 파훼는 이 초에 한 번만 인정(field.js lock) — 혼자면 빈틈, 둘이 번갈아 쓰면 메움
   C.GIM_DEB = { armor: 'burn', rampage: 'freeze', barrier: 'combo', frenzy: 'blind', regen: 'bleed' };   // 기믹 ↔ 답 디버프(속성 1:1)
