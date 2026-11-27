@@ -86,6 +86,10 @@ async function openAccount(id, d) { // 클라우드와 이 기기 캐시 중 더
   ACCT = { id }; CLOUD.doc = CLOUD.db.doc('accounts/' + id);
   let s = d && d.json ? G.deserialize(d.json) : null; const ts = d ? d.lastTs || 0 : 0;
   const loc = localOf(id); if (loc && (loc.lastTs || 0) > ts) { s = loc; }
+  // 2026-11-28 사용자 '각 속성별 베스트 조합을 그대로 프리셋에 저장해' — 하얀 님 계정(knight082)에만 한 번 적용(실행 중인 게임이 저장을 덮어써서 db에 직접 쓰면 안 남음). 서리는 지금 프리셋이 최선이라 그대로.
+  if (s && id === 'knight082' && !(s._bp >= 482) && s.epresets) { const B = { fire: [108, 109, 63, 58, 73], wind: [80, 104, 68, 117, 105], light: [70, 55, 76, 72, 121], dark: [77, 61, 64, 124, 125] };
+    for (const e in B) { const p = s.epresets[e]; if (!p || !B[e].every(h => s.heroes[h])) continue; const ex = {}; for (const h of B[e]) { const x = (p.ex && p.ex[h]) || (s.ex && s.ex.on && s.ex.on[h]); if (x) ex[h] = x; } p.party = B[e].slice(); p.ex = ex; }
+    s._bp = 482; }
   return s;
 }
 function loginScreen() {
