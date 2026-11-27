@@ -38,12 +38,12 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
       case 'wave': return SIGC(a, skill) ? 1 + t.v * Math.min(t.max, a._wave || 0) : 1;   // 세이렌: 지난 고유기에 맞은 적 수만큼
       case 'elems': { if (a._elN == null) a._elN = new Set(st.heroes.map(h => h.elem)).size; return 1 + t.v * Math.max(0, a._elN - 1); }   // 라이나: 편성 속성 종류
       case 'groggy': return SIGC(a, skill) && d.grgT > 0 ? 1 + t.v : 1;   // 브륀힐드: 그로기 중인 적
-      case 'buffs': { const ab = a.b; let n = 0; if (ab.atkT > 0 && ab.atk > 0) n++; if (ab.aspdT > 0 && ab.aspd > 0) n++; if (ab.sklT > 0) n++; if (ab.cdmT > 0) n++; if (ab.crtT > 0) n++; if (ab.defT > 0 && ab.def > 0) n++; if (ab.gdrT > 0) n++; if (a.shield > 0) n++; if (ab.gfxT > 0) n++; return 1 + t.v * Math.min(n, t.max); }   // 루시엘: 자기에게 걸린 버프 수
+      case 'buffs': { const ab = a.b; let n = 0; const an = ab.anT > 0; if (ab.atkT > 0 && ab.atk > 0 || an && ab.anA > 0) n++; if (ab.aspdT > 0 && ab.aspd > 0 || an && ab.anS > 0) n++; if (ab.sklT > 0 || an && ab.anK > 0) n++; if (ab.cdmT > 0 || an && ab.anC > 0) n++; if (ab.crtT > 0) n++; if (ab.defT > 0 && ab.def > 0) n++; if (ab.gdrT > 0) n++; if (a.shield > 0) n++; if (ab.gfxT > 0) n++; return 1 + t.v * Math.min(n, t.max); }   // 루시엘: 자기에게 걸린 버프 수
       case 'fullhp': return SIGC(a, skill) && d.hp / d.maxHp >= t.th ? 1 + t.v : 1;   // 갈레안: 체력이 가득한 적(개막)
       case 'shield': return a.shield > 0 ? 1 + t.v : 1;   // 아폴라: 보호막이 있는 동안
       case 'bleedshield': return t.dmg && b.bleedT > 0 ? 1 + t.dmg : 1;   // 모르가나: 출혈 걸린 적에게 피해(보호막은 타격 뒤 훅) — 2026-11-27 추가(개성이 보호막뿐이라 어둠 편성에서 피해 0이었음)
       case 'solo': { if (a._solo == null) a._solo = st.heroes.filter(h => h !== a && h.role === 'dps' && h.range <= 60).length <= (t.max || 0); return a._solo ? 1 + t.v : 1; }   // 닉스: 다른 근접 딜러가 max명 이하일 때(2026-11-27 0 → 1: 모르가나와 같이 서면 꺼져서)
-      case 'immobile': return SIGC(a, skill) && (b.stunT > 0 || d.grgT > 0 || b.frzT > 0 || d.iceT > 0) ? 1 + t.v : 1;   // 레이븐: 기절·그로기·빙결로 못 움직이는 적
+      case 'immobile': return SIGC(a, skill) && (b.stunT > 0 || d.grgT > 0 || b.frzT > 0 || d.iceT > 0 || (t.bleed && b.bleedT > 0)) ? 1 + t.v : 1;   // 레이븐: 기절·그로기·빙결로 못 움직이는 적
     } return 1; }
   const frostAura = (st) => st._fa != null ? st._fa : (st._fa = Math.max(0, ...st.heroes.map(h => (TR(h) && TR(h).k === 'critslow') ? TR(h).v : 0)));   // 프로스티아: 둔화·빙결된 적은 아군 전원에게 치명타 피해를 더 받음
   function tag(d, k, t) { stackAdd(d, k); if (!d.boss || !SRC) return; const S = d.src || (d.src = {}), m = S[k] || (S[k] = {}); m[SRC] = Math.max(m[SRC] || 0, NOW + (t || 3) * (C.BUFF_DUR || 1)); }   // 이 영웅이 건 몫의 만료(공용 타이머는 다른 영웅 것이 더 길 수 있어서 따로)   // 보스에게 건 디버프를 건 영웅별로 기록(만료 시각)
@@ -93,11 +93,11 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
   const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   const BW = () => C.BUFF_STR == null ? 1 : C.BUFF_STR;   // 버프·디버프 세기 배율(지속 ×3과 짝 — const/core.js C.BUFF_DUR)
   // 지속 피해 세기(2026-11-25 사용자 '도트딜 유의미하게'): 거는 순간 그 영웅의 스킬 피해·치명타 기대값·상성·보스 피해를 곱해 둔다(예전엔 공격력만 → 일반 치명타의 1/30~1/150). 피해는 건 영웅 몫(dmgOut)으로 셈
-  const dotV = (u, d, k, key) => { let v = effAtk(u) * k; if (u && u.kind === 'hero') { const cr = Math.min(0.95, (u.crit || 0.05) + (u.b.crtT > 0 ? u.b.crt * BW() : 0)), cd = (u.cdmg || 1.5) + (u.b.cdmT > 0 ? u.b.cdm * BW() : 0);
-    v *= (1 + (u.skillAmp || 0) + (u.b.sklT > 0 ? u.b.skl * BW() : 0)) * (1 + cr * (cd - 1)) * C.elemMult(u.elem, d.elem) * (d.boss && u.bossDmg ? 1 + u.bossDmg : 1) * (C.DOT_MULT || 1); if (key) d.b[key + 'By'] = u; } return v; };
-  const effAtk = (u) => u.atk * (1 + u.b.atk * BW()) * (u.enr || 1) * (u.frz ? 1 + u.frz * C.GIM.frenzy.amp : 1) * (u.rmp ? 1 + u.rmp * C.GIM.rampage.amp : 1);
+  const dotV = (u, d, k, key) => { let v = effAtk(u) * k; if (u && u.kind === 'hero') { const cr = Math.min(0.95, (u.crit || 0.05) + (u.b.crtT > 0 ? u.b.crt * BW() : 0)), cd = (u.cdmg || 1.5) + ((u.b.cdmT > 0 ? u.b.cdm : 0) + (u.b.anT > 0 ? u.b.anC || 0 : 0)) * BW();
+    v *= (1 + (u.skillAmp || 0) + ((u.b.sklT > 0 ? u.b.skl : 0) + (u.b.anT > 0 ? u.b.anK || 0 : 0)) * BW()) * (1 + cr * (cd - 1)) * C.elemMult(u.elem, d.elem) * (d.boss && u.bossDmg ? 1 + u.bossDmg : 1) * (C.DOT_MULT || 1); if (key) d.b[key + 'By'] = u; } return v; };
+  const effAtk = (u) => u.atk * (1 + (u.b.atk + (u.b.anT > 0 ? u.b.anA || 0 : 0)) * BW()) * (u.enr || 1) * (u.frz ? 1 + u.frz * C.GIM.frenzy.amp : 1) * (u.rmp ? 1 + u.rmp * C.GIM.rampage.amp : 1);
   const effDef = (u) => Math.max(0, u.def * (1 + u.b.def * BW()));
-  const atkInterval = (u) => 100 / Math.max(20, u.spd * (u.aspd || 1) * (1 + u.b.aspd * BW()) * (u.b.slowT > 0 ? 1 - Math.min(0.9, u.b.slow || 0.3) * BW() : 1) * (u.rmp ? 1 + u.rmp * C.GIM.rampage.spd : 1));
+  const atkInterval = (u) => 100 / Math.max(20, u.spd * (u.aspd || 1) * (1 + (u.b.aspd + (u.b.anT > 0 ? u.b.anS || 0 : 0)) * BW()) * (u.b.slowT > 0 ? 1 - Math.min(0.9, u.b.slow || 0.3) * BW() : 1) * (u.rmp ? 1 + u.rmp * C.GIM.rampage.spd : 1));
   const text = (st, x, y, txt, cls, ttl) => { if (st.headless) return; if (st.texts.length > 60) st.texts.shift(); let vx = 0; if (!/[가-힣]/.test(txt)) { const n = st.txn = (st.txn || 0) + 1; x += ((n * 37) % 37) - 18; y -= (n % 4) * 7; vx = ((n * 53) % 61) - 30; } st.texts.push({ x, y, txt, cls, ttl: ttl || 0.8, vx }); };   // 수치 글자는 흩뿌리고 좌우로 흘려 겹침을 줄임(그리기 전용 — 난수 st.rng는 쓰지 않음)
   const fx = (st, o) => { if (st.headless) return; if (st.fx.length > 60) st.fx.shift(); o.ttl = o.max = o.ttl || 0.3; st.fx.push(o); };
 
@@ -106,12 +106,12 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
     const atk = effAtk(a), def = effDef(d);
     const el = C.elemMult(a.elem, d.elem);
     const ice = d.iceT > 0 && a.kind === 'hero' && C.STACK; const crit = st.rng() < Math.min(0.95, (a.crit || 0.05) + (a.b && a.b.crtT > 0 ? a.b.crt * BW() : 0)) || !!ice || !!a._fc;   // 동결된 적·사슬에 묶인 적(엘리스)은 무조건 치명타   // b.crt: 아군 치명타 확률 버프(어둠 1번 부가 효과)
-    let v = mult * atk * atk / (atk + def) * el * (crit ? (a.cdmg || 1.5) + (a.b && a.b.cdmT > 0 ? a.b.cdm * BW() : 0) : 1) * (0.92 + st.rng() * 0.16) * (d.b.vulnT > 0 ? 1 + d.b.vuln * BW() : 1) * (d.boss && a.bossDmg ? 1 + a.bossDmg : 1) * (a.kind === 'hero' ? takeAmp(d) : 1) * (ice ? 1 + C.STACK.iceAmp : 1) * (crit && a.kind === 'hero' && d.b.slowT > 0 && frostAura(st) ? 1 + frostAura(st) : 1) * (1 - (d.dr || 0)) * (d.b && d.b.gdrT > 0 ? 1 - d.b.gdr * BW() : 1);
+    let v = mult * atk * atk / (atk + def) * el * (crit ? (a.cdmg || 1.5) + (a.b ? ((a.b.cdmT > 0 ? a.b.cdm : 0) + (a.b.anT > 0 ? a.b.anC || 0 : 0)) * BW() : 0) : 1) * (0.92 + st.rng() * 0.16) * (d.b.vulnT > 0 ? 1 + d.b.vuln * BW() : 1) * (d.boss && a.bossDmg ? 1 + a.bossDmg : 1) * (a.kind === 'hero' ? takeAmp(d) : 1) * (ice ? 1 + C.STACK.iceAmp : 1) * (crit && a.kind === 'hero' && d.b.slowT > 0 && frostAura(st) ? 1 + frostAura(st) : 1) * (1 - (d.dr || 0)) * (d.b && d.b.gdrT > 0 ? 1 - d.b.gdr * BW() : 1);
     return { v: Math.max(1, Math.round(v)), crit, el: el > 1 ? 'adv' : (el < 1 ? 'dis' : null) };
   }
   function hit(st, a, d, mult, skill) {
     if (a.kind === 'hero') SRC = a.id;
-    if (a.kind === 'hero') mult *= skill ? 1 + (a.skillAmp || 0) + (a._ult ? a.ultAmp || 0 : 0) + (a.b.sklT > 0 ? a.b.skl * BW() : 0) : 1 + (a.basicAmp || 0);   // 장비 옵션: 스킬·궁극기·일반 공격 피해
+    if (a.kind === 'hero') mult *= skill ? 1 + (a.skillAmp || 0) + (a._ult ? a.ultAmp || 0 : 0) + ((a.b.sklT > 0 ? a.b.skl : 0) + (a.b.anT > 0 ? a.b.anK || 0 : 0)) * BW() : 1 + (a.basicAmp || 0);   // 장비 옵션: 스킬·궁극기·일반 공격 피해
     if (a.kind === 'hero' && C.STACK) {   // 중첩 연계: 유지형(stk — 이 영웅의 모든 피해가 대상의 중첩당 +per) · 소모형(eat — 고유기가 중첩을 전부 소모하며 중첩당 +per)
       if (a.stkK === undefined) { const s2 = a.skills.find(k => k.stk); a.stkK = s2 ? s2.stk : null; }
       if (a.stkK) { const n = Math.max(0, (d.b[a.stkK[0] + 'N'] || 0) - (a.stkK[2] != null ? a.stkK[2] : C.STACK.base)); if (n > 0) mult *= 1 + a.stkK[1] * n; }   // stk = [디버프, 중첩당 증가, 이 중첩까지는 효과 없음] — 유지형은 높은 중첩을 지켜야 보상(소모형과 같이 쓰면 거의 못 받음)
@@ -253,7 +253,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
     let ok = true;
     switch (sk.type) {
       case 'single': { if (!tgt) return false; fx(st, { type: 'slash', x: tgt.x, y: tgt.y - 14, ttl: 0.25, elem: u.elem }); const v = hit(st, u, tgt, sk.mult, true); applyFx(tgt, v); break; }
-      case 'multi': { if (!tgt) return false; let tot = 0; for (let i = 0, nh = sk.hits + (sk.tr && sk.tr.k === 'aspdhits' && u.b.aspdT > 0 && u.b.aspd > 0 ? sk.tr.v : 0); i < nh; i++) { if (tgt.dead) tgt = nearest(u, foesInRange(st, u, u.range + 10)); if (!tgt) break; fx(st, { type: 'slash', x: tgt.x + (i - 1) * 6, y: tgt.y - 14, ttl: 0.25, elem: u.elem }); tot += hit(st, u, tgt, sk.mult, true); } applyFx(tgt, tot); break; }
+      case 'multi': { if (!tgt) return false; let tot = 0; for (let i = 0, nh = sk.hits + (sk.tr && sk.tr.k === 'aspdhits' && (u.b.aspdT > 0 && u.b.aspd > 0 || u.b.anT > 0 && u.b.anS > 0) ? sk.tr.v : 0); i < nh; i++) { if (tgt.dead) tgt = nearest(u, foesInRange(st, u, u.range + 10)); if (!tgt) break; fx(st, { type: 'slash', x: tgt.x + (i - 1) * 6, y: tgt.y - 14, ttl: 0.25, elem: u.elem }); tot += hit(st, u, tgt, sk.mult, true); } applyFx(tgt, tot); break; }
       case 'aoe': { const fs = foesInRange(st, u, R); if (!fs.length) return false; fx(st, { type: 'ring', x: u.x, y: u.y - 10, r: R, ttl: 0.45, elem: u.elem }); let tot = 0; for (const f of fs) { tot += hit(st, u, f, sk.mult, true); if (sk.stun) stun(st, f, sk.stun); if (sk.fx === 'burn' || sk.fx === 'slow' || sk.fx === 'vuln') applyFx(f, 0); } if (sk.fx === 'drain') applyFx(null, tot); break; }
       case 'bash': { if (!tgt) return false; fx(st, { type: 'slash', x: tgt.x, y: tgt.y - 14, ttl: 0.25, elem: u.elem }); const v = hit(st, u, tgt, sk.mult, true); { const sd = sk.stun || 1.2; if (stun(st, tgt, sd)) fx(st, { type: 'stun', x: tgt.x, y: tgt.y - 36, ttl: sd }); } applyFx(tgt, v); break; }
       case 'taunt': case 'guard': { // 수호 공통 자기 강화: 방어력↑ + 변형(주변 피해 / 자가 회복). 적은 항상 수호를 노리므로 도발 없음
@@ -306,7 +306,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
         for (const f of fs) { if (!f.boss) { f.x += (cx - f.x) * 0.75; f.y += (cy - f.y) * 0.75; } else if (isHero) grog(st, f, 'strong'); if (!sk.noSlow) slowOn(st, u, f, 3); hit(st, u, f, sk.mult, true); } break; }
       case 'berserk': { if (!tgt) return false; if (sk.sac) { u.bzT = (sk.dur || 6) * (C.BUFF_DUR || 1); u.sacAcc = 0; u.sacP = sk.sac; } else if (!sk.noCost) u.hp = Math.max(1, u.hp - u.maxHp * 0.1); u.b.atk = Math.max(u.b.atk, sk.atk); u.b.atkT = sk.dur || 6; u.b.aspd = Math.max(u.b.aspd, sk.aspd); u.b.aspdT = sk.dur || 6; fx(st, { type: 'aura', x: u.x, y: u.y - 12, r: 34, ttl: 0.8, elem: 'fire' }); break; }
       case 'bless': { for (const m of mates) { heal(st, u, m, effAtk(u) * sk.mult * (1 + u.healBonus)); m.b.atk = Math.max(m.b.atk, sk.buff || 0); m.b.atkT = sk.dur || 5; if (sk.def) { m.b.def = Math.max(m.b.def, sk.def); m.b.defT = sk.dur || 5; } fx(st, { type: 'healfx', x: m.x, y: m.y - 14, ttl: 0.6 }); } fx(st, { type: 'burst', x: u.x, y: u.y - 12, r: 80, ttl: 0.6, elem: 'light' }); break; }
-      case 'anthem': { for (const m of mates) { m.b.atk = Math.max(m.b.atk, sk.atk); m.b.atkT = sk.dur || 6; m.b.aspd = Math.max(m.b.aspd, sk.aspd); m.b.aspdT = sk.dur || 6; for (const q of ['skl', 'cdm']) if (sk[q]) { m.b[q] = Math.max(m.b[q + 'T'] > 0 ? m.b[q] || 0 : 0, sk[q]); m.b[q + 'T'] = Math.max(m.b[q + 'T'] || 0, sk.dur || 6); }   /* 2026-11-21 버프 지원 궁극기: 스킬 피해·치명타 피해 */ fx(st, { type: 'aura', x: m.x, y: m.y - 12, r: 28, ttl: 0.6, elem: 'wind' }); if (sk.heal) { heal(st, u, m, effAtk(u) * sk.heal * (1 + u.healBonus)); fx(st, { type: 'healfx', x: m.x, y: m.y - 14, ttl: 0.6 }); } } break; }
+      case 'anthem': { for (const m of mates) { const B2 = m.b, on = B2.anT > 0; B2.anA = Math.max(on ? B2.anA || 0 : 0, sk.atk || 0); B2.anS = Math.max(on ? B2.anS || 0 : 0, sk.aspd || 0); B2.anK = Math.max(on ? B2.anK || 0 : 0, sk.skl || 0); B2.anC = Math.max(on ? B2.anC || 0 : 0, sk.cdm || 0); B2.anT = Math.max(B2.anT || 0, sk.dur || 6);   /* 2026-11-27 고유기 버프는 따로 칸(an*)에 두고 1번 스킬·전용장비 버프와 합산 — 예전엔 같은 칸의 큰 값만 남아 고유기 한쪽이 자기 1번 버프에 가려져 무효였음 */ /* 2026-11-21 버프 지원 궁극기: 스킬 피해·치명타 피해 */ fx(st, { type: 'aura', x: m.x, y: m.y - 12, r: 28, ttl: 0.6, elem: 'wind' }); if (sk.heal) { heal(st, u, m, effAtk(u) * sk.heal * (1 + u.healBonus)); fx(st, { type: 'healfx', x: m.x, y: m.y - 14, ttl: 0.6 }); } } break; }
       default: ok = false;
     }
     if (ok && isHero && !fxDone && C.ELEM_DEBUFFS.includes(sk.fx)) { const tg = tgt && !tgt.dead && tgt.kind !== 'hero' ? tgt : st.boss && !st.boss.dead ? st.boss : alive(st.mobs)[0]; if (tg) applyFx(tg, 0); }   // 적을 치지 않는 스킬(회복·버프 등)도 디버프형이면 지금 대상(없으면 보스)에게 건다
@@ -359,7 +359,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
     if (u.bzT > 0 && (u.bzT -= dt) <= 0) u.sacAcc = 0;
     if (u.kind === 'mob') { if (u.chainT > 0) u.chainT -= dt; if (u.iceT > 0) u.iceT -= dt; if (b.burnN && !(b.burnT > 0)) b.burnN = 0; if (b.bleedN && !(b.bleedT > 0)) b.bleedN = 0; if (b.vsT > 0 && (b.vsT -= bd) <= 0) b.vsN = 0; if (b.blindN && !(b.blindT > 0)) b.blindN = 0; if (b.frzN && !(b.frzT > 0)) b.frzN = 0; }
     if (u.boss && C.GROGGY) { if (u.grgT > 0) u.grgT -= dt; else if (u.grg > 0) u.grg = Math.max(0, u.grg - C.GROGGY.decay * dt); }
-    if (b.vulnT > 0 && (b.vulnT -= bd) <= 0) b.vuln = 0;
+    if (b.vulnT > 0 && (b.vulnT -= bd) <= 0) b.vuln = 0; if (b.anT > 0 && (b.anT -= bd) <= 0) b.anA = b.anS = b.anK = b.anC = 0;
     if (b.sklT > 0 && (b.sklT -= bd) <= 0) b.skl = 0; if (b.comboT > 0) b.comboT -= bd; if (b.gfxT > 0) b.gfxT -= bd; if (b.frzT > 0) b.frzT -= bd; if (b.blindT > 0) b.blindT -= bd; if (b.crtT > 0 && (b.crtT -= bd) <= 0) b.crt = 0; if (b.cdmT > 0 && (b.cdmT -= bd) <= 0) b.cdm = 0;
     if (u.shieldT > 0 && (u.shieldT -= bd) <= 0) { u.shield = 0; u.reflect = 0; }
     if (u.lsBuffT > 0) u.lsBuffT -= bd;

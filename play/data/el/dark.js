@@ -20,8 +20,8 @@ Object.assign(g.SIG, {
   125: { name: '영혼의 등불', type: 'bless', mult: 2.0, buff: 0, dur: 5, cd: 15, postDr: [0.2, 5],
     desc: '아군 전체 회복(공격력 200%) + 5초간 아군 받는 피해 20%↓',
     intro: '흑장미를 품은 수녀. 등불 속 영혼들이 그녀 대신 동료를 지킨다.', line: '이 불빛 안에서는, 아무도 길을 잃지 않아요.' },
-  126: { name: '흑익 저격', type: 'execute', th: 0, mult: 7.5, hSlow: 4, ranged: true, cd: 12, tr: { k: 'immobile', v: 0.8 },
-    desc: '적 하나에 750% 피해 + 둔화 · 기절·그로기·빙결로 묶인 적에게는 저격 피해 +80%',
+  126: { name: '흑익 저격', type: 'execute', th: 0, mult: 7.5, hSlow: 4, ranged: true, cd: 12, tr: { k: 'immobile', v: 0.5, bleed: true },
+    desc: '적 하나에 750% 피해 + 둔화 · 출혈 걸렸거나 기절·그로기·빙결로 묶인 적에게는 저격 피해 +50%',
     intro: '심연에서 돌아온 저격수. 한쪽 눈을 잃은 뒤로 오히려 빗나간 적이 없다.', line: '한 발이면 돼. 두 발은 낭비야.' },
   127: { name: '달콤한 꿈', type: 'anthem', atk: 0.3, aspd: 0, cdm: 1.5, dur: 7, cd: 15,   // 2026-11-21 버프 지원으로(수면·받는 피해↑ → 아군 버프)
     desc: '아군에게 7초간 꿈의 가호 — 공격력 30%↑ + 치명타 피해 150%p↑',

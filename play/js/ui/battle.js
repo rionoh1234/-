@@ -543,8 +543,8 @@ function unitStatus(u) {
   const b = u.b || {}, o = [];
   if (b.stunT > 0) o.push(['stun', b.stunT]); if (b.burnT > 0) o.push(['burn', b.burnT, b.burnN]); if (b.bleedT > 0) o.push(['bleed', b.bleedT, b.bleedN]); if (b.comboT > 0) o.push(['combo', b.comboT]); if (b.blindT > 0) o.push(['blind', b.blindT, b.blindN]); { const mt = Math.max(b.vulnT > 0 ? b.vulnT : 0, b.vsT > 0 ? b.vsT : 0); if (mt > 0) o.push(['mark', mt, b.vsT > 0 ? b.vsN : 0]); }   // 받는 피해 증가: 일반 낙인·출혈 등 + 질풍 중첩(×n)
   if (b.defT > 0 && b.def < 0) o.push(['defD', b.defT]); if (b.atkT > 0 && b.atk < 0) o.push(['atkD', b.atkT]); if (u.iceT > 0) o.push(['ice', u.iceT / (C.BUFF_DUR || 1)]); if (b.slowT > 0) o.push(['slow', b.slowT, b.frzT > 0 ? b.frzN : 0]);
-  if (b.atkT > 0 && b.atk > 0) o.push(['atkU', b.atkT]); const dU = Math.max(b.defT > 0 && b.def > 0 ? b.defT : 0, b.gdrT > 0 ? b.gdrT : 0); if (dU > 0) o.push(['defU', dU]);
-  if (b.aspdT > 0 && b.aspd > 0) o.push(['fast', b.aspdT]); if (u.shield > 0 && u.shieldT > 0) o.push(['shld', u.shieldT]); if (b.hotT > 0) o.push(['hot', b.hotT]); if (b.tauntT > 0) o.push(['taunt', b.tauntT]); if (u.lsBuffT > 0) o.push(['ls', u.lsBuffT]); if (b.sklT > 0) o.push(['skl', b.sklT]); if (b.cdmT > 0) o.push(['cdm', b.cdmT]); if (b.crtT > 0) o.push(['crt', b.crtT]);
+  { const aU = Math.max(b.atkT > 0 && b.atk > 0 ? b.atkT : 0, b.anT > 0 && b.anA > 0 ? b.anT : 0); if (aU > 0) o.push(['atkU', aU]); } const dU = Math.max(b.defT > 0 && b.def > 0 ? b.defT : 0, b.gdrT > 0 ? b.gdrT : 0); if (dU > 0) o.push(['defU', dU]);
+  { const fU = Math.max(b.aspdT > 0 && b.aspd > 0 ? b.aspdT : 0, b.anT > 0 && b.anS > 0 ? b.anT : 0); if (fU > 0) o.push(['fast', fU]); } if (u.shield > 0 && u.shieldT > 0) o.push(['shld', u.shieldT]); if (b.hotT > 0) o.push(['hot', b.hotT]); if (b.tauntT > 0) o.push(['taunt', b.tauntT]); if (u.lsBuffT > 0) o.push(['ls', u.lsBuffT]); if (b.sklT > 0) o.push(['skl', b.sklT]); if (b.cdmT > 0) o.push(['cdm', b.cdmT]); if (b.crtT > 0) o.push(['crt', b.crtT]);
   return o;
 }
 function statusFill(el, list, hero, sec) {   // 내용이 바뀔 때만 다시 그림(초 표시는 정수 단위)
