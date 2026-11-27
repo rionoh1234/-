@@ -37,6 +37,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
       case 'ramp': { if (a._rampU !== d.uid) { a._rampU = d.uid; a._rampN = 0; } const m = 1 + t.v * a._rampN; a._rampN = Math.min(t.max, a._rampN + 1); return m; }   // 나디아: 같은 적을 계속 때릴수록
       case 'wave': return SIGC(a, skill) ? 1 + t.v * Math.min(t.max, a._wave || 0) : 1;   // 세이렌: 지난 고유기에 맞은 적 수만큼
       case 'elems': { if (a._elN == null) a._elN = new Set(st.heroes.map(h => h.elem)).size; return 1 + t.v * Math.max(0, a._elN - 1); }   // 라이나: 편성 속성 종류
+      case 'aspdscale': { if (!SIGC(a, skill)) return 1; const ab = a.b; return 1 + t.v * ((ab.aspdT > 0 ? ab.aspd : 0) + (ab.anT > 0 ? ab.anS || 0 : 0)) * BW(); }   // 브륀힐드(2026-11-27, 그로기 조건 대신): 받고 있는 공격속도 버프(화면 표시값)의 v배만큼 고유기 피해
       case 'groggy': return SIGC(a, skill) && d.grgT > 0 ? 1 + t.v : 1;   // 브륀힐드: 그로기 중인 적
       case 'buffs': { const ab = a.b; let n = 0; const an = ab.anT > 0; if (ab.atkT > 0 && ab.atk > 0 || an && ab.anA > 0) n++; if (ab.aspdT > 0 && ab.aspd > 0 || an && ab.anS > 0) n++; if (ab.sklT > 0 || an && ab.anK > 0) n++; if (ab.cdmT > 0 || an && ab.anC > 0) n++; if (ab.crtT > 0) n++; if (ab.defT > 0 && ab.def > 0) n++; if (ab.gdrT > 0) n++; if (a.shield > 0) n++; if (ab.gfxT > 0) n++; return 1 + t.v * Math.min(n, t.max); }   // 루시엘: 자기에게 걸린 버프 수
       case 'fullhp': return SIGC(a, skill) && d.hp / d.maxHp >= t.th ? 1 + t.v : 1;   // 갈레안: 체력이 가득한 적(개막)
