@@ -127,7 +127,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
     if (a.kind === 'mob' && d.kind === 'hero' && d.role !== 'tank') dmg = cover(st, a, d, dmg);   // 수호의 보호(2026-10-30)
     if (d.shield > 0) { const ab = Math.min(d.shield, dmg); d.shield -= ab; dmg -= ab; if (d.reflect && !a.dead && a.kind !== d.kind) { const rv = Math.round(ab * d.reflect); a.hp = Math.max(0, a.hp - rv); if (a.hp <= 0 && !a.dead) kill(st, a, d); } }
     d.hp = Math.max(0, d.hp - dmg); d.hitAt = st.t; if (!skill && !(a.range > 60)) a.atkAt = st.t;   // 그리기 전용: 피격 번쩍임·공격 동작
-    if (a.kind === 'hero' && d.b.comboT > 0 && r.v > 1) { const e = Math.max(1, Math.round(r.v * C.ELEM_DEB.combo * BW())); d.hp = Math.max(0, d.hp - e); r.v += e; }   // 연타 추가타
+    if (a.kind === 'hero' && !skill && d.b.comboT > 0 && r.v > 1) { const e = Math.max(1, Math.round(r.v * C.ELEM_DEB.combo)); d.hp = Math.max(0, d.hp - e); r.v += e; }   // 연타: 연타 걸린 적을 평타로 때리면 한 번 더 때림(추가타 = 그 평타의 combo배, 스킬 타격엔 없음) — 2026-11-28 사용자 '연타는 말 그대로 몇 배 빠르게 때리는 개념, 공속이 빠를수록 많이 터져야'. 예전: 모든 타격에 피해의 7.7% 덧붙임(타격 횟수와 무관)
     if (a.kind === 'hero') { st.dmgDealt += r.v; a.dmgOut = (a.dmgOut || 0) + r.v; const t = TR(a);
       if (t) { if (t.k === 'killcd') { if (SIGC(a, skill) && d.hp <= 0) a._kr = true; }   // 아젤라: 고유기로 처치하면 쿨 환급
         else if (t.k === 'bleedshield') { if (d.b.bleedT > 0) { a.shield = Math.min(a.maxHp * t.max, (a.shield || 0) + a.maxHp * t.v); a.shieldT = Math.max(a.shieldT || 0, 8); } }   // 모르가나: 출혈 걸린 적을 때리면 보호막

@@ -147,7 +147,7 @@
   C.ELEM_FX.frost = C.ELEM_FX.slow; delete C.ELEM_FX.slow;   // 서리 버프형 = 아군 스킬 피해(디버프형 둔화와 분리)
   C.ELEM_TEAM = { might: 'atk', frost: 'skl', haste: 'aspd', radiance: 'cdm', focus: 'crt' };   // 버프형 부가 효과 → 버프 칸(field.js u.b)
   C.ELEM_DEB = {   // 2026-11-25 사용자 '세 도트 모두 동일해야지': 화상·출혈·중독 1틱 = 공격력 × 3.5 × BUFF_STR × (스킬 피해·치명 기대값·상성·보스 피해, field.js dotV). 출혈 예전 0.3
-    burn: +(T0.edb) || 3.5, combo: +(T0.edc) || 0.23, blind: +(T0.edl) || 0.5, bleed: +(T0.edd) || 3.5, bleedVuln: +(T0.edv) || 0.32 };   // 디버프형 세기(세기 ÷3·지속 ×3 규칙 적용 — 화상·출혈의 매초 피해, 연타 추가타 비율, 실명 빗나감 확률, 출혈 받는 피해)
+    burn: +(T0.edb) || 3.5, combo: +(T0.edc) || 0.5, blind: +(T0.edl) || 0.5, bleed: +(T0.edd) || 3.5, bleedVuln: +(T0.edv) || 0.32 };   // 디버프형 세기(세기 ÷3·지속 ×3 규칙 적용 — 화상·출혈의 매초 피해, 연타 = 평타 추가타 크기(평타의 몇 배, ÷3 규칙 없음 — 2026-11-28 0.23(모든 타격 ×1/3) → 0.5(평타만)), 실명 빗나감 확률, 출혈 받는 피해)
   C.ELEM_DEBUFFS = ['burn', 'freeze', 'combo', 'blind', 'bleed'];   // 2026-11-20 서리 디버프 둔화 → 빙결(둔화 + 폭주 기믹의 답)
   C.GRANT = { p: +(T0.grp) || 0.5, dur: 7 };   // 2026-11-20 파훼 지원 버프: 아군 공격 1회당 p 확률로 지원의 속성 디버프(일반 스킬 = 시전 시 100% — 사용자 '그 반의 비율'), 7초(다른 궁극기 버프와 같음)
   C.CNT_CD = T0.cnc != null ? +T0.cnc : 8;     // 파훼 1번 스킬 기본 쿨(★3 실제 약 20초 = 8 × 0.85 × 3)
@@ -178,7 +178,7 @@ C.skillsOf = function (ch) {
     const pc = (k) => Math.round(C.ELEM_FX[k] * 100);
     const D = C.ELEM_DEB;
     const FXD = { might: `아군 전체 공격력 ${pc('might')}%↑(4초)`, frost: `아군 전체 스킬 피해 ${pc('frost')}%↑(4초)`, haste: `아군 전체 공격속도 ${pc('haste')}%↑(4초)`, radiance: `광휘: 아군 전체 치명타 피해 ${pc('radiance')}%p↑(4초)`, focus: `아군 전체 치명타 확률 ${pc('focus')}%p↑(4초)`,
-      burn: `화상: 매초 공격력 ${Math.round(D.burn * 100)}%(3초)`, freeze: '빙결: 둔화 · 폭주 해제(3초)', combo: `연타: 아군 타격마다 추가타 ${Math.round(D.combo * C.BUFF_STR * 100)}%(3초)`, blind: `실명: 적 공격 ${Math.round(D.blind * C.BUFF_STR * 100)}% 빗나감(3초) · 힘 모으기 끊음`, bleed: `출혈: 매초 공격력 ${Math.round(D.bleed * 100)}% · 받는 피해 ${Math.round(D.bleedVuln * 100)}%↑(3초)` };
+      burn: `화상: 매초 공격력 ${Math.round(D.burn * 100)}%(3초)`, freeze: '빙결: 둔화 · 폭주 해제(3초)', combo: `연타: 평타로 때리면 한 번 더 때림 — 추가타 ${Math.round(D.combo * 100)}%(3초)`, blind: `실명: 적 공격 ${Math.round(D.blind * C.BUFF_STR * 100)}% 빗나감(3초) · 힘 모으기 끊음`, bleed: `출혈: 매초 공격력 ${Math.round(D.bleed * 100)}% · 받는 피해 ${Math.round(D.bleedVuln * 100)}%↑(3초)` };
     let a, b;
     // 같은 역할·속성 그룹 안에서 순번을 매겨 A/B 조합이 겹치지 않게 배정 (A 풀 × B 풀 = 최대 12가지)
     const grp = C._grp || (C._grp = {});
