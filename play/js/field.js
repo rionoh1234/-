@@ -41,7 +41,8 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
       case 'buffs': { const ab = a.b; let n = 0; if (ab.atkT > 0 && ab.atk > 0) n++; if (ab.aspdT > 0 && ab.aspd > 0) n++; if (ab.sklT > 0) n++; if (ab.cdmT > 0) n++; if (ab.crtT > 0) n++; if (ab.defT > 0 && ab.def > 0) n++; if (ab.gdrT > 0) n++; if (a.shield > 0) n++; if (ab.gfxT > 0) n++; return 1 + t.v * Math.min(n, t.max); }   // 루시엘: 자기에게 걸린 버프 수
       case 'fullhp': return SIGC(a, skill) && d.hp / d.maxHp >= t.th ? 1 + t.v : 1;   // 갈레안: 체력이 가득한 적(개막)
       case 'shield': return a.shield > 0 ? 1 + t.v : 1;   // 아폴라: 보호막이 있는 동안
-      case 'solo': { if (a._solo == null) a._solo = !st.heroes.some(h => h !== a && h.role === 'dps' && h.range <= 60); return a._solo ? 1 + t.v : 1; }   // 닉스: 다른 근접 딜러가 없을 때
+      case 'bleedshield': return t.dmg && b.bleedT > 0 ? 1 + t.dmg : 1;   // 모르가나: 출혈 걸린 적에게 피해(보호막은 타격 뒤 훅) — 2026-11-27 추가(개성이 보호막뿐이라 어둠 편성에서 피해 0이었음)
+      case 'solo': { if (a._solo == null) a._solo = st.heroes.filter(h => h !== a && h.role === 'dps' && h.range <= 60).length <= (t.max || 0); return a._solo ? 1 + t.v : 1; }   // 닉스: 다른 근접 딜러가 max명 이하일 때(2026-11-27 0 → 1: 모르가나와 같이 서면 꺼져서)
       case 'immobile': return SIGC(a, skill) && (b.stunT > 0 || d.grgT > 0 || b.frzT > 0 || d.iceT > 0) ? 1 + t.v : 1;   // 레이븐: 기절·그로기·빙결로 못 움직이는 적
     } return 1; }
   const frostAura = (st) => st._fa != null ? st._fa : (st._fa = Math.max(0, ...st.heroes.map(h => (TR(h) && TR(h).k === 'critslow') ? TR(h).v : 0)));   // 프로스티아: 둔화·빙결된 적은 아군 전원에게 치명타 피해를 더 받음
