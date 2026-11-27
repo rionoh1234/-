@@ -178,7 +178,7 @@ C.skillsOf = function (ch) {
     const pc = (k) => Math.round(C.ELEM_FX[k] * 100);
     const D = C.ELEM_DEB;
     const FXD = { might: `아군 전체 공격력 ${pc('might')}%↑(4초)`, frost: `아군 전체 스킬 피해 ${pc('frost')}%↑(4초)`, haste: `아군 전체 공격속도 ${pc('haste')}%↑(4초)`, radiance: `광휘: 아군 전체 치명타 피해 ${pc('radiance')}%p↑(4초)`, focus: `아군 전체 치명타 확률 ${pc('focus')}%p↑(4초)`,
-      burn: `화상: 매초 공격력 ${Math.round(D.burn * 100)}%(3초)`, freeze: '빙결: 둔화 · 폭주 해제(3초)', combo: `연타: 평타로 때리면 한 번 더 때림 — 추가타 ${Math.round(D.combo * 100)}%(3초)`, blind: `실명: 적 공격 ${Math.round(D.blind * C.BUFF_STR * 100)}% 빗나감(3초) · 힘 모으기 끊음`, bleed: `출혈: 매초 공격력 ${Math.round(D.bleed * 100)}% · 받는 피해 ${Math.round(D.bleedVuln * 100)}%↑(3초)` };
+      burn: '화상(3초)', freeze: '빙결(3초)', combo: '연타(3초)', blind: '실명(3초)', bleed: '출혈(3초)' };   // 2026-11-28 사용자 '그냥 연타라고만 써 놓으면 되는 걸 뭘 줄줄 설명문' → 속성 디버프는 이름과 지속만(효과 풀이 금지)
     let a, b;
     // 같은 역할·속성 그룹 안에서 순번을 매겨 A/B 조합이 겹치지 않게 배정 (A 풀 × B 풀 = 최대 12가지)
     const grp = C._grp || (C._grp = {});
