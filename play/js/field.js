@@ -47,7 +47,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
       case 'immobile': return SIGC(a, skill) && (b.stunT > 0 || d.grgT > 0 || b.frzT > 0 || d.iceT > 0 || (t.bleed && b.bleedT > 0)) ? 1 + t.v : 1;   // 레이븐: 기절·그로기·빙결로 못 움직이는 적
     } return 1; }
   const frostAura = (st) => st._fa != null ? st._fa : (st._fa = Math.max(0, ...st.heroes.map(h => (TR(h) && TR(h).k === 'critslow') ? TR(h).v : 0)));   // 프로스티아: 둔화·빙결된 적은 아군 전원에게 치명타 피해를 더 받음
-  function tag(d, k, t) { stackAdd(d, k); if (!d.boss || !SRC) return; const S = d.src || (d.src = {}), m = S[k] || (S[k] = {}); m[SRC] = Math.max(m[SRC] || 0, NOW + (t || 3) * (C.BUFF_DUR || 1)); }   // 이 영웅이 건 몫의 만료(공용 타이머는 다른 영웅 것이 더 길 수 있어서 따로)   // 보스에게 건 디버프를 건 영웅별로 기록(만료 시각)
+  function tag(d, k, t) { stackAdd(d, k); if (k === 'blindT' && SRC) d.blindBy = SRC; if (!d.boss || !SRC) return; const S = d.src || (d.src = {}), m = S[k] || (S[k] = {}); m[SRC] = Math.max(m[SRC] || 0, NOW + (t || 3) * (C.BUFF_DUR || 1)); }   // 이 영웅이 건 몫의 만료(공용 타이머는 다른 영웅 것이 더 길 수 있어서 따로)   // 보스에게 건 디버프를 건 영웅별로 기록(만료 시각)
   function unl(st, d, k) { const m = d.src && d.src[k]; if (!m) return 0; let best = 0; for (const id in m) if (m[id] > st.t && !(d.lk && d.lk[id] > st.t) && (!best || m[id] < m[best])) best = id; return best; }   // 여럿이면 가장 먼저 끝나는 쪽을 씀(오래 남는 디버프는 다음 파훼로)   // 잠기지 않은 영웅의 디버프가 걸려 있으면 그 영웅 id
   function lock(st, d, k) { const id = unl(st, d, k); if (id) (d.lk || (d.lk = {}))[id] = st.t + C.GIM_LOCK; }
   const HEAL_BASIC = +(TF.hbh) || C.HEAL_BASIC || 0;   // 치유 평타 → 체력 비율 가장 낮은 아군 회복(공격력 ×값), 0이면 끔
@@ -125,6 +125,7 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
     if (d.gim && a.kind === 'hero') { r.v = gimHit(st, d, r.v); if (!r.v) { fx(st, { type: 'hit', x: d.x, y: d.y - 14, ttl: 0.15 }); if (a.kind === 'hero' && a.b.gfxT > 0 && st.rng() < C.GRANT.p) { SRC = a.b.gfxBy || a.id; STKADD = true; applyDeb(st, a, d, a.b.gfx); STKADD = false; SRC = a.id; } return 0; } }   // 보스 기믹: 장벽·철갑
     let dmg = r.v;
     if (a.kind === 'mob' && d.kind === 'hero' && d.role !== 'tank') dmg = cover(st, a, d, dmg);   // 수호의 보호(2026-10-30)
+    if (d.shield > 0 && d.kind === 'hero' && a.kind !== 'hero' && a.b.blindT > 0) smiteHit(st, a, d);
     if (d.shield > 0) { const ab = Math.min(d.shield, dmg); d.shield -= ab; dmg -= ab; if (d.reflect && !a.dead && a.kind !== d.kind) { const rv = Math.round(ab * d.reflect); a.hp = Math.max(0, a.hp - rv); if (a.hp <= 0 && !a.dead) kill(st, a, d); } }
     d.hp = Math.max(0, d.hp - dmg); d.hitAt = st.t; if (!skill && !(a.range > 60)) a.atkAt = st.t;   // 그리기 전용: 피격 번쩍임·공격 동작
     if (a.kind === 'hero' && !skill && d.b.comboT > 0 && r.v > 1) { const e = Math.max(1, Math.round(r.v * C.ELEM_DEB.combo)); d.hp = Math.max(0, d.hp - e); r.v += e; }   // 연타: 연타 걸린 적을 평타로 때리면 한 번 더 때림(추가타 = 그 평타의 combo배, 스킬 타격엔 없음) — 2026-11-28 사용자 '연타는 말 그대로 몇 배 빠르게 때리는 개념, 공속이 빠를수록 많이 터져야'. 예전: 모든 타격에 피해의 7.7% 덧붙임(타격 횟수와 무관)
@@ -161,6 +162,12 @@ const HEAL_SK = new Set(['heal', 'healall', 'sanctuary', 'bless', 'shield', 'res
     if (!(d.armT > 0)) { text(st, d.x, d.y - 62, '철갑 파괴', 'crit'); fx(st, { type: 'burst', x: d.x, y: d.y - 24, r: 46, ttl: 0.45, elem: 'fire' }); fx(st, { type: 'shards', x: d.x, y: d.y - 28, ttl: 0.7, n: 12, big: true }); } d.armT = C.GIM.armor.open; }
   function interrupt(st, f) { if (!(f.chargeT > 0) || C.GIM_NOANS || !unl(st, f, 'blindT')) return false; lock(st, f, 'blindT'); f.chargeT = 0; f.frz = 0; f.chT = Math.max(C.GIM.frenzy.every, C.GIM.frenzy.stagger || 0); text(st, f.x, f.y - 62, '저지!', 'crit'); fx(st, { type: 'burst', x: f.x, y: f.y - 24, r: 40, ttl: 0.4, elem: 'light' }); st.events.push({ t: 'interrupt' }); return true; }   // 실명으로 힘 모으기 끊기(기절과 같은 저지)
   // 보스 그로기(2026-11-25 사용자 'CC를 몰아 걸면 그로기'): 보스에 CC가 들어올 때마다 게이지가 차고(강한 CC = 기절·넉백·끌어당김·시간정지, 약한 CC = 빙결·둔화), 안 들어오면 초당 decay씩 빠짐. 가득 차면 dur초 행동 불능 + 받는 피해 +vuln
+  // 천벌(2026-11-28 사용자 '실명 걸린 적이 방어막 있는 아군을 때릴 때 천벌'): 그 적에게 실명을 건 영웅의 공격력 기준 피해. 같은 적은 C.SMITE.icd초에 한 번
+  function smiteHit(st, a, h) { const Sm = C.SMITE; if (!Sm || a.dead) return; if (a._smT != null && st.t - a._smT < Sm.icd) return; a._smT = st.t;
+    const u = st.heroes.find(x => x.id === a.blindBy && !x.dead) || h; const lk = a.gim ? gimLeak(a) : 1;
+    if (a.boss) { fx(st, { type: 'burst', x: a.x, y: a.y - 14, r: 60, ttl: 0.9, elem: 'light' }); text(st, a.x, a.y - 74, '천벌', 'smite', 3); st.shake = Math.max(st.shake || 0, 0.25); }
+    if (!(lk > 0)) return; const v = Math.max(1, Math.round(dotV(u, a, a.boss ? Sm.k : Sm.km || Sm.k, 'blindT') * lk * (a.grgT > 0 ? 1 + C.GROGGY.vuln : 1)));
+    a.hp = Math.max(0, a.hp - v); st.dmgDealt += v; u.dmgOut = (u.dmgOut || 0) + v; text(st, a.x, a.y - 48, fmtN(v), 'crit', a.boss ? 1.5 : 0.8); if (a.hp <= 0 && !a.dead) kill(st, a, u); }
   function grog(st, f, kind) { const Gg = C.GROGGY; if (!Gg || !f || !f.boss || f.dead || f.grgT > 0 || st.t < (f.grgLk || 0)) return;   /* 그로기가 끝난 뒤 Gg.rest초는 게이지가 안 참(2026-11-28 — 빙결을 기절류로 넣자 서리 프리셋이 60초에 7회, 사용자 선택 '5초 쉬기') */
     if (kind === 'strong') { const m = f.grgS || (f.grgS = {}); if (m[SRC] != null && st.t - m[SRC] < Gg.sIcd) return; m[SRC] = st.t; }   // 같은 영웅의 강한 CC는 sIcd초에 한 번(다단 히트 기절 중복 방지)
     else { const m = f.grgW || (f.grgW = {}); if (m[kind] != null && st.t - m[kind] < Gg.wIcd) return; m[kind] = st.t; }   // 약한 CC는 종류별 wIcd초에 한 번
